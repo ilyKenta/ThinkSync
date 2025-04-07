@@ -1,2 +1,2 @@
 # ThinkSync
-SD-project
+SD-project do not mess with the structure please
