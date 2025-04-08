@@ -21,44 +21,79 @@ router.post('/register', async (req, res) => {
 });
 
 router.post('/register/reviewer/credentials', async (req, res) => {
-    const { phone_number, department, acc_role, res_area, qualification, current_proj } = req.body;
+    const {user_ID, phone_number, department, acc_role, res_area, qualification, current_proj, fname, sname} = req.body;
+    const role_name = 'reviewer';
+    
     try {
-        const user_query = 'INSERT INTO users (phone_number, department, acc_role) VALUES (?, ?, ?)';
-        db.execute(user_query, [phone_number, department, acc_role], (err, results) => {
+        const user_query = 'UPDATE users set phone_number = ?, department = ?, acc_role = ?, fname = ?, sname = ? where user_ID = ?';
+        db.execute(user_query, [phone_number, department, acc_role, fname, sname, user_ID], (err, results) => {
             if (err) {
                 return res.status(400).json({ error: 'User credentials input failed' });
             }
-            res.status(201).json({ message: 'User credentials input successfully' });
         });
-        const reviewer_query = 'INSERT INTO reviewer (res_area, qualification, current_proj) VALUES (?, ?, ?)';
-        db.execute(reviewer_query, [res_area, qualification, current_proj], (err, results) => {
+
+
+        const reviewer_query = 'INSERT INTO reviewer (user_ID, res_area, qualification, current_proj) VALUES (?, ?, ?, ?)';
+        db.execute(reviewer_query, [user_ID, res_area, qualification, current_proj], (err, results) => {
             if (err) {
                 return res.status(400).json({ error: 'Reviewer credentials input failed' });
             }
-            res.status(201).json({ message: 'Reviewer credentials input successfully' });
         });
+
+
+        const roles_query = `
+        INSERT INTO user_roles (user_ID, role_ID) 
+        SELECT u.user_ID, r.role_ID 
+        FROM users u, roles r 
+        WHERE u.user_ID = ? AND r.role_name = ?
+        `;
+        db.execute(roles_query, [user_ID, role_name], (err, results) => {
+            if (err) {
+                return res.status(400).json({ error: 'Reviewer role assignment failed' });
+            }
+        });
+        res.status(201).json({ message: 'All input successful' });
+
     } catch (error) {
         res.status(500).json({ error: 'Server error' });
     }
 });
 
+
 router.post('/register/researcher/credentials', async (req, res) => {
-    const { phone_number, department, acc_role, res_area, qualification, current_proj } = req.body;
+    const {user_ID, phone_number, department, acc_role, res_area, qualification, current_proj, fname, sname} = req.body;
+    const role_name = 'researcher';
+
     try {
-        const user_query = 'INSERT INTO users (phone_number, department, acc_role) VALUES (?, ?, ?)';
-        db.execute(user_query, [phone_number, department, acc_role], (err, results) => {
+        const user_query = 'UPDATE users set phone_number = ?, department = ?, acc_role = ?, fname = ?, sname = ? where user_ID = ?';
+        db.execute(user_query, [phone_number, department, acc_role, fname, sname, user_ID], (err, results) => {
             if (err) {
                 return res.status(400).json({ error: 'User credentials input failed' });
             }
-            res.status(201).json({ message: 'User credentials input successfully' });
         });
-        const reviewer_query = 'INSERT INTO researcher (res_area, qualification, current_proj) VALUES (?, ?, ?)';
-        db.execute(reviewer_query, [res_area, qualification, current_proj], (err, results) => {
+
+
+        const reviewer_query = 'INSERT INTO reviewer (user_ID, res_area, qualification, current_proj) VALUES (?, ?, ?, ?)';
+        db.execute(reviewer_query, [user_ID, res_area, qualification, current_proj], (err, results) => {
             if (err) {
                 return res.status(400).json({ error: 'Researcher credentials input failed' });
             }
-            res.status(201).json({ message: 'Researcher credentials input successfully' });
         });
+
+
+        const roles_query = `
+        INSERT INTO user_roles (user_ID, role_ID) 
+        SELECT u.user_ID, r.role_ID 
+        FROM users u, roles r 
+        WHERE u.user_ID = ? AND r.role_name = ?
+        `;
+        db.execute(roles_query, [user_ID, role_name], (err, results) => {
+            if (err) {
+                return res.status(400).json({ error: 'Researcher role assignment failed' });
+            }
+        });
+        res.status(201).json({ message: 'All input successful' });
+
     } catch (error) {
         res.status(500).json({ error: 'Server error' });
     }
