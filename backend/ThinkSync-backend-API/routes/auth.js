@@ -1,50 +1,45 @@
 const express = require('express');
-const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('../db');
 const router = express.Router();
-const { ConfidentialClientApplication } = require('@azure/msal-node');
+const axios = require("axios");
 
-const msalConfig = {
-    auth: {
-        clientId: process.env.AZURE_CLIENT_ID,
-        authority: `https://login.microsoftonline.com/${process.env.AZURE_TENANT_ID}`,
-        clientSecret: process.env.AZURE_CLIENT_SECRET
-    }
-};
-
-const msalClient = new ConfidentialClientApplication(msalConfig);
 
 router.post('/microsoft', async (req, res) => {
     const { token } = req.body;
 
-    try {
-        const tokenResponse = await msalClient.acquireTokenOnBehalfOf({
-            oboAssertion: token,
-            scopes: ["User.Read"]
-        });
+    if (!token) {
+        return res.status(400).json({ error: "Access token missing" });
+    }
 
-        const userInfo = tokenResponse.account;
-        const { givenName, familyName, homeAccountId } = userInfo;
+    try {
+        const graphResponse = await axios.get("https://graph.microsoft.com/v1.0/me", {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
+
+        const userInfo = graphResponse.data;
+        const { givenName, surname, id } = userInfo;
 
         const userQuery = 'SELECT * FROM users WHERE user_ID = ?';
-        db.execute(userQuery, [homeAccountId], (err, results) => {
+        db.execute(userQuery, [id], (err, results) => {
             if (err) {
                 return res.status(500).json({ error: 'Database query failed' });
             }
 
             if (results.length === 0) {
                 const insertQuery = 'INSERT INTO users (user_ID, fname, sname) VALUES (?, ?, ?)';
-                db.execute(insertQuery, [homeAccountId, givenName, familyName], (err, results) => {
+                db.execute(insertQuery, [id, givenName, surname], (err, results) => {
                     if (err) {
                         return res.status(500).json({ error: 'User registration failed' });
                     }
-                    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-                    res.status(201).json({ message: 'User registered successfully', token: token, user_ID: homeAccountId});
+                    const token = jwt.sign({ id: id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+                    res.status(201).json({ message: 'User registered successfully', token: token, user_ID: id});
                 });
             } else {
-                const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-                res.status(200).json({ message: 'User authenticated successfully' , token, user_ID: homeAccountId});
+                const token = jwt.sign({ id: id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+                res.status(200).json({ message: 'User authenticated successfully' , token, user_ID: id});
             }
         });
     } catch (error) {
