@@ -4,14 +4,37 @@ import styles from './page.module.css';
 
 export default function ResearcherSignupPage() {
   return (
+    
     <main className={styles.signupPage}>
+      <header className={styles.header}>
+        <div className={styles.logo}>ThinkSync</div>
+        <nav className={styles.navButtons}>
+        <button className={styles.loginButton}type="button">login</button>
+        <button className={styles.signupButton}type="button">sign up</button>
+        </nav>
+      </header>
+      <div className={styles.signupBox}>
       <h1 className={styles.title}>Researcher Sign Up</h1>
       <form className={styles.signupForm}>
-        <input type="text" placeholder="Full Name" required />
-        <input type="email" placeholder="Email Address" required />
-        <input type="password" placeholder="Password" required />
-        <button type="submit">Sign Up</button>
+
+        <label htmlFor="number">contact number</label>
+        <input type="text"  id="number" placeholder="Contact number" required />
+
+        <label htmlFor="department">department</label>
+        <input type="text" id="department" placeholder="Department" required />
+
+        <label htmlFor="academicRole">academic Role</label>
+        <input type="text" id="academicRole" placeholder="Academic Role" required />
+
+        <label htmlFor="researchArea">research area</label>
+        <input type="text" id="researchArea" placeholder="Research area" required />
+
+        <label htmlFor="researchExp">research experience</label>
+        <input type="text"  id="researchExp" placeholder="Research experience" required />
+
+        <button type="submit">Continue  →</button>
       </form>
+      </div>
     </main>
   );
 }
