@@ -22,6 +22,10 @@ router.post('/microsoft', async (req, res) => {
         const userInfo = graphResponse.data;
         const { givenName, surname, id } = userInfo;
 
+        if (!id || !givenName || !surname) {
+            return res.status(400).json({ error: 'Incomplete user data from Microsoft' });
+        }
+
         const userQuery = 'SELECT * FROM users WHERE user_ID = ?';
         db.execute(userQuery, [id], (err, results) => {
             if (err) {
@@ -39,17 +43,39 @@ router.post('/microsoft', async (req, res) => {
                 });
             } else {
                 const token = jwt.sign({ id: id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-                res.status(200).json({ message: 'User authenticated successfully' , token, user_ID: id});
+                return res.status(200).json({ message: 'User authenticated successfully' , token, user_ID: id});
             }
         });
     } catch (error) {
-        res.status(400).json({ error: 'Invalid Microsoft token' });
+        return res.status(400).json({ error: 'Invalid Microsoft token' });
     }
 });
 
 
+const isValidUserPayload = (reqBody, includeResearchFields = false) => {
+    const { user_ID, phone_number, department, acc_role, res_area, qualification, current_proj } = reqBody;
+    if (!user_ID || typeof user_ID !== 'string') return false;
+    if (!phone_number || typeof phone_number !== 'string') return false;
+    if (!department || typeof department !== 'string') return false;
+    if (!acc_role || typeof acc_role !== 'string') return false;
+
+    if (includeResearchFields) {
+        if (!res_area || typeof res_area !== 'string') return false;
+        if (!qualification || typeof qualification !== 'string') return false;
+        if (!current_proj || typeof current_proj !== 'string') return false;
+    }
+
+    return true;
+};
+
+
 
 router.post('/reviewer', async (req, res) => {
+
+    if (!isValidUserPayload(req.body, true)) {
+        return res.status(400).json({ error: 'Missing or invalid input fields for reviewer' });
+    }
+
     const {user_ID, phone_number, department, acc_role, res_area, qualification, current_proj} = req.body;
     const role_name = 'reviewer';
     
@@ -81,15 +107,20 @@ router.post('/reviewer', async (req, res) => {
                 return res.status(400).json({ error: 'Reviewer role assignment failed' });
             }
         });
-        res.status(201).json({ message: 'All input successful' });
+        return res.status(201).json({ message: 'All input successful' });
 
     } catch (error) {
-        res.status(500).json({ error: 'Server error' });
+        return res.status(500).json({ error: 'Server error' });
     }
 });
 
 
 router.post('/researcher', async (req, res) => {
+    
+    if (!isValidUserPayload(req.body, true)) {
+        return res.status(400).json({ error: 'Missing or invalid input fields for researcher' });
+    }
+    
     const {user_ID, phone_number, department, acc_role, res_area, qualification, current_proj} = req.body;
     const role_name = 'researcher';
 
@@ -121,14 +152,19 @@ router.post('/researcher', async (req, res) => {
                 return res.status(400).json({ error: 'Researcher role assignment failed' });
             }
         });
-        res.status(201).json({ message: 'All input successful' });
+        return res.status(201).json({ message: 'All input successful' });
 
     } catch (error) {
-        res.status(500).json({ error: 'Server error' });
+        return res.status(500).json({ error: 'Server error' });
     }
 });
 
 router.post('/register/admin', async (req, res) => {
+
+    if (!isValidUserPayload(req.body, false)) {
+        return res.status(400).json({ error: 'Missing or invalid input fields for admin' });
+    }
+
     const {user_ID, phone_number, department, acc_role} = req.body;
     const role_name = 'admin';
 
@@ -152,30 +188,11 @@ router.post('/register/admin', async (req, res) => {
                 return res.status(400).json({ error: 'Researcher role assignment failed' });
             }
         });
-        res.status(201).json({ message: 'All input successful' });
+        return res.status(201).json({ message: 'All input successful' });
 
     } catch (error) {
-        res.status(500).json({ error: 'Server error' });
+        return res.status(500).json({ error: 'Server error' });
     }
 });
-
-
-
-// router.post('/login', (req, res) => {
-//     const { email, password } = req.body;
-//     const query = 'SELECT * FROM users WHERE email = ?';
-//     db.execute(query, [email], async (err, results) => {
-//         if (err || results.length === 0) {
-//             return res.status(400).json({ error: 'Invalid credentials' });
-//         }
-//         const user = results[0];
-//         const isMatch = await bcrypt.compare(password, user.password);
-//         if (!isMatch) {
-//             return res.status(400).json({ error: 'Invalid credentials' });
-//         }
-//         const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-//         res.json({ token });
-//     });
-// });
 
 module.exports = router;
