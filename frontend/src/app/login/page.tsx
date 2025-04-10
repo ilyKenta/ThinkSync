@@ -2,6 +2,8 @@
 
 import styles from "./page.module.css";
 
+
+
 export default function LoginPage() {
   return (
     <main className={styles.loginPage}>
@@ -16,22 +18,7 @@ export default function LoginPage() {
       <section className={styles.loginBox}>
         <h1 className={styles.title}>Login</h1>
         <form className={styles.loginForm}>
-          <label htmlFor="email">email</label>
-          <input
-            type="email"
-            id="email"
-            placeholder="john@gmail.com"
-            required
-          />
-
-          <label htmlFor="password">password</label>
-          <input
-            type="password"
-            id="password"
-            placeholder="********"
-            required
-          />
-
+          
           <button type="submit">Continue →</button>
         </form>
       </section>
