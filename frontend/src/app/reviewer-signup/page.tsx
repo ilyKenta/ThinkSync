@@ -2,7 +2,7 @@
 
 import styles from "./page.module.css";
 
-export default function ResearcherSignupPage() {
+export default function ReviewerSignupPage() {
   return (
     <main className={styles.signupPage}>
       <header className={styles.header}>
@@ -17,7 +17,7 @@ export default function ResearcherSignupPage() {
         </nav>
       </header>
       <div className={styles.signupBox}>
-        <h1 className={styles.title}>Researcher Sign Up</h1>
+        <h1 className={styles.title}>Reviewer Sign Up</h1>
         <form className={styles.signupForm}>
           <label htmlFor="number">contact number</label>
           <input
