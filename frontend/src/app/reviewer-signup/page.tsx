@@ -54,10 +54,11 @@ export default function ReviewerSignupPage() {
           <label htmlFor="researchExp">research experience</label>
           <input
             type="text"
-            id="researchExp"
-            placeholder="Research experience"
+            id="qualifications"
+            placeholder="Qualifications"
             required
           />
+          <input type="text" id="projects" placeholder="Projects" required />
 
           <button type="submit">Continue →</button>
         </form>
