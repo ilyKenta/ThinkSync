@@ -1,0 +1,33 @@
+.title{
+    color: black;
+    font-weight: var(--font-weight-semibold);
+}
+.signupPage {
+    max-width: 400px;
+    margin: 4rem auto;
+    padding: 2rem;
+    background: var(--box-color);
+    border-radius: 12px;
+    box-shadow: 0 0 10px var(--shadows-color);
+      
+  }
+  
+  .signupForm input {
+    width: 100%;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    background-color: var(--box-color);
+  }
+  
+  .signupForm button {
+    width: 100%;
+    padding: 1rem;
+    background-color: var(--secondary-color);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  
