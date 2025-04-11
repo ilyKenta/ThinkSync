@@ -9,20 +9,24 @@ export default function LoginPage() {
   const router = useRouter();
 
   // Function to handle Microsoft login
-  const handleMicrosoftLogin = async () => {
-    setLoading(true);
+  const handleMicrosoftLogin = () => {
+    try{
+    const clientId = process.env.AZURE_CLIENT_ID!;
+    const tenantId = process.env.AZURE_TENANT_ID!;
+    const redirectUri = process.env.NEXT_PUBLIC_AZURE_REDIRECT_URI!;
+    const scope = 'openid profile email offline_access User.Read';
+    console.log("Redirect URI:", process.env.NEXT_PUBLIC_AZURE_REDIRECT_URI);
+  
+    const authUrl = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/authorize` +
+      `?client_id=${clientId}` +
+      `&response_type=token` +
+      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+      `&scope=${encodeURIComponent(scope)}` +
+      `&response_mode=fragment`;
+  
+    const authWindow = window.open(authUrl, '_blank', 'width=600,height=700');
+  
 
-    try {
-      // 1. Redirect user to Microsoft login
-      const microsoftAuthUrl = 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize';
-      const clientId = process.env.NEXT_PUBLIC_MICROSOFT_CLIENT_ID;
-      const redirectUri = process.env.NEXT_PUBLIC_MICROSOFT_REDIRECT_URI;
-
-      // Build OAuth URL
-      const url = `${microsoftAuthUrl}?client_id=${clientId}&response_type=code&redirect_uri=${redirectUri}&scope=openid profile email`;
-
-      // Open the authentication window
-      const authWindow = window.open(url, '_blank', 'width=500,height=700');
 
       if (!authWindow) {
         setLoading(false);
@@ -62,7 +66,7 @@ export default function LoginPage() {
       setLoading(false);
       console.error('Error during login:', error);
     }
-  };
+  }
   return (
     <main className={styles.loginPage}>
       <header className={styles.header}>
