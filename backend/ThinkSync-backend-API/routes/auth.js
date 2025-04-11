@@ -4,6 +4,15 @@ const db = require('../db');
 const router = express.Router();
 const axios = require("axios");
 
+const executeQuery = (query, params) => {
+    return new Promise((resolve, reject) => {
+        db.execute(query, params, (err, results) => {
+            if (err) return reject(err);
+            resolve(results);
+        });
+    });
+};
+
 
 router.post('/microsoft', async (req, res) => {
     const { token } = req.body;
@@ -27,25 +36,19 @@ router.post('/microsoft', async (req, res) => {
         }
 
         const userQuery = 'SELECT * FROM users WHERE user_ID = ?';
-        db.execute(userQuery, [id], (err, results) => {
-            if (err) {
-                return res.status(500).json({ error: 'Database query failed' });
-            }
+        const results = await executeQuery(userQuery, [id]);
 
-            if (results.length === 0) {
-                const insertQuery = 'INSERT INTO users (user_ID, fname, sname) VALUES (?, ?, ?)';
-                db.execute(insertQuery, [id, givenName, surname], (err, results) => {
-                    if (err) {
-                        return res.status(500).json({ error: 'User registration failed' });
-                    }
-                    const token = jwt.sign({ id: id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-                    return res.status(201).json({ message: 'User registered successfully', token: token, user_ID: id});
-                });
-            } else {
-                const token = jwt.sign({ id: id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-                return res.status(200).json({ message: 'User authenticated successfully' , token, user_ID: id});
-            }
-        });
+        if (results.length === 0) {
+            const insertQuery = 'INSERT INTO users (user_ID, fname, sname) VALUES (?, ?, ?)';
+            await executeQuery(insertQuery, [id, givenName, surname]);
+            const token = jwt.sign({ id: id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+            return res.status(201).json({ message: 'User registered successfully', token: token, user_ID: id});
+        }
+        else
+        {
+            const token = jwt.sign({ id: id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+            return res.status(200).json({ message: 'User authenticated successfully' , token, user_ID: id});
+        }
     } catch (error) {
         return res.status(400).json({ error: 'Invalid Microsoft token' });
     }
@@ -81,47 +84,38 @@ router.post('/reviewer', async (req, res) => {
     
     try {
         const userQuery = 'SELECT * FROM users WHERE user_ID = ?';
-        db.execute(userQuery, [user_ID], (err, results) => {
-            if (err) {
-                return res.status(500).json({ error: 'Database query failed' });
-            }
-            if(results.length !== 0)
+        const results_userQuery = await executeQuery(userQuery, [user_ID]);
+        if(results_userQuery.length !== 0)
+        {
+            const check_reviewer_query = 'SELECT * FROM reviewer WHERE user_ID = ?'
+            const results_check_reviewer_query = await executeQuery(check_reviewer_query, [user_ID]);
+            if(results_check_reviewer_query.length === 0)
             {
-                const user_query = 'UPDATE users set phone_number = ?, department = ?, acc_role = ? where user_ID = ?';
-                db.execute(user_query, [phone_number, department, acc_role, user_ID], (err, results) => {
-                    if (err) {
-                        return res.status(400).json({ error: 'User credentials input failed' });
-                    }
-                });
-        
-        
+                const user_query = 'UPDATE users SET phone_number = ?, department = ?, acc_role = ? WHERE user_ID = ?';
+                await executeQuery(user_query, [phone_number, department, acc_role, user_ID]);
+
                 const reviewer_query = 'INSERT INTO reviewer (user_ID, res_area, qualification, current_proj) VALUES (?, ?, ?, ?)';
-                db.execute(reviewer_query, [user_ID, res_area, qualification, current_proj], (err, results) => {
-                    if (err) {
-                        return res.status(400).json({ error: 'Reviewer credentials input failed' });
-                    }
-                });
-        
-        
+                await executeQuery(reviewer_query, [user_ID, res_area, qualification, current_proj]);
+
                 const roles_query = `
-                INSERT INTO user_roles (user_ID, role_ID) 
-                SELECT u.user_ID, r.role_ID 
-                FROM users u, roles r 
-                WHERE u.user_ID = ? AND r.role_name = ?
+                    INSERT INTO user_roles (user_ID, role_ID) 
+                    SELECT u.user_ID, r.role_ID 
+                    FROM users u, roles r 
+                    WHERE u.user_ID = ? AND r.role_name = ?
                 `;
-                db.execute(roles_query, [user_ID, role_name], (err, results) => {
-                    if (err) {
-                        return res.status(400).json({ error: 'Reviewer role assignment failed' });
-                    }
-                });
+                await executeQuery(roles_query, [user_ID, role_name]);
+
                 return res.status(201).json({ message: 'All input successful' });
             }
             else
             {
-                return res.status(400).json({ error: 'User does not exsist in database'});
+                return res.status(400).json({ error: 'User already signed up as reviewer'});
             }
-        });
-
+        }
+        else
+        {
+            return res.status(400).json({ error: 'User does not exsist in database'});
+        }
 
     } catch (error) {
         return res.status(500).json({ error: 'Server error' });
@@ -140,53 +134,45 @@ router.post('/researcher', async (req, res) => {
 
     try {
         const userQuery = 'SELECT * FROM users WHERE user_ID = ?';
-        db.execute(userQuery, [user_ID], (err, results) => {
-            if (err) {
-                return res.status(500).json({ error: 'Database query failed' });
-            }
-            if(results.length !== 0)
+        const results_userQuery = await executeQuery(userQuery, [user_ID]);
+        if(results_userQuery.length !== 0)
+        {
+            const check_researcher_query = 'SELECT * FROM researcher WHERE user_ID = ?'
+            const results_check_researcher_query = await executeQuery(check_researcher_query, [user_ID]);
+            if(results_check_researcher_query.length === 0)
             {
-                const user_query = 'UPDATE users set phone_number = ?, department = ?, acc_role = ? where user_ID = ?';
-                db.execute(user_query, [phone_number, department, acc_role, user_ID], (err, results) => {
-                    if (err) {
-                        return res.status(400).json({ error: 'User credentials input failed' });
-                    }
-                });
+                const user_query = 'UPDATE users SET phone_number = ?, department = ?, acc_role = ? WHERE user_ID = ?';
+                await executeQuery(user_query, [phone_number, department, acc_role, user_ID]);
 
-
-                const reviewer_query = 'INSERT INTO reviewer (user_ID, res_area, qualification, current_proj) VALUES (?, ?, ?, ?)';
-                db.execute(reviewer_query, [user_ID, res_area, qualification, current_proj], (err, results) => {
-                    if (err) {
-                        return res.status(400).json({ error: 'Researcher credentials input failed' });
-                    }
-                });
-
+                const researcher_query = 'INSERT INTO researcher (user_ID, res_area, qualification, current_proj) VALUES (?, ?, ?, ?)';
+                await executeQuery(researcher_query, [user_ID, res_area, qualification, current_proj]);
 
                 const roles_query = `
-                INSERT INTO user_roles (user_ID, role_ID) 
-                SELECT u.user_ID, r.role_ID 
-                FROM users u, roles r 
-                WHERE u.user_ID = ? AND r.role_name = ?
+                    INSERT INTO user_roles (user_ID, role_ID) 
+                    SELECT u.user_ID, r.role_ID 
+                    FROM users u, roles r 
+                    WHERE u.user_ID = ? AND r.role_name = ?
                 `;
-                db.execute(roles_query, [user_ID, role_name], (err, results) => {
-                    if (err) {
-                        return res.status(400).json({ error: 'Researcher role assignment failed' });
-                    }
-                });
+                await executeQuery(roles_query, [user_ID, role_name]);
+
                 return res.status(201).json({ message: 'All input successful' });
             }
-            else{
-                return res.status(400).json({ error: 'User does not exsist in database'});
+            else
+            {
+                return res.status(400).json({ error: 'User already signed up as researcher'});
             }
-
-        });
+        }
+        else
+        {
+            return res.status(400).json({ error: 'User does not exsist in database'});
+        }
 
     } catch (error) {
         return res.status(500).json({ error: 'Server error' });
     }
 });
 
-router.post('/register/admin', async (req, res) => {
+router.post('/admin', async (req, res) => {
 
     if (!isValidUserPayload(req.body, false)) {
         return res.status(400).json({ error: 'Missing or invalid input fields for admin' });
@@ -196,44 +182,42 @@ router.post('/register/admin', async (req, res) => {
     const role_name = 'admin';
 
     try {
-
-        db.execute(userQuery, [user_ID], (err, results) => {
-            if (err) {
-                return res.status(500).json({ error: 'Database query failed' });
-            }
-            if(results.length !== 0)
+        const userQuery = 'SELECT * FROM users WHERE user_ID = ?';
+        const results_userQuery = await executeQuery(userQuery, [user_ID]);
+        if(results_userQuery.length !== 0)
+        {
+            const check_admin_query = `
+                SELECT u.*
+                FROM users u
+                JOIN user_roles ur ON u.user_ID = ur.user_ID
+                JOIN roles r ON ur.role_ID = r.role_ID
+                WHERE u.user_ID = ? AND r.role_name = 'admin';
+            `;
+            const results_check_admin_query = await executeQuery(check_admin_query, [user_ID]);
+            if(results_check_admin_query.length === 0)
             {
-                const user_query = 'UPDATE users set phone_number = ?, department = ?, acc_role = ? where user_ID = ?';
-                db.execute(user_query, [phone_number, department, acc_role, user_ID], (err, results) => {
-                    if (err) {
-                        return res.status(400).json({ error: 'User credentials input failed' });
-                    }
-                });
-
+                const user_query = 'UPDATE users SET phone_number = ?, department = ?, acc_role = ? WHERE user_ID = ?';
+                await executeQuery(user_query, [phone_number, department, acc_role, user_ID]);
 
                 const roles_query = `
-                INSERT INTO user_roles (user_ID, role_ID) 
-                SELECT u.user_ID, r.role_ID 
-                FROM users u, roles r 
-                WHERE u.user_ID = ? AND r.role_name = ?
+                    INSERT INTO user_roles (user_ID, role_ID) 
+                    SELECT u.user_ID, r.role_ID 
+                    FROM users u, roles r 
+                    WHERE u.user_ID = ? AND r.role_name = ?
                 `;
-                db.execute(roles_query, [user_ID, role_name], (err, results) => {
-                    if (err) {
-                        return res.status(400).json({ error: 'Researcher role assignment failed' });
-                    }
-                });
+                await executeQuery(roles_query, [user_ID, role_name]);
+
                 return res.status(201).json({ message: 'All input successful' });
             }
             else
             {
-                return res.status(400).json({ error: 'User does not exsist in database'});
-            }
-
-        });
-
-
-        
-
+                return res.status(400).json({ error: 'User already enroled as admin'});
+            }  
+        }
+        else
+        {
+            return res.status(400).json({ error: 'User does not exsist in database'});
+        }
     } catch (error) {
         return res.status(500).json({ error: 'Server error' });
     }
