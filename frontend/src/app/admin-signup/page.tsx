@@ -62,7 +62,7 @@ export default function AdminSignupPage() {
   return (
     <main className={styles.signupPage}>
       <header className={styles.header}>
-        <div className={styles.logo}>ThinkSync</div>
+        <h1 className={styles.logo}>ThinkSync</h1>
         <nav className={styles.navButtons}>
           <button className={styles.loginButton} type="button">
             login
@@ -72,7 +72,7 @@ export default function AdminSignupPage() {
           </button>
         </nav>
       </header>
-      <div className={styles.signupBox}>
+      <section className={styles.signupBox}>
         <h1 className={styles.title}>Admin Sign Up</h1>
         <form className={styles.signupForm} onSubmit={handleSubmit}>
 
@@ -91,9 +91,9 @@ export default function AdminSignupPage() {
           <input type="text" id="role" name="role" required placeholder="Lecturer" value={formData.role} onChange={handleChange} />
 
 
-          <button type="submit">Continue →</button>
+          <button type="submit" aria-label="submit information">Continue →</button>
         </form>
-      </div>
+      </section>
     </main>
   );
 }
