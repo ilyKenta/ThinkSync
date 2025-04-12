@@ -65,7 +65,7 @@ export default function LoginPage() {
   return (
     <main className={styles.loginPage}>
       <header className={styles.header}>
-        <div className={styles.logo}>ThinkSync</div>
+        <h1 className={styles.logo}>ThinkSync</h1>
         <nav className={styles.navButtons}>
           <button className={styles.loginButton} type="button">login</button>
           <button className={styles.signupButton} type="button">sign up</button>
@@ -76,9 +76,14 @@ export default function LoginPage() {
         <h1 className={styles.title}>Login</h1>
         <form className={styles.loginForm}>
           
-        <button className={styles.loginButton} onClick={handleMicrosoftLogin} disabled={loading}>
-            {loading ? 'Logging in...' : 'Sign in with Microsoft'}
-          </button>
+        <button className={styles.loginButton} onClick={handleMicrosoftLogin} disabled={loading} aria-label="Sign in with Microsoft">
+          {loading ? 'Logging in...' : 'Sign in with Microsoft'}
+          <img 
+            src="/microsoft-logo(curve).png" 
+            alt="Microsoft Logo" 
+            className={styles.mircoLogo}
+          />
+        </button>
         </form>
       </section>
     </main>
