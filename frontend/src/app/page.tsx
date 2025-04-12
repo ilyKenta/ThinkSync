@@ -12,7 +12,7 @@ export default function Home() {
   return (
     <main className={styles.main}>
       <header className={styles.header}>
-        <h1 className={styles.logo}>ThinkSync</h1>
+        <a href = '/' className={styles.logo}>ThinkSync</a>
         <nav className={styles.nav}>
           <button className={styles.loginButton} onClick={handleRedirect}>login</button>
           <button className={styles.signupButton} onClick={handleRedirect}>sign up</button>

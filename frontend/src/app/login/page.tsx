@@ -36,6 +36,7 @@ export default function LoginPage() {
       const loginResponse: AuthenticationResult = await msalInstance.loginPopup(loginRequest);
       const accessToken = loginResponse.accessToken;
       localStorage.setItem('jwt', accessToken);
+      //console.log(localStorage.getItem('jwt'));
       setToken(accessToken);
 
       const response = await fetch('http://localhost:5000/api/auth/microsoft', {
@@ -48,7 +49,7 @@ export default function LoginPage() {
       });
 
       const data = await response.json();
-      console.log(data);
+      //console.log(data);
       if (data.message === 'User authenticated successfully') {
         router.push('/dashboard');
       }
