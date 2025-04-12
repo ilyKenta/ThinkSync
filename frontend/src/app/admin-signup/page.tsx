@@ -83,15 +83,18 @@ export default function AdminSignupPage() {
           <label htmlFor="department">Current Department</label>
           <select name="department" id="department" className="drop-down" required value={formData.department} onChange={handleChange}>
             <option value="science">Science</option>
+            <option value="health-science">Health Science</option>
             <option value="commerce">Commerce</option>
             <option value="engineering">Engineering</option>
+            <option value="humanities">Humanities</option>
           </select>
 
           <label htmlFor="role">Current Academic Role</label>
           <input type="text" id="role" name="role" required placeholder="Lecturer" value={formData.role} onChange={handleChange} />
 
 
-          <button type="submit" aria-label="submit information">Continue →</button>
+          <button type="submit" aria-label="submit information">Continue →
+          </button>
         </form>
       </section>
     </main>
