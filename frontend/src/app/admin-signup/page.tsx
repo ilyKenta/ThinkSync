@@ -27,21 +27,23 @@ export default function AdminSignupPage() {
     e.preventDefault();
 
     // Assuming user_ID is retrieved from elsewhere like localStorage or session
-    /*const user_ID = localStorage.getItem("user_ID");
+    const user_ID =/*"65fc38ee-5415-49f4-96ee-4a1643a69923";*/ localStorage.getItem("user_ID");
     if (!user_ID) {
       alert("User ID is missing.");
       return;
-    }*/
+    }
 
     const payload = {
-      //user_ID,
+      user_ID,
       phone_number: formData.number,
       department: formData.department,
       acc_role: formData.role
     };
 
+    const bodie= JSON.stringify(payload);
+
     try {
-      const response = await fetch("http://localhost:5000/api/auth/register/admin", {
+      const response = await fetch("http://localhost:5000/api/auth/register/admin", { // localhost;5000= error during fetch, localhost:3000= error during reg
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -56,6 +58,7 @@ export default function AdminSignupPage() {
         alert("Error: " + result.error);
       }
     } catch (error) {
+      console.log(bodie);
       console.error("Error during registration:", error);
     }
   };
@@ -81,7 +84,7 @@ export default function AdminSignupPage() {
 
 
           <label htmlFor="number">Contact Number</label>
-          <input type="tel" id="number" name="number" required placeholder="+27 814366553" value={formData.number} onChange={handleChange} />
+          <input type="tel" id="number" name="number" required placeholder="0814366553" value={formData.number} onChange={handleChange} />
 
           <label htmlFor="department">Current Department</label>
           <select name="department" id="department" className="drop-down" required value={formData.department} onChange={handleChange}>
