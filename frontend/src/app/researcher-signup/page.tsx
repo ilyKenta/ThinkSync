@@ -2,12 +2,13 @@
 
 import styles from "./page.module.css";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function ResearcherSignupPage() {
-  const user_ID = "example_id";
+  const router = useRouter();
 
   const [phone_number, setPhoneNumber] = useState("");
-  const [department, setDepartment] = useState("");
+  const [department, handleChange] = useState("");
   const [acc_role, setAccRole] = useState("");
   const [res_area, setResArea] = useState("");
   const [qualification, setQualification] = useState("");
@@ -15,7 +16,11 @@ export default function ResearcherSignupPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+    const user_ID = localStorage.getItem("user_ID");
+    if (!user_ID) {
+      alert("User ID is missing.");
+      return;
+    }
     const payload = {
       user_ID,
       phone_number,
@@ -52,9 +57,13 @@ export default function ResearcherSignupPage() {
   return (
     <main className={styles.signupPage}>
       <header className={styles.header}>
-        <div className={styles.logo}>ThinkSync</div>
+        <h1 className={styles.logo}>ThinkSync</h1>
         <nav className={styles.navButtons}>
-          <button className={styles.loginButton} type="button">
+          <button
+            className={styles.loginButton}
+            type="button"
+            onClick={() => router.push("/login")}
+          >
             login
           </button>
           <button className={styles.signupButton} type="button">
@@ -62,50 +71,55 @@ export default function ResearcherSignupPage() {
           </button>
         </nav>
       </header>
-      <div className={styles.signupBox}>
+      <section className={styles.signupBox}>
         <h1 className={styles.title}>Researcher Sign Up</h1>
         <form className={styles.signupForm} onSubmit={handleSubmit}>
-          <label htmlFor="number">contact number</label>
+          <label htmlFor="number">Contact number</label>
           <input
             type="text"
             id="number"
-            placeholder="Contact number"
+            placeholder="+27 814366553"
             value={phone_number}
             onChange={(e) => setPhoneNumber(e.target.value)}
             required
           />
 
-          <label htmlFor="department">department</label>
-          <input
-            type="text"
+          <label htmlFor="department">Current Department</label>
+          <select
+            name="department"
             id="department"
-            placeholder="Department"
-            value={department}
-            onChange={(e) => setDepartment(e.target.value)}
+            className="drop-down"
+            onChange={(e) => handleChange(e.target.value)}
             required
-          />
+          >
+            <option value="science">Science</option>
+            <option value="health-science">Health Science</option>
+            <option value="commerce">Commerce</option>
+            <option value="engineering">Engineering</option>
+            <option value="humanities">Humanities</option>
+          </select>
 
-          <label htmlFor="academicRole">academic role</label>
+          <label htmlFor="academicRole">Current academic role</label>
           <input
             type="text"
             id="academicRole"
-            placeholder="Academic Role"
+            placeholder="Lecturer"
             value={acc_role}
             onChange={(e) => setAccRole(e.target.value)}
             required
           />
 
-          <label htmlFor="researchArea">research area</label>
+          <label htmlFor="researchArea">Research area</label>
           <input
             type="text"
             id="researchArea"
-            placeholder="Research area"
+            placeholder="Black holes"
             value={res_area}
             onChange={(e) => setResArea(e.target.value)}
             required
           />
 
-          <label htmlFor="researchExp">research experience</label>
+          <label htmlFor="researchExp">Research experience</label>
           <input
             type="text"
             id="qualifications"
@@ -123,9 +137,11 @@ export default function ResearcherSignupPage() {
             required
           />
 
-          <button type="submit">Continue →</button>
+          <button type="submit" aria-label="submit information">
+            Continue →
+          </button>
         </form>
-      </div>
+      </section>
     </main>
   );
 }

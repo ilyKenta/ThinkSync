@@ -7,6 +7,7 @@
 }
 .logo {
   font-size: 30px;
+  font-weight: normal;
 }
 .header {
   display: flex;
@@ -55,6 +56,7 @@
   align-items: center;
   flex-direction: column;
 }
+
 .signupForm {
   display: flex;
   flex-direction: column;
@@ -68,6 +70,15 @@
   font-size: 15px;
 }
 .signupForm input {
+  width: var(--input-fields-width);
+  height: var(--input-fields-height);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: var(--input-radius);
+  border: 1px solid #ccc;
+  background-color: var(--box-color);
+}
+.signupForm select {
   width: var(--input-fields-width);
   height: var(--input-fields-height);
   padding: 1rem;
