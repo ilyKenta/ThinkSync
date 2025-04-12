@@ -1,8 +1,64 @@
 "use client";
 
 import styles from "./page.module.css";
+import { useState } from "react";
 
 export default function AdminSignupPage() {
+
+  const [formData, setFormData] = useState({
+
+    number: "",
+    department: "science",
+    role: "",
+
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Assuming user_ID is retrieved from elsewhere like localStorage or session
+    const user_ID = localStorage.getItem("user_ID");
+    if (!user_ID) {
+      alert("User ID is missing.");
+      return;
+    }
+
+    const payload = {
+      user_ID,
+      phone_number: formData.number,
+      department: formData.department,
+      acc_role: formData.role
+    };
+
+    try {
+      const response = await fetch("http://localhost:5000/api/auth/register/admin", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+      if (response.ok) {
+        alert("Admin registered successfully!");
+      } else {
+        alert("Error: " + result.error);
+      }
+    } catch (error) {
+      console.error("Error during registration:", error);
+    }
+  };
+
+
+
   return (
     <main className={styles.signupPage}>
       <header className={styles.header}>
@@ -18,72 +74,22 @@ export default function AdminSignupPage() {
       </header>
       <div className={styles.signupBox}>
         <h1 className={styles.title}>Admin Sign Up</h1>
-        <form className={styles.signupForm}>
-        <label htmlFor="name">Name</label>
-      <input 
-        type="text" 
-        id="name" 
-        name="name" 
-        required 
-        placeholder="john" 
-      />
-      
-      <label htmlFor="surname">Surname</label>
-      <input 
-        type="text" 
-        id="surname" 
-        name="surname" 
-        required 
-        placeholder="smith" 
-      />
+        <form className={styles.signupForm} onSubmit={handleSubmit}>
 
-      <label htmlFor="email">Email</label>
-      <input 
-        type="email" 
-        id="email" 
-        name="email" 
-        required 
-        placeholder="john@gmail.com" 
-      />
 
-      <label htmlFor="contact">Contact Number</label>
-      <input 
-        type="tel" 
-        id="number" 
-        name="number" 
-        required 
-        placeholder="+27814366553" 
-      />
+          <label htmlFor="number">Contact Number</label>
+          <input type="tel" id="number" name="number" required placeholder="+27814366553" value={formData.number} onChange={handleChange} />
 
-      <label htmlFor="department">Current Department</label>
-      <select 
-        name="department" 
-        id="department" 
-        className="drop-down" 
-        required
-      >
-        <option value="science">Science</option>
-        <option value="commerce">Commerce</option>
-        <option value="engineering">Engineering</option>
-      </select> 
+          <label htmlFor="department">Current Department</label>
+          <select name="department" id="department" className="drop-down" required value={formData.department} onChange={handleChange}>
+            <option value="science">Science</option>
+            <option value="commerce">Commerce</option>
+            <option value="engineering">Engineering</option>
+          </select>
 
-      <label htmlFor="role">Current Academic Role</label>
-      <input 
-        type="text" 
-        id="role" 
-        name="role" 
-        required 
-        placeholder="Lecturer" 
-      />
+          <label htmlFor="role">Current Academic Role</label>
+          <input type="text" id="role" name="role" required placeholder="Lecturer" value={formData.role} onChange={handleChange} />
 
-      <label htmlFor="password">Password</label>
-      <input 
-        type="password" 
-        id="password" 
-        name="password" 
-        required 
-        placeholder="********" 
-      />
 
           <button type="submit">Continue →</button>
         </form>
