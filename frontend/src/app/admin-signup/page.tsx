@@ -2,8 +2,11 @@
 
 import styles from "./page.module.css";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function AdminSignupPage() {
+
+  const router = useRouter();
 
   const [formData, setFormData] = useState({
 
@@ -24,14 +27,14 @@ export default function AdminSignupPage() {
     e.preventDefault();
 
     // Assuming user_ID is retrieved from elsewhere like localStorage or session
-    const user_ID = localStorage.getItem("user_ID");
+    /*const user_ID = localStorage.getItem("user_ID");
     if (!user_ID) {
       alert("User ID is missing.");
       return;
-    }
+    }*/
 
     const payload = {
-      user_ID,
+      //user_ID,
       phone_number: formData.number,
       department: formData.department,
       acc_role: formData.role
@@ -64,7 +67,7 @@ export default function AdminSignupPage() {
       <header className={styles.header}>
         <h1 className={styles.logo}>ThinkSync</h1>
         <nav className={styles.navButtons}>
-          <button className={styles.loginButton} type="button">
+          <button className={styles.loginButton} type="button"  onClick= {() => router.push("/login")}>
             login
           </button>
           <button className={styles.signupButton} type="button">
@@ -93,7 +96,7 @@ export default function AdminSignupPage() {
           <input type="text" id="role" name="role" required placeholder="Lecturer" value={formData.role} onChange={handleChange} />
 
 
-          <button type="submit" aria-label="submit information">Continue →
+          <button type="submit" aria-label="submit information" /*onClick= {() => router.push("/login")}*/>Continue →
           </button>
         </form>
       </section>
