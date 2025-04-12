@@ -78,7 +78,7 @@ export default function AdminSignupPage() {
 
 
           <label htmlFor="number">Contact Number</label>
-          <input type="tel" id="number" name="number" required placeholder="+27814366553" value={formData.number} onChange={handleChange} />
+          <input type="tel" id="number" name="number" required placeholder="+27 814366553" value={formData.number} onChange={handleChange} />
 
           <label htmlFor="department">Current Department</label>
           <select name="department" id="department" className="drop-down" required value={formData.department} onChange={handleChange}>
