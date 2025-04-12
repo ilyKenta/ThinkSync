@@ -32,7 +32,7 @@ export default function ResearcherSignupPage() {
     };
 
     try {
-      const res = await fetch("http://localhost:5000/researcher", {
+      const res = await fetch("http://localhost:5000/api/auth/researcher", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -66,7 +66,11 @@ export default function ResearcherSignupPage() {
           >
             login
           </button>
-          <button className={styles.signupButton} type="button">
+          <button
+            className={styles.signupButton}
+            type="button"
+            onClick={() => router.push("/roles")}
+          >
             sign up
           </button>
         </nav>
@@ -78,7 +82,7 @@ export default function ResearcherSignupPage() {
           <input
             type="text"
             id="number"
-            placeholder="+27 814366553"
+            placeholder="0814366553"
             value={phone_number}
             onChange={(e) => setPhoneNumber(e.target.value)}
             required
