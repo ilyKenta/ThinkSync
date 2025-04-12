@@ -35,7 +35,7 @@ export default function LoginPage() {
     try {
       const loginResponse: AuthenticationResult = await msalInstance.loginPopup(loginRequest);
       const accessToken = loginResponse.accessToken;
-      console.log(accessToken);
+      localStorage.setItem('jwt', accessToken);
       setToken(accessToken);
 
       const response = await fetch('http://localhost:5000/api/auth/microsoft', {
@@ -49,10 +49,14 @@ export default function LoginPage() {
 
       const data = await response.json();
       console.log(data);
-      if (data.token) {
-        localStorage.setItem('jwt', data.token);
-        router.push('/login');
-      } else {
+      if (data.message === 'User authenticated successfully') {
+        router.push('/dashboard');
+      }
+      else if(data.message === 'User registered successfully')
+      {
+        router.push('/role');
+      }
+      else{
         alert('Error: ' + data.error);
       }
     } catch (error) {
@@ -65,7 +69,7 @@ export default function LoginPage() {
   return (
     <main className={styles.loginPage}>
       <header className={styles.header}>
-        <div className={styles.logo}>ThinkSync</div>
+        <a className={styles.logo} href='/'>ThinkSync</a>
         <nav className={styles.navButtons}>
           <button className={styles.loginButton} type="button">login</button>
           <button className={styles.signupButton} type="button">sign up</button>
