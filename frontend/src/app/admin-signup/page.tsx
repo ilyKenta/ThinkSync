@@ -27,7 +27,8 @@ export default function AdminSignupPage() {
     e.preventDefault();
 
     // Assuming user_ID is retrieved from elsewhere like localStorage or session
-    const user_ID =/*"65fc38ee-5415-49f4-96ee-4a1643a69923";*/ localStorage.getItem("user_ID");
+    const user_ID ="65fc38ee-5415-49f4-96ee-4a1643a69923"; 
+    // localStorage.getItem("user_ID");
     if (!user_ID) {
       alert("User ID is missing.");
       return;
@@ -96,7 +97,15 @@ export default function AdminSignupPage() {
           </select>
 
           <label htmlFor="role">Current Academic Role</label>
-          <input type="text" id="role" name="role" required placeholder="Lecturer" value={formData.role} onChange={handleChange} />
+          <select name="department" id="role" className="drop-down" required value={formData.department} onChange={handleChange}>
+            <option value="lecturer">Lecturer</option>
+            <option value="student">Student</option>
+            <option value="professor">Professor</option>
+            <option value="dean">Dean</option>
+            <option value="librarian">Librarian</option>
+            <option value="reasearcher">Reasearcher</option>
+          </select>
+          {/* <input type="text" id="role" name="role" required placeholder="Lecturer" value={formData.role} onChange={handleChange} /> */}
 
 
           <button type="submit" aria-label="submit information" /*onClick= {() => router.push("/login")}*/>Continue →
