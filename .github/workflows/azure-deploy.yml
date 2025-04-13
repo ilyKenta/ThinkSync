@@ -82,19 +82,28 @@ jobs:
     - name: Install frontend dependencies
       working-directory: ./frontend
       run: |
+        echo "Installing dependencies..."
         npm cache clean --force
+        rm -rf node_modules package-lock.json .next
         npm install
+        npm install --save-dev typescript @types/react @types/node @types/react-dom
+
+    - name: Type check
+      working-directory: ./frontend
+      run: |
+        echo "Running type check..."
+        npx tsc --noEmit
 
     - name: Build frontend
       working-directory: ./frontend
       run: |
         echo "Starting build process..."
-        npm run build
+        NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 npm run build
       env:
         NEXT_PUBLIC_API_URL: 'https://thinksyncapi.azurewebsites.net'
         NEXT_PUBLIC_AZURE_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_AZURE_CLIENT_ID }}
         NEXT_PUBLIC_AZURE_TENANT_ID: ${{ secrets.NEXT_PUBLIC_AZURE_TENANT_ID }}
-        CI: false # This prevents treating warnings as errors
+        CI: false
 
   deploy-frontend:
     runs-on: ubuntu-latest
@@ -104,6 +113,12 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
+    - name: Install and build
+      working-directory: ./frontend
+      run: |
+        npm install
+        npm run build
+
     - name: Deploy to Azure Static Web Apps
       uses: Azure/static-web-apps-deploy@v1
       with:
@@ -111,6 +126,6 @@ jobs:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         action: "upload"
         app_location: "frontend"
-        output_location: ".next"
-        skip_app_build: true
+        output_location: ".next/standalone"
+        skip_api_build: true
         production_branch: "main" 
