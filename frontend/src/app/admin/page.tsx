@@ -45,7 +45,7 @@ export default function AdminSignupPage() {
     console.log(bodie);
 
     try {
-      const response = await fetch("thinksyncapi.azurewebsites.net/api/auth/admin", { // localhost;5000= error during fetch, localhost:3000= error during reg
+      const response = await fetch("https://thinksyncapi.azurewebsites.net/api/auth/admin", { // localhost;5000= error during fetch, localhost:3000= error during reg
         method: "POST",
         headers: {
           "Content-Type": "application/json"

@@ -36,7 +36,7 @@ export default function ReviewerSignupPage() {
     console.log(payload);
 
     try {
-      const res = await fetch("thinksyncapi.azurewebsites.net/api/auth/reviewer", {
+      const res = await fetch("https://thinksyncapi.azurewebsites.net/api/auth/reviewer", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
