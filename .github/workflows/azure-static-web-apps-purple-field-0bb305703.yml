@@ -58,6 +58,10 @@ jobs:
           output_location: ".next" # Next.js output directory
           app_build_command: "npm run build"
           github_id_token: ${{ steps.idtoken.outputs.result }}
+        env:
+          NEXT_PUBLIC_AZURE_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_AZURE_CLIENT_ID }}
+          NEXT_PUBLIC_AZURE_TENANT_ID: ${{ secrets.NEXT_PUBLIC_AZURE_TENANT_ID }}
+          NEXT_PUBLIC_AZURE_REDIRECT_URI: "https://purple-field-0bb305703.azurestaticapps.net/login"
           ###### End of Repository/Build Configurations ######
 
   close_pull_request_job:
