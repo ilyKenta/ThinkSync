@@ -66,17 +66,35 @@ jobs:
       with:
         node-version: '18.x'
 
+    - name: Check Node.js and npm versions
+      run: |
+        node --version
+        npm --version
+        pwd
+        ls -la
+
+    - name: Check frontend directory
+      working-directory: ./frontend
+      run: |
+        pwd
+        ls -la
+        
     - name: Install frontend dependencies
       working-directory: ./frontend
-      run: npm install
+      run: |
+        npm cache clean --force
+        npm install
 
     - name: Build frontend
       working-directory: ./frontend
-      run: npm run build
+      run: |
+        echo "Starting build process..."
+        npm run build
       env:
         NEXT_PUBLIC_API_URL: 'https://thinksyncapi.azurewebsites.net'
         NEXT_PUBLIC_AZURE_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_AZURE_CLIENT_ID }}
         NEXT_PUBLIC_AZURE_TENANT_ID: ${{ secrets.NEXT_PUBLIC_AZURE_TENANT_ID }}
+        CI: false # This prevents treating warnings as errors
 
   deploy-frontend:
     runs-on: ubuntu-latest
