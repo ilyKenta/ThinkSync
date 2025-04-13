@@ -36,7 +36,7 @@ export default function LoginPage() {
       const accessToken = loginResponse.accessToken;
       localStorage.setItem('jwt', accessToken);
 
-      const response = await fetch('http://localhost:5000/api/auth/microsoft', {
+      const response = await fetch('https://thinksyncapi.azurewebsites.net/api/auth/microsoft', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
