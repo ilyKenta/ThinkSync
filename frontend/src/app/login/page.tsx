@@ -1,41 +1,48 @@
 'use client';
 
-import { useState, useEffect} from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import styles from './page.module.css';
 import { Configuration, PublicClientApplication, AuthenticationResult } from '@azure/msal-browser';
 
-let msalInstance: PublicClientApplication | null = null;
-
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
+  const [msalInstance, setMsalInstance] = useState<PublicClientApplication | null>(null);
   const router = useRouter();
 
   useEffect(() => {
-    const msalConfig = {
-      auth: {
-        clientId: process.env.NEXT_PUBLIC_AZURE_CLIENT_ID!,
-        authority: `https://login.microsoftonline.com/${process.env.NEXT_PUBLIC_AZURE_TENANT_ID}`,
-        redirectUri: process.env.NEXT_PUBLIC_AZURE_REDIRECT_URI!,
-        postLogoutRedirectUri: '/',
-        navigateToLoginRequestUrl: true
-      },
-      cache: {
-        cacheLocation: 'sessionStorage',
-        storeAuthStateInCookie: false
-      }
+    const initializeMsal = async () => {
+      const msalConfig = {
+        auth: {
+          clientId: process.env.NEXT_PUBLIC_AZURE_CLIENT_ID!,
+          authority: `https://login.microsoftonline.com/${process.env.NEXT_PUBLIC_AZURE_TENANT_ID}`,
+          redirectUri: process.env.NEXT_PUBLIC_AZURE_REDIRECT_URI!,
+          postLogoutRedirectUri: '/',
+          navigateToLoginRequestUrl: true
+        },
+        cache: {
+          cacheLocation: 'sessionStorage',
+          storeAuthStateInCookie: false
+        }
+      };
+
+      const instance = new PublicClientApplication(msalConfig);
+      await instance.initialize();
+      setMsalInstance(instance);
     };
 
-    msalInstance = new PublicClientApplication(msalConfig);
-    msalInstance.initialize();
+    initializeMsal();
   }, []);
 
   const loginRequest = {
     scopes: ['User.Read'],
   };
 
-  const handleMicrosoftLogin = async () => {
+  const handleMicrosoftLogin = async (e: React.MouseEvent) => {
+    e.preventDefault();
     if (!msalInstance) return;
+    
     setLoading(true);
     try {
       const loginResponse: AuthenticationResult = await msalInstance.loginPopup(loginRequest);
@@ -53,16 +60,14 @@ export default function LoginPage() {
 
       const data = await response.json();
       
-      //console.log(data);
       if (data.message === 'User authenticated successfully') {
         router.push('/dashboard');
       }
-      else if(data.message === 'User registered successfully')
-      {
+      else if(data.message === 'User registered successfully') {
         localStorage.setItem('user_ID', data.user_ID);
         router.push('/role');
       }
-      else{
+      else {
         alert('Error: ' + data.error);
       }
     } catch (error) {
@@ -72,10 +77,19 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+
   return (
     <main className={styles.loginPage}>
       <header className={styles.header}>
-      <button onClick={() => window.location.href = '/'} className={styles.logo}>ThinkSync</button>
+        <button 
+          onClick={(e) => {
+            e.preventDefault();
+            window.location.href = '/';
+          }} 
+          className={styles.logo}
+        >
+          ThinkSync
+        </button>
         <nav className={styles.navButtons}>
           <button className={styles.loginButton} type="button">login</button>
           <button className={styles.signupButton} type="button">sign up</button>
@@ -84,16 +98,24 @@ export default function LoginPage() {
 
       <section className={styles.loginBox}>
         <h1 className={styles.title}>Login</h1>
-        <form className={styles.loginForm}>
-          
-        <button className={styles.loginButton} onClick={handleMicrosoftLogin} disabled={loading} aria-label="Sign in with Microsoft">
-          {loading ? 'Logging in...' : 'Sign in with Microsoft'}
-          <img 
-            src="microsoft-logocurve.png" 
-            alt="Microsoft Logo" 
-            className={styles.mircoLogo}
-          />
-        </button>
+        <form className={styles.loginForm} onSubmit={(e) => e.preventDefault()}>
+          <button 
+            className={styles.loginButton} 
+            onClick={handleMicrosoftLogin} 
+            disabled={loading || !msalInstance} 
+            type="button"
+            aria-label="Sign in with Microsoft"
+          >
+            {loading ? 'Logging in...' : 'Sign in with Microsoft'}
+            <Image 
+              src="/microsoft-logocurve.png"
+              alt="Microsoft Logo"
+              width={24}
+              height={24}
+              className={styles.mircoLogo}
+              priority
+            />
+          </button>
         </form>
       </section>
     </main>

@@ -15,10 +15,14 @@ export const metadata: Metadata = {
 
 
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   return (
     <html lang="en">
-      <body className={inter.variable}>
+      <body suppressHydrationWarning={true} className={inter.variable}>
         {children}
       </body>
     </html>

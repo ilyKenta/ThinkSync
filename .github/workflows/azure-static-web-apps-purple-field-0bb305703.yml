@@ -57,6 +57,7 @@ jobs:
           api_location: "" # Api source code path - optional
           output_location: ".next" # Next.js output directory
           app_build_command: "npm run build"
+          skip_api_build: true
           github_id_token: ${{ steps.idtoken.outputs.result }}
         env:
           NEXT_PUBLIC_AZURE_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_AZURE_CLIENT_ID }}
