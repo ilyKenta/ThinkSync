@@ -1,0 +1,104 @@
+.title {
+  color: black;
+  font-weight: var(--font-weight-bold);
+  font-size: 30px;
+  padding: 1.5rem;
+  align-self: center;
+}
+.logo {
+  font-size: 30px;
+  font-weight: normal;
+}
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid #000000;
+}
+.navButtons {
+  display: flex;
+  gap: 1rem;
+}
+
+.loginButton {
+  background-color: var(--primary-color);
+  color: var(--secondary-color);
+  width: var(--navbar-buttons-width);
+  height: var(--navbar-buttons-height);
+  border-radius: var(--button-radius);
+  gap: 1rem;
+  cursor: pointer;
+  font-size: large;
+  font-weight: var(--font-weight-medium);
+}
+.signupButton {
+  background-color: var(--secondary-color);
+  color: var(--primary-color);
+  width: var(--navbar-buttons-width);
+  height: var(--navbar-buttons-height);
+  border-radius: var(--button-radius);
+  cursor: pointer;
+  font-size: large;
+  font-weight: var(--font-weight-medium);
+}
+.signupBox {
+  max-width: var(--card-width);
+  min-height: var(--card-height);
+  margin: 4rem auto;
+  padding: 2rem;
+  background: var(--box-color);
+  border-radius: 12px;
+  box-shadow: 10px 10px 10px var(--shadows-color);
+  background-color: var(--box-color);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+.signupForm {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.signupForm label {
+  align-self: flex-start;
+  font-weight: var(--font-weight-regular);
+  margin-bottom: 0.2rem;
+  font-size: 15px;
+}
+.signupForm input {
+  width: var(--input-fields-width);
+  height: var(--input-fields-height);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: var(--input-radius);
+  border: 1px solid #ccc;
+  background-color: var(--box-color);
+}
+.signupForm select {
+  width: var(--input-fields-width);
+  height: var(--input-fields-height);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: var(--input-radius);
+  border: 1px solid #ccc;
+  background-color: var(--box-color);
+}
+.signupForm input:hover {
+  background-color: var(--field-hover-color);
+}
+
+.signupForm button {
+  width: var(--card-buttons-width);
+  height: var(--card-buttons-height);
+  padding: 1rem;
+  background-color: var(--secondary-color);
+  color: white;
+  font-size: 25px;
+  font-weight: var(--font-weight-medium);
+  border: none;
+  border-radius: var(--button-radius);
+  cursor: pointer;
+}

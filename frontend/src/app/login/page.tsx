@@ -36,6 +36,7 @@ export default function LoginPage() {
       const loginResponse: AuthenticationResult = await msalInstance.loginPopup(loginRequest);
       const accessToken = loginResponse.accessToken;
       localStorage.setItem('jwt', accessToken);
+      
       //console.log(localStorage.getItem('jwt'));
       setToken(accessToken);
 
@@ -49,12 +50,14 @@ export default function LoginPage() {
       });
 
       const data = await response.json();
+      
       //console.log(data);
       if (data.message === 'User authenticated successfully') {
         router.push('/dashboard');
       }
       else if(data.message === 'User registered successfully')
       {
+        localStorage.setItem('user_ID', data.user_ID);
         router.push('/role');
       }
       else{
