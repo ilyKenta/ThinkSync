@@ -3,9 +3,11 @@
 import styles from "./page.module.css";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import useAuth from '../useAuth';
 
 export default function ReviewerSignupPage() {
   const router = useRouter();
+  useAuth(); // Check authentication
 
   const [phone_number, setPhoneNumber] = useState("");
   const [department, handleChangeDept] = useState("");
@@ -16,13 +18,13 @@ export default function ReviewerSignupPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const user_ID = localStorage.getItem("user_ID");
-    if (!user_ID) {
+    const token = localStorage.getItem("jwt");
+    if (!token) {
       alert("User ID is missing.");
       return;
     }
     const payload = {
-      user_ID,
+      token,
       phone_number,
       department,
       acc_role,
@@ -34,7 +36,7 @@ export default function ReviewerSignupPage() {
     console.log(payload);
 
     try {
-      const res = await fetch("http://localhost:5000/api/auth/reviewer", {
+      const res = await fetch("thinksyncapi.azurewebsites.net/api/auth/reviewer", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

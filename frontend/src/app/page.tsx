@@ -12,7 +12,7 @@ export default function Home() {
   return (
     <main className={styles.main}>
       <header className={styles.header}>
-        <a href = '/' className={styles.logo}>ThinkSync</a>
+      <button onClick={() => window.location.href = '/'} className={styles.logo}>ThinkSync</button>
         <nav className={styles.nav}>
           <button className={styles.loginButton} onClick={handleRedirect}>login</button>
           <button className={styles.signupButton} onClick={handleRedirect}>sign up</button>
@@ -22,7 +22,7 @@ export default function Home() {
       <section className={styles.hero}>
         <article className={styles.textBlock}>
           <h2>Connect,Collaborate, Manage Resources with Ease</h2>
-          <p>some description text</p>
+          <p>A collaboration tool for members of the University of the Witwatersrand </p>
           <button className={styles.cta} onClick={handleRedirect}>
             Get started
           </button>

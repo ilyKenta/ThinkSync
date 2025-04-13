@@ -3,17 +3,17 @@
 import styles from "./page.module.css";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import useAuth from '../useAuth';
 
 export default function AdminSignupPage() {
+  useAuth(); // Check authentication
 
   const router = useRouter();
 
   const [formData, setFormData] = useState({
-
     number: "",
     department: "",
     role: "",
-
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -27,15 +27,15 @@ export default function AdminSignupPage() {
     e.preventDefault();
 
     // Assuming user_ID is retrieved from elsewhere like localStorage or session
-    const user_ID ="65fc38ee-5415-49f4-96ee-4a1643a69923"; 
+    const token = localStorage.getItem("jwt"); 
     // localStorage.getItem("user_ID");
-    if (!user_ID) {
+    if (!token) {
       alert("User ID is missing.");
       return;
     }
 
     const payload = {
-      user_ID,
+      token,
       phone_number: formData.number,
       department: formData.department,
       acc_role: formData.role
@@ -45,7 +45,7 @@ export default function AdminSignupPage() {
     console.log(bodie);
 
     try {
-      const response = await fetch("http://localhost:5000/api/auth/admin", { // localhost;5000= error during fetch, localhost:3000= error during reg
+      const response = await fetch("thinksyncapi.azurewebsites.net/api/auth/admin", { // localhost;5000= error during fetch, localhost:3000= error during reg
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -55,8 +55,7 @@ export default function AdminSignupPage() {
 
       const result = await response.json();
       if (response.ok) {
-        router.push('/login');
-        alert("Admin registered successfully!");
+        router.push('/dashboard');
       } else {
         alert("Error: " + result.error);
       }
@@ -65,8 +64,6 @@ export default function AdminSignupPage() {
       console.error("Error during registration:", error);
     }
   };
-
-
 
   return (
     <main className={styles.signupPage}>
@@ -84,8 +81,6 @@ export default function AdminSignupPage() {
       <section className={styles.signupBox}>
         <h1 className={styles.title}>Admin Sign Up</h1>
         <form className={styles.signupForm} onSubmit={handleSubmit}>
-
-
           <label htmlFor="number">Contact Number</label>
           <input type="tel" id="number" name="number" required placeholder="0814366553" value={formData.number} onChange={handleChange} />
 
@@ -109,7 +104,6 @@ export default function AdminSignupPage() {
             <option value="librarian">Librarian</option>
             <option value="reasearcher">Reasearcher</option>
           </select>
-
 
           <button type="submit" aria-label="submit information" /*onClick= {() => router.push("/login")}*/>Continue →
           </button>

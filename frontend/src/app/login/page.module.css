@@ -7,9 +7,11 @@
     justify-content: flex-start;
     
 }
-.logo{
-  font-size: 30px;
-  font-weight: normal;
+.logo {
+  font-weight: bold;
+  font-size: 1.5rem;
+  background: none;
+  border: none;
 }
 .header {
   display: flex;

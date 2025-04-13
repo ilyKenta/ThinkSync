@@ -9,7 +9,6 @@ let msalInstance: PublicClientApplication | null = null;
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
-  const [token, setToken] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -36,9 +35,6 @@ export default function LoginPage() {
       const loginResponse: AuthenticationResult = await msalInstance.loginPopup(loginRequest);
       const accessToken = loginResponse.accessToken;
       localStorage.setItem('jwt', accessToken);
-      
-      //console.log(localStorage.getItem('jwt'));
-      setToken(accessToken);
 
       const response = await fetch('http://localhost:5000/api/auth/microsoft', {
         method: 'POST',
@@ -73,7 +69,7 @@ export default function LoginPage() {
   return (
     <main className={styles.loginPage}>
       <header className={styles.header}>
-        <a href = '/' className={styles.logo}>ThinkSync</a>
+      <button onClick={() => window.location.href = '/'} className={styles.logo}>ThinkSync</button>
         <nav className={styles.navButtons}>
           <button className={styles.loginButton} type="button">login</button>
           <button className={styles.signupButton} type="button">sign up</button>

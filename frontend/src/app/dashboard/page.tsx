@@ -1,6 +1,7 @@
 "use client";
 
 import styles from "./page.module.css";
+import useAuth from '../useAuth';
 
 const mockProjects = [
   {
@@ -54,11 +55,13 @@ const mockCollabs = [
   ];
   
 
-export default function DashboardPage() {
+const Dashboard = () => {
+  useAuth(); // Check authentication
+
   return (
     <main className={styles.dashboardPage}>
       <header className={styles.header}>
-        <a href = '/' className={styles.logo}>ThinkSync</a>
+        <button onClick={() => window.location.href = '/'} className={styles.logo}>ThinkSync</button>
         <nav className={styles.navButtons}>
           <button className={styles.loginButton} type="button">
             login
@@ -126,7 +129,9 @@ export default function DashboardPage() {
       </section>
     </main>
   );
-}
+};
+
+export default Dashboard;
 
 
 

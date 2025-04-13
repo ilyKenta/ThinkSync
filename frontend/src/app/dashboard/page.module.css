@@ -6,7 +6,10 @@
     align-self: center;
   }
   .logo {
-    font-size: 30px;
+    font-weight: bold;
+    font-size: 1.5rem;
+    background: none;
+    border: none;
   }
   .header {
     display: flex;
