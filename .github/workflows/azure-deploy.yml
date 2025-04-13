@@ -87,6 +87,7 @@ jobs:
         rm -rf node_modules package-lock.json .next
         npm install
         npm install --save-dev typescript @types/react @types/node @types/react-dom
+        npm install @azure/msal-browser @azure/msal-react
 
     - name: Type check
       working-directory: ./frontend
