@@ -77,8 +77,7 @@ router.post('/microsoft', async (req, res) => {
 
 
 const isValidUserPayload = (reqBody, includeResearchFields = false) => {
-    const { user_ID, phone_number, department, acc_role, res_area, qualification, current_proj } = reqBody;
-    if (!user_ID || typeof user_ID !== 'string') return false;
+    const {phone_number, department, acc_role, res_area, qualification, current_proj } = reqBody;
     if (!phone_number || typeof phone_number !== 'string') return false;
     if (!department || typeof department !== 'string') return false;
     if (!acc_role || typeof acc_role !== 'string') return false;
@@ -96,6 +95,7 @@ const isValidUserPayload = (reqBody, includeResearchFields = false) => {
 
 router.post('/reviewer', async (req, res) => {
     const { token, phone_number, department, acc_role, res_area, qualification, current_proj } = req.body;
+    const userData = req.body;
 
     if (!token) {
         return res.status(400).json({ error: 'Token is required' });
@@ -144,6 +144,7 @@ router.post('/reviewer', async (req, res) => {
 
 router.post('/researcher', async (req, res) => {
     const { token, phone_number, department, acc_role, res_area, qualification, current_proj } = req.body;
+    const userData = req.body;
 
     if (!token) {
         return res.status(400).json({ error: 'Token is required' });
@@ -191,6 +192,7 @@ router.post('/researcher', async (req, res) => {
 
 router.post('/admin', async (req, res) => {
     const { token, phone_number, department, acc_role} = req.body;
+    const userData = req.body;
 
     if (!token) {
         return res.status(400).json({ error: 'Token is required' });

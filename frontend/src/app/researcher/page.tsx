@@ -37,7 +37,7 @@ export default function ResearcherSignupPage() {
     console.log(payload);
 
     try {
-      const res = await fetch("https://thinksyncapi.azurewebsites.net/api/auth/researcher", {
+      const res = await fetch("http://localhost:5000/api/auth/researcher", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
