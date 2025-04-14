@@ -11,6 +11,11 @@ const nextConfig = {
   // Configure external domains for image optimization
   images: {
     domains: ['localhost', 'thinksyncapi.azurewebsites.net'],
+    unoptimized: true, // This ensures images are served as-is in production
+  },
+  // Ensure public directory is included in the build
+  experimental: {
+    outputFileTracingRoot: undefined,
   },
 }
 

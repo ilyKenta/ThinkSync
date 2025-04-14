@@ -113,6 +113,7 @@ export default function LoginPage() {
               width={24}
               height={24}
               className={styles.mircoLogo}
+              unoptimized={true}
             />
           </button>
         </form>
