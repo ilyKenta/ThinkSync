@@ -62,13 +62,11 @@ router.post('/microsoft', async (req, res) => {
         if (results.length === 0) {
             const insertQuery = 'INSERT INTO users (user_ID, fname, sname) VALUES (?, ?, ?)';
             await executeQuery(insertQuery, [id, givenName, surname]);
-            const token = jwt.sign({ id: id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-            return res.status(201).json({ message: 'User registered successfully', token: token, user_ID: id});
+            return res.status(201).json({ message: 'User registered successfully'});
         }
         else
         {
-            const token = jwt.sign({ id: id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-            return res.status(200).json({ message: 'User authenticated successfully' , token, user_ID: id});
+            return res.status(200).json({ message: 'User authenticated successfully'});
         }
     } catch (error) {
         return res.status(400).json({ error: 'Invalid Microsoft token' });
@@ -241,4 +239,9 @@ router.post('/admin', async (req, res) => {
     }
 });
 
+
 module.exports = router;
+
+module.exports.executeQuery = executeQuery;
+module.exports.fetchUserIdFromGraph = fetchUserIdFromGraph;
+module.exports.isValidUserPayload = isValidUserPayload;
