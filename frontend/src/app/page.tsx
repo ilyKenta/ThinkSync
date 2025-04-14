@@ -22,7 +22,7 @@ export default function Home() {
       <section className={styles.hero}>
         <article className={styles.textBlock}>
           <h2>Connect,Collaborate, Manage Resources with Ease</h2>
-          <p>A collaboration tool for members of the University of the Witwatersrand </p>
+          <p>A web platform designed to help university researchers find partners, share resources, and track project progress</p>
           <button className={styles.cta} onClick={handleRedirect}>
             Get started
           </button>
