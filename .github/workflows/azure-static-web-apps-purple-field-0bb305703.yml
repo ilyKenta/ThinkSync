@@ -46,6 +46,13 @@ jobs:
           npm install
           npm install @azure/msal-browser @azure/msal-react
 
+      - name: Run Tests
+        working-directory: ./frontend
+        run: |
+          echo "Running tests..."
+          npm run test:coverage
+        continue-on-error: true # Allow the workflow to continue even if tests fail
+
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1

@@ -31,7 +31,7 @@ router.post('/microsoft', async (req, res) => {
     const { token } = req.body;
 
     if (!token) {
-        return res.status(400).json({ error: "Access token missing" });
+        return res.status(401).json({ error: "Access token missing" });
     }
 
     
@@ -97,7 +97,11 @@ const isValidUserPayload = (reqBody, includeResearchFields = false) => {
 router.post('/reviewer', async (req, res) => {
     const { token, phone_number, department, acc_role, res_area, qualification, current_proj } = req.body;
 
-    if (!token || !phone_number || !department || !acc_role || !res_area || !qualification || !current_proj) {
+    if (!token) {
+        return res.status(400).json({ error: 'Token is required' });
+    }
+
+    if (!isValidUserPayload(userData, true)) {
         return res.status(400).json({ error: 'Missing or invalid input fields for reviewer' });
     }
 
@@ -141,7 +145,11 @@ router.post('/reviewer', async (req, res) => {
 router.post('/researcher', async (req, res) => {
     const { token, phone_number, department, acc_role, res_area, qualification, current_proj } = req.body;
 
-    if (!token || !phone_number || !department || !acc_role || !res_area || !qualification || !current_proj) {
+    if (!token) {
+        return res.status(400).json({ error: 'Token is required' });
+    }
+
+    if (!isValidUserPayload(userData, true)) {
         return res.status(400).json({ error: 'Missing or invalid input fields for researcher' });
     }
 
@@ -182,9 +190,13 @@ router.post('/researcher', async (req, res) => {
 });
 
 router.post('/admin', async (req, res) => {
-    const { token, phone_number, department, acc_role } = req.body;
+    const { token, phone_number, department, acc_role} = req.body;
 
-    if (!token || !phone_number || !department || !acc_role) {
+    if (!token) {
+        return res.status(400).json({ error: 'Token is required' });
+    }
+
+    if (!isValidUserPayload(userData)) {
         return res.status(400).json({ error: 'Missing or invalid input fields for admin' });
     }
 
