@@ -14,11 +14,14 @@ app.use(helmet());
 
 // Configure CORS
 app.use(cors({
-    origin: process.env.CORS_ORIGIN || '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true
-}));
+    origin: '*'
+});
+// app.use(cors({
+//     origin: process.env.CORS_ORIGIN || '*',
+//     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+//     allowedHeaders: ['Content-Type', 'Authorization'],
+//     credentials: true
+// }));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
