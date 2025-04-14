@@ -7,9 +7,8 @@ import useAuth from '../useAuth';
 
 export default function AdminSignupPage() {
   useAuth(); // Check authentication
+
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     number: "",
@@ -26,13 +25,12 @@ export default function AdminSignupPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
 
-    const token = localStorage.getItem("jwt");
+    // Assuming user_ID is retrieved from elsewhere like localStorage or session
+    const token = localStorage.getItem("jwt"); 
+    // localStorage.getItem("user_ID");
     if (!token) {
-      setError("Authentication token is missing. Please log in again.");
-      setLoading(false);
+      alert("User ID is missing.");
       return;
     }
 
@@ -43,8 +41,11 @@ export default function AdminSignupPage() {
       acc_role: formData.role
     };
 
+    const bodie= JSON.stringify(payload);
+    console.log(bodie);
+
     try {
-      const response = await fetch("http://localhost:5000/api/auth/admin", {
+      const response = await fetch("https://thinksyncapi.azurewebsites.net/api/auth/admin", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -52,22 +53,15 @@ export default function AdminSignupPage() {
         body: JSON.stringify(payload)
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to register as admin');
-      }
-
       const result = await response.json();
-      router.push('/dashboard');
-    } catch (error) {
-      console.error("Error during registration:", error);
-      if (error instanceof Error) {
-        setError(error.message);
+      if (response.ok) {
+        router.push('/dashboard');
       } else {
-        setError("Failed to connect to the server. Please make sure the backend server is running.");
+        alert("Error: " + result.error);
       }
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      console.log(bodie);
+      console.error("Error during registration:", error);
     }
   };
 
@@ -76,7 +70,7 @@ export default function AdminSignupPage() {
       <header className={styles.header}>
         <h1 className={styles.logo}>ThinkSync</h1>
         <nav className={styles.navButtons}>
-          <button className={styles.loginButton} type="button" onClick={() => router.push("/login")}>
+          <button className={styles.loginButton} type="button"  onClick= {() => router.push("/login")}>
             login
           </button>
           <button className={styles.signupButton} type="button">
@@ -86,7 +80,6 @@ export default function AdminSignupPage() {
       </header>
       <section className={styles.signupBox}>
         <h1 className={styles.title}>Admin Sign Up</h1>
-        {error && <div className={styles.error}>{error}</div>}
         <form className={styles.signupForm} onSubmit={handleSubmit}>
           <label htmlFor="number">Contact Number</label>
           <input type="tel" id="number" name="number" required placeholder="0814366553" value={formData.number} onChange={handleChange} />
@@ -112,8 +105,7 @@ export default function AdminSignupPage() {
             <option value="reasearcher">Reasearcher</option>
           </select>
 
-          <button type="submit" disabled={loading} aria-label="submit information">
-            {loading ? 'Submitting...' : 'Continue →'}
+          <button type="submit" aria-label="submit information" /*onClick= {() => router.push("/login")}*/>Continue →
           </button>
         </form>
       </section>
