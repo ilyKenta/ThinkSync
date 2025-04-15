@@ -15,10 +15,8 @@ const Page = () => {
 
         <h3>COLLECTIONS</h3>
         <ul>
-          <li>Product Demos</li>
-          <li>Case Studies</li>
-          <li>Sales Collateral</li>
-          <li>Training Materials</li>
+          <li>Current Projects</li>
+          <li>Collaborations</li>
         </ul>
       </aside>
 
@@ -30,20 +28,22 @@ const Page = () => {
             placeholder="  Search files..."
           />
         </div>
+          <section className={styles.buttonHeader}>
+            <button
+            className={styles.createButton}
+            onClick={() => setShowForm(true)}
+           >
+            + Create
+            </button>
+            {showForm && <CreateForm onClose={() => setShowForm(false)} />}
 
-        <button
-          className={styles.createButton}
-          onClick={() => setShowForm(true)}
-        >
-          + Create
-        </button>
-        {showForm && <CreateForm onClose={() => setShowForm(false)} />}
-
-        <div className={styles.buttonGroup}>
-          <button>Upload</button>
-          <button>Create folder</button>
-          <button>Record</button>
-        </div>
+            <div className={styles.buttonGroup}>
+              <button>Upload</button>
+              <button>Create folder</button>
+              <button>Record</button>
+            </div>
+          </section>
+        
         <div className={styles.tabGroup}>
           <button>Recent</button>
           <button>Starred</button>
@@ -53,18 +53,21 @@ const Page = () => {
         <div className={styles.cardContainer}>
           <div className={styles.card}>
             <div className={styles.cardContent}>
+              <img src="/exampleImg.png" alt="search" />
               <span>Q4 Sales Deck</span>
               <p>Shared folder • 8 presentations</p>
             </div>
           </div>
           <div className={styles.card}>
             <div className={styles.cardContent}>
+              <img src="/exampleImg.png" alt="search" />
               <span>Product Videos</span>
               <p>Shared folder • 5 videos</p>
             </div>
           </div>
           <div className={styles.card}>
             <div className={styles.cardContent}>
+              <img src="/exampleImg.png" alt="search" />
               <span>ROI Calculator</span>
               <p>Shared file • 1 Excel</p>
             </div>
