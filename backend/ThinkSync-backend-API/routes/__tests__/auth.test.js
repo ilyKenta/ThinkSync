@@ -8,6 +8,12 @@ const jwt = require('jsonwebtoken');
 // Mock environment variables
 process.env.JWT_SECRET = 'test-secret';
 
+// Mock modules
+jest.mock('axios');
+jest.mock('../../db', () => ({
+  execute: jest.fn()
+}));
+
 describe('Auth Routes', () => {
   let app;
 
@@ -42,17 +48,17 @@ describe('Auth Routes', () => {
     });
 
     describe('fetchUserIdFromGraph', () => {
-      it('should return user ID from Microsoft Graph', async () => {
-        const mockUserId = 'test-user-id';
+      it('should return user ID on success', async () => {
+        const mockId = 'test-user-id';
         axios.get.mockResolvedValueOnce({
-          data: { id: mockUserId }
+          data: { id: mockId }
         });
 
         const result = await authRoutes.fetchUserIdFromGraph('valid-token');
-        expect(result).toBe(mockUserId);
+        expect(result).toBe(mockId);
       });
 
-      it('should throw error on failed Graph API call', async () => {
+      it('should throw error on failure', async () => {
         axios.get.mockRejectedValueOnce(new Error('Graph API error'));
 
         await expect(authRoutes.fetchUserIdFromGraph('invalid-token'))
@@ -64,38 +70,49 @@ describe('Auth Routes', () => {
       it('should validate basic user payload', () => {
         const validPayload = {
           phone_number: '1234567890',
-          department: 'Science',
-          acc_role: 'researcher'
+          department: 'Test Dept',
+          acc_role: 'Test Role'
         };
         expect(authRoutes.isValidUserPayload(validPayload)).toBe(true);
       });
 
-      it('should validate researcher payload with all fields', () => {
+      it('should validate researcher/reviewer payload', () => {
         const validPayload = {
           phone_number: '1234567890',
-          department: 'Science',
-          acc_role: 'researcher',
-          res_area: 'Computer Science',
-          qualification: 'PhD',
-          current_proj: 'AI Research'
+          department: 'Test Dept',
+          acc_role: 'Test Role',
+          res_area: 'Test Area',
+          qualification: 'Test Qual',
+          current_proj: 'Test Project'
         };
         expect(authRoutes.isValidUserPayload(validPayload, true)).toBe(true);
       });
 
-      it('should reject invalid payload types', () => {
+      it('should reject invalid basic payload', () => {
         const invalidPayload = {
-          phone_number: 123, // Should be string
-          department: 'Science',
-          acc_role: 'researcher'
+          phone_number: '1234567890',
+          department: 'Test Dept'
+          // missing acc_role
         };
         expect(authRoutes.isValidUserPayload(invalidPayload)).toBe(false);
       });
 
-      it('should reject missing required fields', () => {
+      it('should reject invalid researcher/reviewer payload', () => {
         const invalidPayload = {
           phone_number: '1234567890',
-          // Missing department
-          acc_role: 'researcher'
+          department: 'Test Dept',
+          acc_role: 'Test Role',
+          res_area: 'Test Area'
+          // missing qualification and current_proj
+        };
+        expect(authRoutes.isValidUserPayload(invalidPayload, true)).toBe(false);
+      });
+
+      it('should reject payload with invalid types', () => {
+        const invalidPayload = {
+          phone_number: 12345, // should be string
+          department: 'Test Dept',
+          acc_role: 'Test Role'
         };
         expect(authRoutes.isValidUserPayload(invalidPayload)).toBe(false);
       });
@@ -104,79 +121,35 @@ describe('Auth Routes', () => {
 
   describe('Route Handlers', () => {
     describe('POST /api/auth/microsoft', () => {
-      it('should return 401 if no token is provided', async () => {
+      it('should handle missing token', async () => {
         const response = await request(app)
           .post('/api/auth/microsoft')
           .send({});
-        
+
         expect(response.status).toBe(401);
         expect(response.body.error).toBe('Access token missing');
       });
 
-      it('should return 400 if invalid token is provided', async () => {
-        axios.get.mockRejectedValueOnce(new Error('Invalid token'));
+      it('should handle incomplete user data', async () => {
+        axios.get.mockResolvedValueOnce({
+          data: { id: 'test-id' } // missing givenName, surname, mail
+        });
 
         const response = await request(app)
           .post('/api/auth/microsoft')
-          .send({ token: 'invalid-token' });
-        
+          .send({ token: 'valid-token' });
+
         expect(response.status).toBe(400);
-        expect(response.body.error).toBe('Invalid Microsoft token');
+        expect(response.body.error).toBe('Incomplete user data from Microsoft');
       });
 
-      it('should create new user if not exists', async () => {
-        const mockUserData = {
-          id: 'test-user-id',
-          givenName: 'Test',
-          surname: 'User',
-          mail: 'test@wits.ac.za'
-        };
-
-        axios.get.mockResolvedValueOnce({ data: mockUserData });
-        db.execute.mockImplementation((query, params, callback) => {
-          if (query.includes('SELECT')) {
-            callback(null, []);
-          } else if (query.includes('INSERT')) {
-            callback(null, { affectedRows: 1 });
-          }
-        });
-
-        const response = await request(app)
-          .post('/api/auth/microsoft')
-          .send({ token: 'valid-token' });
-
-        expect(response.status).toBe(201);
-        expect(response.body.message).toBe('User registered successfully');
-      });
-
-      it('should return existing user if already registered', async () => {
-        const mockUserData = {
-          id: 'test-user-id',
-          givenName: 'Test',
-          surname: 'User',
-          mail: 'test@wits.ac.za'
-        };
-
-        axios.get.mockResolvedValueOnce({ data: mockUserData });
-        db.execute.mockImplementation((query, params, callback) => {
-          callback(null, [{ user_ID: mockUserData.id, fname: mockUserData.givenName, sname: mockUserData.surname }]);
-        });
-
-        const response = await request(app)
-          .post('/api/auth/microsoft')
-          .send({ token: 'valid-token' });
-
-        expect(response.status).toBe(200);
-        expect(response.body.message).toBe('User authenticated successfully');
-      });
-
-      it('should return 400 if email domain is not wits.ac.za', async () => {
+      it('should handle invalid email domain', async () => {
         axios.get.mockResolvedValueOnce({
           data: {
-            id: 'test-user-id',
+            id: 'test-id',
             givenName: 'Test',
             surname: 'User',
-            mail: 'test@gmail.com'
+            mail: 'test@invalid.com'
           }
         });
 
@@ -187,52 +160,164 @@ describe('Auth Routes', () => {
         expect(response.status).toBe(400);
         expect(response.body.error).toBe('Please sign up using a University of Witwatersrand email domain');
       });
+
+      it('should create new user if not exists', async () => {
+        axios.get.mockResolvedValueOnce({
+          data: {
+            id: 'test-id',
+            givenName: 'Test',
+            surname: 'User',
+            mail: 'test@student.wits.ac.za'
+          }
+        });
+
+        // First query returns empty (user doesn't exist)
+        // Second query is the insert
+        db.execute
+          .mockImplementationOnce((query, params, callback) => callback(null, []))
+          .mockImplementationOnce((query, params, callback) => callback(null, { insertId: 1 }));
+
+        const response = await request(app)
+          .post('/api/auth/microsoft')
+          .send({ token: 'valid-token' });
+
+        expect(response.status).toBe(201);
+        expect(response.body.message).toBe('User registered successfully');
+      });
+
+      it('should return existing user if already registered', async () => {
+        axios.get.mockResolvedValueOnce({
+          data: {
+            id: 'test-id',
+            givenName: 'Test',
+            surname: 'User',
+            mail: 'test@student.wits.ac.za'
+          }
+        });
+
+        // Query returns existing user
+        db.execute.mockImplementationOnce((query, params, callback) => 
+          callback(null, [{ user_ID: 'test-id' }])
+        );
+
+        const response = await request(app)
+          .post('/api/auth/microsoft')
+          .send({ token: 'valid-token' });
+
+        expect(response.status).toBe(200);
+        expect(response.body.message).toBe('User authenticated successfully');
+      });
+
+      it('should handle database errors', async () => {
+        axios.get.mockResolvedValueOnce({
+          data: {
+            id: 'test-id',
+            givenName: 'Test',
+            surname: 'User',
+            mail: 'test@student.wits.ac.za'
+          }
+        });
+
+        db.execute.mockImplementationOnce((query, params, callback) => 
+          callback(new Error('Database error'), null)
+        );
+
+        const response = await request(app)
+          .post('/api/auth/microsoft')
+          .send({ token: 'valid-token' });
+
+        expect(response.status).toBe(400);
+      });
     });
 
     describe('POST /api/auth/reviewer', () => {
-      it('should return 400 if token is missing', async () => {
+      const validReviewerData = {
+        token: 'valid-token',
+        phone_number: '1234567890',
+        department: 'Test Dept',
+        acc_role: 'reviewer',
+        res_area: 'Test Area',
+        qualification: 'Test Qual',
+        current_proj: 'Test Project'
+      };
+
+      it('should handle missing token', async () => {
+        const { token, ...dataWithoutToken } = validReviewerData;
         const response = await request(app)
           .post('/api/auth/reviewer')
-          .send({});
-        
+          .send(dataWithoutToken);
+
         expect(response.status).toBe(400);
         expect(response.body.error).toBe('Token is required');
       });
 
-      it('should return 400 if payload is invalid', async () => {
+      it('should handle invalid input fields', async () => {
+        const invalidData = {
+          token: 'valid-token',
+          phone_number: '1234567890',
+          // missing other required fields
+        };
+
         const response = await request(app)
           .post('/api/auth/reviewer')
-          .send({ token: 'valid-token' });
-        
+          .send(invalidData);
+
         expect(response.status).toBe(400);
         expect(response.body.error).toBe('Missing or invalid input fields for reviewer');
       });
 
-      it('should successfully register reviewer', async () => {
-        const mockPayload = {
-          token: 'valid-token',
-          phone_number: '1234567890',
-          department: 'Science',
-          acc_role: 'reviewer',
-          res_area: 'Computer Science',
-          qualification: 'PhD',
-          current_proj: 'AI Research'
-        };
-
-        axios.get.mockResolvedValueOnce({ data: { id: 'test-user-id' } });
-        db.execute.mockImplementation((query, params, callback) => {
-          if (query.includes('SELECT * FROM users')) {
-            callback(null, [{ user_ID: 'test-user-id' }]);
-          } else if (query.includes('SELECT * FROM reviewer')) {
-            callback(null, []);
-          } else {
-            callback(null, { affectedRows: 1 });
-          }
+      it('should handle non-existent user', async () => {
+        axios.get.mockResolvedValueOnce({
+          data: { id: 'test-id' }
         });
+
+        db.execute.mockImplementationOnce((query, params, callback) => 
+          callback(null, []) // Empty result means user doesn't exist
+        );
 
         const response = await request(app)
           .post('/api/auth/reviewer')
-          .send(mockPayload);
+          .send(validReviewerData);
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toBe('User does not exist in database');
+      });
+
+      it('should handle existing reviewer', async () => {
+        axios.get.mockResolvedValueOnce({
+          data: { id: 'test-id' }
+        });
+
+        // First query returns user exists
+        // Second query returns reviewer already exists
+        db.execute
+          .mockImplementationOnce((query, params, callback) => callback(null, [{ user_ID: 'test-id' }]))
+          .mockImplementationOnce((query, params, callback) => callback(null, [{ user_ID: 'test-id' }]));
+
+        const response = await request(app)
+          .post('/api/auth/reviewer')
+          .send(validReviewerData);
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toBe('User already signed up as reviewer');
+      });
+
+      it('should successfully create reviewer', async () => {
+        axios.get.mockResolvedValueOnce({
+          data: { id: 'test-id' }
+        });
+
+        // Mock all necessary database calls
+        db.execute
+          .mockImplementationOnce((query, params, callback) => callback(null, [{ user_ID: 'test-id' }])) // User exists
+          .mockImplementationOnce((query, params, callback) => callback(null, [])) // Not already a reviewer
+          .mockImplementationOnce((query, params, callback) => callback(null, { affectedRows: 1 })) // Update user
+          .mockImplementationOnce((query, params, callback) => callback(null, { insertId: 1 })) // Insert reviewer
+          .mockImplementationOnce((query, params, callback) => callback(null, { affectedRows: 1 })); // Insert role
+
+        const response = await request(app)
+          .post('/api/auth/reviewer')
+          .send(validReviewerData);
 
         expect(response.status).toBe(201);
         expect(response.body.message).toBe('All input successful');
@@ -240,49 +325,93 @@ describe('Auth Routes', () => {
     });
 
     describe('POST /api/auth/researcher', () => {
-      it('should return 400 if token is missing', async () => {
+      const validResearcherData = {
+        token: 'valid-token',
+        phone_number: '1234567890',
+        department: 'Test Dept',
+        acc_role: 'researcher',
+        res_area: 'Test Area',
+        qualification: 'Test Qual',
+        current_proj: 'Test Project'
+      };
+
+      it('should handle missing token', async () => {
+        const { token, ...dataWithoutToken } = validResearcherData;
         const response = await request(app)
           .post('/api/auth/researcher')
-          .send({});
-        
+          .send(dataWithoutToken);
+
         expect(response.status).toBe(400);
         expect(response.body.error).toBe('Token is required');
       });
 
-      it('should return 400 if payload is invalid', async () => {
+      it('should handle invalid input fields', async () => {
+        const invalidData = {
+          token: 'valid-token',
+          phone_number: '1234567890',
+          // missing other required fields
+        };
+
         const response = await request(app)
           .post('/api/auth/researcher')
-          .send({ token: 'valid-token' });
-        
+          .send(invalidData);
+
         expect(response.status).toBe(400);
         expect(response.body.error).toBe('Missing or invalid input fields for researcher');
       });
 
-      it('should successfully register researcher', async () => {
-        const mockPayload = {
-          token: 'valid-token',
-          phone_number: '1234567890',
-          department: 'Science',
-          acc_role: 'researcher',
-          res_area: 'Computer Science',
-          qualification: 'PhD',
-          current_proj: 'AI Research'
-        };
-
-        axios.get.mockResolvedValueOnce({ data: { id: 'test-user-id' } });
-        db.execute.mockImplementation((query, params, callback) => {
-          if (query.includes('SELECT * FROM users')) {
-            callback(null, [{ user_ID: 'test-user-id' }]);
-          } else if (query.includes('SELECT * FROM researcher')) {
-            callback(null, []);
-          } else {
-            callback(null, { affectedRows: 1 });
-          }
+      it('should handle non-existent user', async () => {
+        axios.get.mockResolvedValueOnce({
+          data: { id: 'test-id' }
         });
+
+        db.execute.mockImplementationOnce((query, params, callback) => 
+          callback(null, []) // Empty result means user doesn't exist
+        );
 
         const response = await request(app)
           .post('/api/auth/researcher')
-          .send(mockPayload);
+          .send(validResearcherData);
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toBe('User does not exist in database');
+      });
+
+      it('should handle existing researcher', async () => {
+        axios.get.mockResolvedValueOnce({
+          data: { id: 'test-id' }
+        });
+
+        // First query returns user exists
+        // Second query returns researcher already exists
+        db.execute
+          .mockImplementationOnce((query, params, callback) => callback(null, [{ user_ID: 'test-id' }]))
+          .mockImplementationOnce((query, params, callback) => callback(null, [{ user_ID: 'test-id' }]));
+
+        const response = await request(app)
+          .post('/api/auth/researcher')
+          .send(validResearcherData);
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toBe('User already signed up as researcher');
+      });
+
+      it('should successfully create researcher', async () => {
+        axios.get.mockResolvedValueOnce({
+          data: { id: 'test-id' }
+        });
+
+        // Mock all necessary database calls
+        db.execute
+          .mockImplementationOnce((query, params, callback) => callback(null, [{ user_ID: 'test-id' }])) // User exists
+          .mockImplementationOnce((query, params, callback) => callback(null, [])) // Not already a researcher
+          .mockImplementationOnce((query, params, callback) => callback(null, { affectedRows: 1 })) // Update user
+          .mockImplementationOnce((query, params, callback) => callback(null, { insertId: 1 })) // Insert researcher
+          .mockImplementationOnce((query, params, callback) => callback(null, { affectedRows: 1 })); // Insert role
+
+        const response = await request(app)
+          .post('/api/auth/researcher')
+          .send(validResearcherData);
 
         expect(response.status).toBe(201);
         expect(response.body.message).toBe('All input successful');
@@ -290,46 +419,90 @@ describe('Auth Routes', () => {
     });
 
     describe('POST /api/auth/admin', () => {
-      it('should return 400 if token is missing', async () => {
+      const validAdminData = {
+        token: 'valid-token',
+        phone_number: '1234567890',
+        department: 'Test Dept',
+        acc_role: 'admin'
+      };
+
+      it('should handle missing token', async () => {
+        const { token, ...dataWithoutToken } = validAdminData;
         const response = await request(app)
           .post('/api/auth/admin')
-          .send({});
-        
+          .send(dataWithoutToken);
+
         expect(response.status).toBe(400);
         expect(response.body.error).toBe('Token is required');
       });
 
-      it('should return 400 if payload is invalid', async () => {
+      it('should handle invalid input fields', async () => {
+        const invalidData = {
+          token: 'valid-token',
+          phone_number: '1234567890',
+          // missing other required fields
+        };
+
         const response = await request(app)
           .post('/api/auth/admin')
-          .send({ token: 'valid-token' });
-        
+          .send(invalidData);
+
         expect(response.status).toBe(400);
         expect(response.body.error).toBe('Missing or invalid input fields for admin');
       });
 
-      it('should successfully register admin', async () => {
-        const mockPayload = {
-          token: 'valid-token',
-          phone_number: '1234567890',
-          department: 'Science',
-          acc_role: 'admin'
-        };
-
-        axios.get.mockResolvedValueOnce({ data: { id: 'test-user-id' } });
-        db.execute.mockImplementation((query, params, callback) => {
-          if (query.includes('SELECT * FROM users')) {
-            callback(null, [{ user_ID: 'test-user-id' }]);
-          } else if (query.includes('JOIN user_roles')) {
-            callback(null, []);
-          } else {
-            callback(null, { affectedRows: 1 });
-          }
+      it('should handle non-existent user', async () => {
+        axios.get.mockResolvedValueOnce({
+          data: { id: 'test-id' }
         });
+
+        db.execute.mockImplementationOnce((query, params, callback) => 
+          callback(null, []) // Empty result means user doesn't exist
+        );
 
         const response = await request(app)
           .post('/api/auth/admin')
-          .send(mockPayload);
+          .send(validAdminData);
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toBe('User does not exist in database');
+      });
+
+      it('should handle existing admin', async () => {
+        axios.get.mockResolvedValueOnce({
+          data: { id: 'test-id' }
+        });
+
+        // First query returns user exists
+        // Second query returns admin already exists
+        db.execute
+          .mockImplementationOnce((query, params, callback) => callback(null, [{ user_ID: 'test-id' }]))
+          .mockImplementationOnce((query, params, callback) => callback(null, [{ user_ID: 'test-id' }]));
+
+        const response = await request(app)
+          .post('/api/auth/admin')
+          .send(validAdminData);
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toBe('User already enrolled as admin');
+      });
+
+      it('should successfully create admin', async () => {
+        axios.get.mockResolvedValueOnce({
+          data: { id: 'test-id' }
+        });
+
+        // Mock all necessary database calls
+        db.execute
+          .mockImplementationOnce((query, params, callback) => callback(null, [{ user_ID: 'test-id' }])) // User exists
+          .mockImplementationOnce((query, params, callback) => callback(null, [])) // Not already an admin
+          .mockImplementationOnce((query, params, callback) => callback(null, { affectedRows: 1 })) // Update user
+          .mockImplementationOnce((query, params, callback) => callback(null, { insertId: 1 })) // Insert admin
+          .mockImplementationOnce((query, params, callback) => callback(null, { affectedRows: 1 })); // Insert role
+
+        const response = await request(app)
+          .post('/api/auth/admin')
+          .send(validAdminData);
 
         expect(response.status).toBe(201);
         expect(response.body.message).toBe('All input successful');

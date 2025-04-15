@@ -4,6 +4,25 @@ const mysql = require('mysql2/promise');
 process.env.PORT = '5000';
 process.env.CORS_ORIGIN = 'http://localhost:3000';
 process.env.JWT_SECRET = 'test-secret';
+process.env.DB_HOST = 'localhost';
+process.env.DB_USER = 'test-user';
+process.env.DB_PASSWORD = 'test-password';
+process.env.DB_NAME = 'test-db';
+process.env.DB_PORT = '3306';
+
+// Mock console methods to prevent noise in test output
+const originalConsoleError = console.error;
+const originalConsoleLog = console.log;
+
+beforeAll(() => {
+  console.error = jest.fn();
+  console.log = jest.fn();
+});
+
+afterAll(() => {
+  console.error = originalConsoleError;
+  console.log = originalConsoleLog;
+});
 
 // Mock the database connection
 jest.mock('./db', () => {
@@ -14,7 +33,7 @@ jest.mock('./db', () => {
     }),
     connect: jest.fn().mockImplementation((callback) => {
       // Mock successful connection
-      callback(null);
+      if (callback) callback(null);
     })
   };
 });
