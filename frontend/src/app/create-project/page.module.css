@@ -1,0 +1,128 @@
+.title {
+  color: black;
+  font-weight: var(--font-weight-bold);
+  font-size: 30px;
+  padding: 1.5rem;
+  align-self: center;
+}
+
+.createBox {
+  max-width: var(--card-width);
+  min-height: var(--card-height);
+  margin: 4rem auto;
+  padding: 2rem;
+  background: var(--box-color);
+  border-radius: 12px;
+  box-shadow: 10px 10px 10px var(--shadows-color);
+  background-color: var(--box-color);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+.createForm {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.createForm label {
+  align-self: flex-start;
+  font-weight: var(--font-weight-regular);
+  margin-bottom: 0.2rem;
+  font-size: 15px;
+}
+.createForm input {
+  width: var(--input-fields-width);
+  height: var(--input-fields-height);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: var(--input-radius);
+  border: 1px solid #ccc;
+  background-color: var(--box-color);
+}
+.createForm select {
+  width: var(--input-fields-width);
+  height: var(--input-fields-height);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: var(--input-radius);
+  border: 1px solid #ccc;
+  background-color: var(--box-color);
+}
+.createForm input:hover {
+  background-color: var(--field-hover-color);
+}
+
+.createForm button {
+  width: var(--card-buttons-width);
+  height: var(--card-buttons-height);
+  padding: 1rem;
+  background-color: var(--secondary-color);
+  color: white;
+  font-size: 25px;
+  font-weight: var(--font-weight-medium);
+  border: none;
+  border-radius: var(--button-radius);
+  cursor: pointer;
+}
+.closeButton {
+  color: var(--primary-color);
+  background-color: var(--field-hover-color);
+  justify-content: left;
+}
+
+/* page.module.css */
+
+.createModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5); /* Modal backdrop */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.createBox {
+  background: white;
+  padding: 2rem;
+  border-radius: 10px;
+  position: relative;
+  width: 500px;
+  max-width: 90%;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+}
+
+.closeButton {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #555;
+}
+
+.closeButton:hover {
+  color: red;
+}
+
+.createForm input {
+  width: 100%;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.button[type="submit"] {
+  padding: 0.6rem 1.2rem;
+  background: #0066ff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
