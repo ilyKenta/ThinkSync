@@ -5,8 +5,11 @@ import styles from "./page.module.css";
 import Image from "next/image";
 import CreateForm from "../create-project/createForm";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 const Page = () => {
+
+  const router = useRouter();
   const [showForm, setShowForm] = useState(false);
   const [projects, setProjects] = useState<string[]>([]);
   return (
@@ -16,21 +19,26 @@ const Page = () => {
 
         <h3>DASHBOARD</h3>
         <ul>
-          <li>Current Projects</li>
-          <li>Collaborations</li>
+          <li> <button type="button" onClick={() => router.push("/dashboard1")}> Current Projects</button></li>
+          <li> <button type="button" onClick={() => router.push("/dashboard2")}> Collaboration</button></li>
         </ul>
       </aside>
 
       <main className={styles.mainContent}>
-        <div className={styles.searchContainer}>
-          <input
-            className={styles.searchInput}
-            type="text"
-            placeholder="  Search files..."
-          />
-        </div>
-        <section className={styles.buttonHeader}>
-          <button
+
+        <section className={styles.heading}>
+          <h2>Current projects</h2>
+          <div className={styles.searchContainer}>
+            <input
+              className={styles.searchInput}
+              type="text"
+              placeholder="  Search files..."
+            />
+          </div>
+        </section>
+          <section className={styles.buttonHeader}>
+            <button
+
             className={styles.createButton}
             onClick={() => setShowForm(true)}
           >
@@ -59,12 +67,14 @@ const Page = () => {
         </div>
 
         <div className={styles.cardContainer}>
+
           {projects.map((name, index) => (
             <div key={index} className={styles.card}>
               <div className={styles.cardContent}>
                 <img src="/exampleImg.png" alt="project" />
                 <span>{name}</span>
               </div>
+
             </div>
           ))}
         </div>
