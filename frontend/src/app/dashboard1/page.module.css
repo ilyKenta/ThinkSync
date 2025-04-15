@@ -13,11 +13,11 @@
 .sidebar h2 {
   margin-top: 0px;
   font-size: 30px;
-  margin-bottom: 0px; 
+  margin-bottom: 0px;
 }
 
 .sidebar h3 {
-  border-top:1px solid #000000 ;
+  border-top: 1px solid #000000;
   padding-top: 10px;
   font-size: 1rem;
   margin-top: 3px;
@@ -30,7 +30,6 @@
   list-style: none;
   padding: 0;
 }
-
 
 .sidebar li button {
   background: none;
@@ -69,9 +68,8 @@
 }
 
 .searchInput {
-
-  width: 300px; 
-  padding: 5px 5px 5px 35px; 
+  width: 300px;
+  padding: 5px 5px 5px 35px;
 
   box-sizing: border-box;
   border: 1px solid #ccc;
@@ -89,17 +87,19 @@
   box-shadow: 0 0 5px var(--shadows-color);
 }
 
-
-.heading{
+.heading {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Responsive grid */
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(250px, 1fr)
+  ); /* Responsive grid */
   gap: 15rem;
   border-bottom: 1px solid #000000;
   margin-bottom: 2rem;
 }
 
 .buttonHeader {
-display: flex;
+  display: flex;
   align-items: center;
   gap: 20px; /* spacing between button and tabs */
 }
@@ -174,11 +174,9 @@ display: flex;
 
 .cardContainer {
   display: grid;
-  grid-template-columns: repeat(
-    minmax(100px, 1fr),
-    minmax(250px, 1fr)
-  ); /* Responsive grid */
+  grid-template-columns: repeat(3, minmax(250px, 1fr)); /* 3 flexible columns */
   gap: 20px;
+  padding: 1rem;
 }
 
 .card {
@@ -209,18 +207,16 @@ display: flex;
   color: #777;
 }
 
-
 .cardFooter {
   display: flex;
   justify-content: space-between;
-  align-items: center;
 }
 
 .trashButton {
   background: none;
   border: none;
   cursor: pointer;
-  padding: 6px;
+  padding: 3px;
   border-radius: 50%; /* makes it a circle */
   transition: background-color 0.2s ease, color 0.2s ease;
 }
@@ -228,4 +224,3 @@ display: flex;
 .trashButton:hover {
   background-color: rgba(255, 0, 0, 0.1);
 }
-

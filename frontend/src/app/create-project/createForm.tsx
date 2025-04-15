@@ -22,8 +22,8 @@ export default function CreateForm({ onClose, onCreate }: CreateFormProps) {
   const [funding_available, setFunding] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
-    /*e.preventDefault();
-    const token = localStorage.getItem("jwt");
+    e.preventDefault();
+    /*const token = localStorage.getItem("jwt");
     if (!token) {
       alert("User ID is missing.");
       return;
@@ -40,10 +40,13 @@ export default function CreateForm({ onClose, onCreate }: CreateFormProps) {
 
     onCreate(title);
     onClose();
-    console.log(payload);
 
-    /*try {
-      const res = await fetch("http://localhost:5000/api/project", {
+    console.log(JSON.stringify(payload));
+
+    // NEED TO RUN ON CREATE
+
+    try {
+      const res = await fetch("http://localhost:5000/api/project/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -54,7 +57,6 @@ export default function CreateForm({ onClose, onCreate }: CreateFormProps) {
       const data = await res.json();
 
       if (res.ok) {
-        router.push("/dashboard");
         console.log(data);
       } else {
         alert(`Error: ${data.error}`);
@@ -62,7 +64,7 @@ export default function CreateForm({ onClose, onCreate }: CreateFormProps) {
     } catch (err) {
       console.error("Submission error:", err);
       alert("An error occurred");
-    }*/
+    }
   };
 
   return (
