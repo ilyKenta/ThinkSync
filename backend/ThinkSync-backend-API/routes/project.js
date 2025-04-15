@@ -125,7 +125,7 @@ router.post('/create', async (req, res) => {
 });
 
 // Get all projects for an owner
-router.get('/owner/:ownerId', async (req, res) => {
+router.get('/owner', async (req, res) => {
     try {
         const token = extractToken(req);
         const userId = await getUserIdFromToken(token);
