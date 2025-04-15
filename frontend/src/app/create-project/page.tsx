@@ -6,5 +6,12 @@ export default function Page() {
     console.log("Modal closed");
   };
 
-  return <CreateForm onClose={handleClose} />;
+  return (
+    <CreateForm
+      onClose={handleClose}
+      onCreate={(projectName: string) => {
+        console.log("Create project:", projectName);
+      }}
+    />
+  );
 }

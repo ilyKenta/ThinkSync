@@ -7,8 +7,9 @@ import { useRouter } from "next/navigation";
 
 type CreateFormProps = {
   onClose: () => void;
+  onCreate: (projectName: string) => void;
 };
-export default function createForm({ onClose }: CreateFormProps) {
+export default function CreateForm({ onClose, onCreate }: CreateFormProps) {
   const router = useRouter();
   // useAuth(); // Check authentication
 
@@ -21,12 +22,12 @@ export default function createForm({ onClose }: CreateFormProps) {
   const [funding_available, setFunding] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    /*e.preventDefault();
     const token = localStorage.getItem("jwt");
     if (!token) {
       alert("User ID is missing.");
       return;
-    }
+    }*/
     const payload = {
       title,
       description,
@@ -37,6 +38,8 @@ export default function createForm({ onClose }: CreateFormProps) {
       funding_available,
     };
 
+    onCreate(title);
+    onClose();
     console.log(payload);
 
     /*try {
@@ -65,7 +68,7 @@ export default function createForm({ onClose }: CreateFormProps) {
   return (
     <main className={styles.createModal}>
       <section className={styles.createBox}>
-        <button className="closeButton" onClick={onClose}>
+        <button onClick={onClose} className={styles.closeButton}>
           X
         </button>
         <h1 className={styles.title}>Project Information</h1>
@@ -131,7 +134,7 @@ export default function createForm({ onClose }: CreateFormProps) {
           />
 
           <button type="submit" aria-label="submit information">
-            Continue →
+            Create →
           </button>
         </form>
       </section>

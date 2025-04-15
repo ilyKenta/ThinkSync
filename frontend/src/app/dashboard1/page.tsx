@@ -8,12 +8,13 @@ import { useState } from "react";
 
 const Page = () => {
   const [showForm, setShowForm] = useState(false);
+  const [projects, setProjects] = useState<string[]>([]);
   return (
     <div className={styles.container}>
       <aside className={styles.sidebar}>
         <h2>ThinkSync</h2>
 
-        <h3>COLLECTIONS</h3>
+        <h3>DASHBOARD</h3>
         <ul>
           <li>Current Projects</li>
           <li>Collaborations</li>
@@ -28,22 +29,29 @@ const Page = () => {
             placeholder="  Search files..."
           />
         </div>
-          <section className={styles.buttonHeader}>
-            <button
+        <section className={styles.buttonHeader}>
+          <button
             className={styles.createButton}
             onClick={() => setShowForm(true)}
-           >
+          >
             + Create
-            </button>
-            {showForm && <CreateForm onClose={() => setShowForm(false)} />}
+          </button>
+          {showForm && (
+            <CreateForm
+              onClose={() => setShowForm(false)}
+              onCreate={(projectName: string) => {
+                setProjects((prev) => [...prev, projectName]);
+              }}
+            />
+          )}
 
-            <div className={styles.buttonGroup}>
-              <button>Upload</button>
-              <button>Create folder</button>
-              <button>Record</button>
-            </div>
-          </section>
-        
+          <div className={styles.buttonGroup}>
+            <button>Upload</button>
+            <button>Create folder</button>
+            <button>Record</button>
+          </div>
+        </section>
+
         <div className={styles.tabGroup}>
           <button>Recent</button>
           <button>Starred</button>
@@ -51,27 +59,14 @@ const Page = () => {
         </div>
 
         <div className={styles.cardContainer}>
-          <div className={styles.card}>
-            <div className={styles.cardContent}>
-              <img src="/exampleImg.png" alt="search" />
-              <span>Q4 Sales Deck</span>
-              <p>Shared folder • 8 presentations</p>
+          {projects.map((name, index) => (
+            <div key={index} className={styles.card}>
+              <div className={styles.cardContent}>
+                <img src="/exampleImg.png" alt="project" />
+                <span>{name}</span>
+              </div>
             </div>
-          </div>
-          <div className={styles.card}>
-            <div className={styles.cardContent}>
-              <img src="/exampleImg.png" alt="search" />
-              <span>Product Videos</span>
-              <p>Shared folder • 5 videos</p>
-            </div>
-          </div>
-          <div className={styles.card}>
-            <div className={styles.cardContent}>
-              <img src="/exampleImg.png" alt="search" />
-              <span>ROI Calculator</span>
-              <p>Shared file • 1 Excel</p>
-            </div>
-          </div>
+          ))}
         </div>
       </main>
     </div>

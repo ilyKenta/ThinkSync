@@ -2,7 +2,6 @@
   font-weight: normal;
   font-size: 30px;
   margin-bottom: 20px; /* Add some space below the title */
-
 }
 
 .container {
@@ -15,7 +14,7 @@
   background-color: var(--primary-color);
   padding: 25px; /* Add a bit more padding */
   border-right: 1px solid #ddd; /* Lighter border */
-  box-shadow: 10px 10px 10px var(--shadows-color)
+  box-shadow: 10px 10px 10px var(--shadows-color);
 }
 .sidebar h2 {
   border-bottom: 1px solid #000000;
@@ -43,7 +42,7 @@
 }
 
 .sidebar li:hover {
-  background-color: var(--field-hover-color); 
+  background-color: var(--field-hover-color);
 }
 
 .searchContainer {
@@ -52,12 +51,12 @@
 }
 
 .searchInput {
-  width: 300px; 
+  width: 300px;
   padding: 10px 10px 10px 35px; /* Adjust padding for icon */
   box-sizing: border-box;
   border: 1px solid #ccc;
   border-radius: 8px;
-  background-image: url("/search.png"); 
+  background-image: url("/search.png");
   background-position: 10px center;
   background-size: 18px 18px;
   background-repeat: no-repeat;
@@ -70,12 +69,10 @@
   box-shadow: 0 0 5px var(--shadows-color);
 }
 
-.buttonHeader{
-
+.buttonHeader {
   display: flex;
   align-items: center;
   gap: 20px; /* spacing between button and tabs */
-  
 }
 
 .createButton {
@@ -133,14 +130,12 @@
 
 .tabGroup button:hover,
 .tabGroup button.active {
-  
   border-bottom-color: #007bff; /* Example active/hover color */
 }
 
 .tabGroup button.active {
   font-weight: var(--font-weight-medium);
 }
-
 
 .mainContent {
   flex-grow: 1;
@@ -150,7 +145,10 @@
 
 .cardContainer {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Responsive grid */
+  grid-template-columns: repeat(
+    minmax(100px, 1fr),
+    minmax(250px, 1fr)
+  ); /* Responsive grid */
   gap: 20px;
 }
 
