@@ -19,14 +19,24 @@ export type EditProjectFormProps = {
   onEdit: (updatedProject: any) => void;
 };
 
-export default function EditProjectForm({ onClose, onEdit, initialValues }: EditProjectFormProps) {
+export default function EditProjectForm({
+  onClose,
+  onEdit,
+  initialValues,
+}: EditProjectFormProps) {
   const [title, setTitle] = useState(initialValues.title || "");
-  const [description, setDescription] = useState(initialValues.description || "");
+  const [description, setDescription] = useState(
+    initialValues.description || ""
+  );
   const [goals, setGoals] = useState(initialValues.goals || "");
-  const [research_areas, setResArea] = useState(initialValues.research_areas || "");
+  const [research_areas, setResArea] = useState(
+    initialValues.research_areas || ""
+  );
   const [start_date, setStart] = useState(initialValues.start_date || "");
   const [end_date, setEnd] = useState(initialValues.end_date || "");
-  const [funding_available, setFunding] = useState(initialValues.funding_available || "");
+  const [funding_available, setFunding] = useState(
+    initialValues.funding_available || ""
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -45,21 +55,25 @@ export default function EditProjectForm({ onClose, onEdit, initialValues }: Edit
       end_date,
       funding_available,
     };
-    console.log("[EditProjectForm] Submitting update for projectId:", initialValues.projectId);
+    console.log(
+      "[EditProjectForm] Submitting update for projectId:",
+      initialValues.projectId
+    );
     console.log("[EditProjectForm] Payload:", payload);
     try {
       const token = localStorage.getItem("jwt");
-      const res = await fetch(`http://localhost:5000/api/project/update/${initialValues.projectId}`,
+      const res = await fetch(
+        `http://localhost:5000/api/projects/update/${initialValues.projectId}`,
         {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {})
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
           body: JSON.stringify({
             project: payload,
-            requirements: [] // Add requirements if needed
-          })
+            requirements: [], // Add requirements if needed
+          }),
         }
       );
       const data = await res.json();
@@ -148,11 +162,19 @@ export default function EditProjectForm({ onClose, onEdit, initialValues }: Edit
             required
           />
 
-          <button type="submit" aria-label="submit information" disabled={loading}>
+          <button
+            type="submit"
+            aria-label="submit information"
+            disabled={loading}
+          >
             {loading ? "Saving..." : "Save Changes"}
           </button>
-          {error && <div style={{ color: 'red', marginTop: 8 }}>{error}</div>}
-          {success && <div style={{ color: 'green', marginTop: 8 }}>Project updated successfully!</div>}
+          {error && <div style={{ color: "red", marginTop: 8 }}>{error}</div>}
+          {success && (
+            <div style={{ color: "green", marginTop: 8 }}>
+              Project updated successfully!
+            </div>
+          )}
         </form>
       </section>
     </main>

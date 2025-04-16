@@ -13,11 +13,21 @@ type CreateFormProps = {
   setResArea: string;
   setStart: string;
   setEnd: string;
-  Funding:string;
+  Funding: boolean | null;
   onClose: () => void;
   onCreate: (projectName: string) => void;
 };
-export default function CreateReqForm({ projectName,projectDesc, goals,setResArea,setStart,setEnd,Funding, onClose, onCreate }: CreateFormProps) {
+export default function CreateReqForm({
+  projectName,
+  projectDesc,
+  goals,
+  setResArea,
+  setStart,
+  setEnd,
+  Funding,
+  onClose,
+  onCreate,
+}: CreateFormProps) {
   const router = useRouter();
   // useAuth(); // Check authentication
 
@@ -25,7 +35,6 @@ export default function CreateReqForm({ projectName,projectDesc, goals,setResAre
   const [experience, setExp] = useState("");
   const [reqrole, setRole] = useState("");
   const [techReq, setReq] = useState("");
-
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,16 +124,19 @@ export default function CreateReqForm({ projectName,projectDesc, goals,setResAre
             onChange={(e) => setSkill(e.target.value)}
             required
           />
-
-          <label htmlFor="explvl">Level of experience</label>  {/*remeber to amke drop down */}
-          <select name="explvl" id="explvl" className="drop-down"  onChange={(e) => setExp(e.target.value)}>
+          <label htmlFor="explvl">Level of experience</label>{" "}
+          {/*remeber to amke drop down */}
+          <select
+            name="explvl"
+            id="explvl"
+            className="drop-down"
+            onChange={(e) => setExp(e.target.value)}
+          >
             <option value=""></option>
             <option value="beginner">Beginner</option>
             <option value="intermediate">Intermediate</option>
             <option value="professional">Professional</option>
           </select>
-
-
           <label htmlFor="role">Role</label>
           <input
             type="text"
@@ -141,9 +153,6 @@ export default function CreateReqForm({ projectName,projectDesc, goals,setResAre
             onChange={(e) => setReq(e.target.value)}
             required
           />
-
-        
-
           <button type="submit" aria-label="submit information">
             Create →
           </button>

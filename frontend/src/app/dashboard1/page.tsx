@@ -1,6 +1,5 @@
 "use client";
 
-
 import React, { useState } from "react";
 
 import styles from "./page.module.css";
@@ -18,15 +17,17 @@ const Page = () => {
 
   const handleDelete = async (projectId: string) => {
     try {
-
       /*localStorage.setItem('jwt', accessToken);
-      const token = "yourAccessToken"; */// Get your token here
-      const res = await fetch(`http://localhost:5000/api/projects/delete/${projectId}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`, // Send token for authorization
-        },
-      });
+      const token = "yourAccessToken"; */ // Get your token here
+      const res = await fetch(
+        `http://localhost:5000/api/projects/delete/${projectId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`, // Send token for authorization
+          },
+        }
+      );
 
       if (!res.ok) {
         const err = await res.json();
@@ -34,7 +35,9 @@ const Page = () => {
       }
 
       // Remove project from UI
-      setProjects(prev => prev.filter(project => project.project_ID !== projectId));
+      setProjects((prev) =>
+        prev.filter((project) => project.project_ID !== projectId)
+      );
     } catch (error) {
       console.error("Delete error:", error);
       alert("Could not delete project.");
@@ -51,10 +54,11 @@ const Page = () => {
   const [currentresearch_areas, setCurrentResArea] = useState("");
   const [currentstart_date, setCurrentStart] = useState("");
   const [currentend_date, setCurrentEnd] = useState("");
-  const [currentfunding_available, setCurrentFunding] = useState("");
+  const [currentfunding_available, setCurrentFunding] = useState<
+    boolean | null
+  >(null);
 
   const [projects, setProjects] = useState<any[]>([]); // Projects could be objects, not just strings
-
 
   return (
     <div className={styles.container}>
@@ -94,10 +98,18 @@ const Page = () => {
           >
             + Create
           </button>
-          {isMounted && showForm && (
+          {showForm && (
             <CreateForm
               onClose={() => setShowForm(false)}
-              onCreate={(projectName: string, projectDesc:string, goals: string, setResArea: string, setStart: string, setEnd: string, Funding:string ) => {
+              onCreate={(
+                projectName: string,
+                projectDesc: string,
+                goals: string,
+                setResArea: string,
+                setStart: string,
+                setEnd: string,
+                Funding: boolean | null
+              ) => {
                 setCurrentProjectName(projectName);
                 setCurrentprojectDesc(projectDesc);
                 setCurrentGoals(goals);
@@ -114,23 +126,23 @@ const Page = () => {
                 setShowReqForm(true); // Open the second modal
               }}
             />
-         )}
+          )}
 
-        {showRequirementsForm && (
-          <CreateReqForm
-            projectName={currentProjectName}
-            projectDesc={currentprojectDesc}
-            goals={currentgoals}
-            setResArea={currentresearch_areas}
-            setStart={currentstart_date}
-            setEnd={currentend_date}
-            Funding={currentfunding_available}
-            onClose={() => setShowReqForm(false)}
-            onCreate={(projectName: string) => {
-              setShowReqForm(false);
-            }}
-          />
-        )}
+          {showRequirementsForm && (
+            <CreateReqForm
+              projectName={currentProjectName}
+              projectDesc={currentprojectDesc}
+              goals={currentgoals}
+              setResArea={currentresearch_areas}
+              setStart={currentstart_date}
+              setEnd={currentend_date}
+              Funding={currentfunding_available}
+              onClose={() => setShowReqForm(false)}
+              onCreate={(projectName: string) => {
+                setShowReqForm(false);
+              }}
+            />
+          )}
 
           <div className={styles.buttonGroup}>
             <button>Upload</button>

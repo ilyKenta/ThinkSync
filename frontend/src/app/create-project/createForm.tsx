@@ -7,7 +7,15 @@ import { useRouter } from "next/navigation";
 
 type CreateFormProps = {
   onClose: () => void;
-  onCreate: (projectName: string,   projectDesc: string, goals: string, setResArea: string, setStart: string, setEnd: string, Funding:string ) => void;
+  onCreate: (
+    projectName: string,
+    projectDesc: string,
+    goals: string,
+    setResArea: string,
+    setStart: string,
+    setEnd: string,
+    Funding: boolean | null
+  ) => void;
 };
 export default function CreateForm({ onClose, onCreate }: CreateFormProps) {
   const router = useRouter();
@@ -40,14 +48,22 @@ export default function CreateForm({ onClose, onCreate }: CreateFormProps) {
       requirementsData,
     };
 
-    onCreate(title, description, goals, research_areas, start_date,end_date, funding_available);
+    onCreate(
+      title,
+      description,
+      goals,
+      research_areas,
+      start_date,
+      end_date,
+      funding_available
+    );
     onClose();
 
     console.log(JSON.stringify(payload));
 
     // NEED TO RUN ON CREATE
 
-    try {
+    /*try {
       const res = await fetch("http://localhost:5000/api/projects/create", {
         method: "POST",
         headers: {
@@ -66,7 +82,7 @@ export default function CreateForm({ onClose, onCreate }: CreateFormProps) {
     } catch (err) {
       console.error("Submission error:", err);
       alert("An error occurred");
-    }
+    }*/
   };
 
   return (
@@ -155,7 +171,6 @@ export default function CreateForm({ onClose, onCreate }: CreateFormProps) {
               No
             </label>
           </section>
-
 
           <button type="submit" aria-label="submit information">
             Create →
