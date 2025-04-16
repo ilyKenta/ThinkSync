@@ -67,6 +67,8 @@
   border: none;
   border-radius: var(--button-radius);
   cursor: pointer;
+  align-items: center;
+  justify-content: center;
 }
 .closeButton {
   color: var(--secondary-color);
