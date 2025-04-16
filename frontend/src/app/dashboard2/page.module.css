@@ -223,21 +223,18 @@
   }
   
   .editButton {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 6px;
-    border-radius: 50%; /* makes it a circle */
-    transition: none;
-    filter: grayscale(1);
-    color: #222;
-    margin: 0;
-    font-size: 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%; /* makes it a circle */
+  color: #222;
+  font-size: 20px;
+  transition: background-color 0.2s, color 0.2s;
 }
 .editButton:hover {
-    background: none;
-    color: #222;
-    filter: grayscale(1);
+  background-color: #eee;
+  color: #222;
 }
   .trashButton {
     background: none;

@@ -5,10 +5,14 @@ import styles from "./page.module.css";
 import Image from "next/image";
 import CreateForm from "../create-project/createForm";
 import EditProjectForm from "../edit-project/editProjectForm";
+import EditReqForm from "../edit-project/editReqForm";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 const Page = () => {
+  // State for editing requirements
+  const [editReqProject, setEditReqProject] = useState<any | null>(null);
+  const [showEditReqForm, setShowEditReqForm] = useState(false);
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
   const [editProject, setEditProject] = useState<any | null>(null);
@@ -168,14 +172,32 @@ const Page = () => {
                         setShowEditForm(true);
                       }}
                     >
-                      ✏️
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 20h9" />
+                        <path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19.5 3 21l1.5-4L16.5 3.5z" />
+                      </svg>
                     </button>
+
                     <button className={styles.trashButton} title="Delete project">🗑️</button>
                   </div>
                 </section>
               </div>
             </div>
           ))}
+          {/* Edit Requirements Modal */}
+          {showEditReqForm && editReqProject && (
+            <EditReqForm
+              projectId={editReqProject.projectId}
+              requirements={editReqProject.requirements || { skill: '', experience: '', reqrole: '', techReq: '' }}
+              onClose={() => { setShowEditReqForm(false); setEditReqProject(null); }}
+              onEdit={(updatedRequirements) => {
+                // Update requirements in the project list (dummy for now)
+                // You can add API call here
+                setShowEditReqForm(false);
+                setEditReqProject(null);
+              }}
+            />
+          )}
         </div>
       </main>
     </div>

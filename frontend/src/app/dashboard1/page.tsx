@@ -5,9 +5,16 @@ import React, { useState } from "react";
 import styles from "./page.module.css";
 import CreateForm from "../create-project/createForm";
 import CreateReqForm from "../create-req/createReqForm";
+import EditProjectForm from "../edit-project/editProjectForm";
+import EditReqForm from "../edit-project/editReqForm";
 import { useRouter } from "next/navigation";
 
 const Page = () => {
+  // State for editing project and requirements
+  const [editProject, setEditProject] = useState<any | null>(null);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [editReqProject, setEditReqProject] = useState<any | null>(null);
+  const [showEditReqForm, setShowEditReqForm] = useState(false);
   const router = useRouter();
 
   const handleCardClick = (name: string) => {
@@ -159,30 +166,93 @@ const Page = () => {
 
         <div className={styles.cardContainer}>
           {projects.map((project, index) => (
-            <button
-              key={index}
-              className={styles.card}
-              onClick={() => handleCardClick(project.name)}
-            >
+            <div key={index} className={styles.card}>
               <div className={styles.cardContent}>
                 <img src="/exampleImg.png" alt="project" />
                 <span>{project.name}</span>
                 <section className={styles.cardFooter}>
-                  <button
-                    className={styles.trashButton}
-                    title="Delete project"
-                    onClick={(e) => {
-                      e.stopPropagation(); // prevent triggering card click
-                      handleDelete(project.project_ID);
-                    }}
-                  >
-                    🗑️
-                  </button>
+                  <div className={styles.buttonContainer}>
+                    <button
+                      className={styles.editButton}
+                      title="Edit project"
+                      onClick={() => {
+                        setEditProject(project);
+                        setShowEditForm(true);
+                      }}
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 20h9" />
+                        <path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19.5 3 21l1.5-4L16.5 3.5z" />
+                      </svg>
+                    </button>
+                    <button
+                      className={styles.trashButton}
+                      title="Delete project"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(project.project_ID);
+                      }}
+                    >
+                      🗑️
+                    </button>
+                  </div>
                 </section>
               </div>
-            </button>
+            </div>
           ))}
         </div>
+        {/* Edit Project Modal */}
+        {showEditForm && editProject && (
+          <EditProjectForm
+            initialValues={editProject}
+            onClose={() => {
+              setShowEditForm(false);
+              setEditProject(null);
+            }}
+            onEdit={(updatedProject) => {
+              // Update the project in the list
+              setProjects((prev) =>
+                prev.map((p) =>
+                  p.project_ID === updatedProject.project_ID
+                    ? { ...p, ...updatedProject }
+                    : p
+                )
+              );
+              setShowEditForm(false);
+              setEditProject(null);
+              // Always show requirements editing modal after editing project, even if fetch fails
+              setEditReqProject({ ...updatedProject });
+              setShowEditReqForm(true);
+            }}
+          />
+        )}
+        {/* Edit Requirements Modal */}
+        {showEditReqForm && editReqProject && (
+          <EditReqForm
+            projectId={editReqProject.project_ID}
+            requirements={editReqProject.requirements || {
+              skill: "",
+              experience: "",
+              reqrole: "",
+              techReq: "",
+            }}
+            onClose={() => {
+              setShowEditReqForm(false);
+              setEditReqProject(null);
+            }}
+            onEdit={(updatedRequirements) => {
+              setProjects((prev) =>
+                prev.map((p) =>
+                  p.project_ID === editReqProject.project_ID
+                    ? { ...p, requirements: updatedRequirements }
+                    : p
+                )
+              );
+              setShowEditReqForm(false);
+              setEditReqProject(null);
+            }}
+          />
+        )}
       </main>
     </div>
   );

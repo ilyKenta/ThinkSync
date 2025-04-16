@@ -34,8 +34,14 @@ export default function EditProjectForm({
   );
   const [start_date, setStart] = useState(initialValues.start_date || "");
   const [end_date, setEnd] = useState(initialValues.end_date || "");
-  const [funding_available, setFunding] = useState(
-    initialValues.funding_available || ""
+  const [funding_available, setFunding] = useState<boolean | null>(
+    typeof initialValues.funding_available === "boolean"
+      ? initialValues.funding_available
+      : initialValues.funding_available === "true"
+      ? true
+      : initialValues.funding_available === "false"
+      ? false
+      : null
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -153,19 +159,37 @@ export default function EditProjectForm({
             onChange={(e) => setEnd(e.target.value)}
             required
           />
-          <label htmlFor="setFunding">Fundings</label>
-          <input
-            type="number"
-            id="setFunding"
-            value={funding_available}
-            onChange={(e) => setFunding(e.target.value)}
-            required
-          />
+          <section className={styles.radioContainer}>
+            <label htmlFor="Funding">Fundings</label>
+            <label>
+              <input
+                type="radio"
+                name="funding"
+                value="true"
+                className={styles.radioInput}
+                checked={funding_available === true}
+                onChange={() => setFunding(true)}
+              />
+              Yes
+            </label>
+            <label>
+              <input
+                type="radio"
+                name="funding"
+                value="false"
+                className={styles.radioInput}
+                checked={funding_available === false}
+                onChange={() => setFunding(false)}
+              />
+              No
+            </label>
+          </section>
 
           <button
             type="submit"
             aria-label="submit information"
             disabled={loading}
+            style={{ backgroundColor: 'black', color: 'white', border: 'none', borderRadius: 'var(--button-radius)', fontSize: 20, fontWeight: 600 }}
           >
             {loading ? "Saving..." : "Save Changes"}
           </button>

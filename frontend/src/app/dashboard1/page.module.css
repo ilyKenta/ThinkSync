@@ -216,6 +216,22 @@
   justify-content: space-between;
 }
 
+.editButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%; /* makes it a circle */
+  color: #222;
+  font-size: 20px;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.editButton:hover {
+  background-color: #eee;
+  color: #222;
+}
+
 .trashButton {
   background: none;
   border: none;
