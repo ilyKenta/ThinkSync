@@ -4,13 +4,92 @@ import React from "react";
 import styles from "./page.module.css";
 import Image from "next/image";
 import CreateForm from "../create-project/createForm";
+import EditProjectForm from "../edit-project/editProjectForm";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 const Page = () => {
-
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
+  const [editProject, setEditProject] = useState<any | null>(null);
+  const [showEditForm, setShowEditForm] = useState(false);
+
+  // Dummy project data for demonstration (replace with real data)
+  const projects = [
+    {
+      projectId: "1",
+      title: "Q4 Sales Deck",
+      description: "Q4 sales deck description",
+      goals: "Increase sales",
+      research_areas: "Sales, Marketing",
+      start_date: "2025-01-01",
+      end_date: "2025-06-30",
+      funding_available: "10000",
+      info: "Shared folder • 8 presentations"
+    },
+    {
+      projectId: "2",
+      title: "Product Videos",
+      description: "Product videos description",
+      goals: "Promote product",
+      research_areas: "Video, Marketing",
+      start_date: "2025-02-01",
+      end_date: "2025-07-31",
+      funding_available: "7000",
+      info: "Shared folder • 5 videos"
+    },
+    {
+      projectId: "3",
+      title: "ROI Calculator",
+      description: "ROI calculator description",
+      goals: "Calculate ROI",
+      research_areas: "Finance, Analytics",
+      start_date: "2025-03-01",
+      end_date: "2025-08-31",
+      funding_available: "5000",
+      info: "Shared file • 1 Excel"
+    }
+  ];
+
+  // Handler for edit submit
+  const handleEdit = async (updatedProject: any) => {
+    try {
+      const token = localStorage.getItem("jwt");
+      const res = await fetch(`http://localhost:5000/api/project/update/${updatedProject.projectId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify({
+            project: {
+              title: updatedProject.title,
+              description: updatedProject.description,
+              goals: updatedProject.goals,
+              research_areas: updatedProject.research_areas,
+              start_date: updatedProject.start_date,
+              end_date: updatedProject.end_date,
+              funding_available: updatedProject.funding_available
+            },
+            requirements: [] // Add requirements if needed
+          })
+        }
+      );
+      const data = await res.json();
+      if (res.ok) {
+        alert("Project updated successfully!");
+        setShowEditForm(false);
+        setEditProject(null);
+        // Optionally refresh project list here
+      } else {
+        alert(`Error: ${data.error}`);
+      }
+    } catch (err) {
+      alert("An error occurred while updating the project.");
+    }
+  };
+
   return (
     <div className={styles.container}>
       <aside className={styles.sidebar}>
@@ -41,7 +120,23 @@ const Page = () => {
            >
             + Create
             </button>
-            {showForm && <CreateForm onClose={() => setShowForm(false)} />}
+            {showForm && (
+  <CreateForm 
+    onClose={() => setShowForm(false)}
+    onCreate={(projectName) => {
+      setShowForm(false);
+      // Add more logic here if needed
+      console.log("Project created:", projectName);
+    }}
+  />
+)}
+{showEditForm && editProject && (
+  <EditProjectForm
+    initialValues={editProject}
+    onClose={() => { setShowEditForm(false); setEditProject(null); }}
+    onEdit={handleEdit}
+  />
+)}
 
             <div className={styles.buttonGroup}>
               <button>Upload</button>
@@ -57,36 +152,28 @@ const Page = () => {
         </div>
 
         <div className={styles.cardContainer}>
-          <div className={styles.card}>
-            <div className={styles.cardContent}>
-              <img src="/exampleImg.png" alt="search" />
-              <span>Q4 Sales Deck</span>
-              <section className={styles.cardFooter}>
-                <p>Shared folder • 8 presentations</p>
-                <button className={styles.trashButton} title="Delete project">🗑️</button>
-              </section>
+          {projects.map((project) => (
+            <div className={styles.card} key={project.projectId}>
+              <div className={styles.cardContent}>
+                <img src="/exampleImg.png" alt="search" />
+                <span>{project.title}</span>
+                <section className={styles.cardFooter}>
+                  <p>{project.info}</p>
+                  <button
+                    className={styles.editButton}
+                    title="Edit project"
+                    onClick={() => {
+                      setEditProject(project);
+                      setShowEditForm(true);
+                    }}
+                  >
+                    ✏️
+                  </button>
+                  <button className={styles.trashButton} title="Delete project">🗑️</button>
+                </section>
+              </div>
             </div>
-          </div>
-          <div className={styles.card}>
-            <div className={styles.cardContent}>
-              <img src="/exampleImg.png" alt="search" />
-              <span>Product Videos</span>
-              <section className={styles.cardFooter}>
-                <p>Shared folder • 5 videos</p>
-                <button className={styles.trashButton} title="Delete project">🗑️</button>
-              </section>
-            </div>
-          </div>
-          <div className={styles.card}>
-            <div className={styles.cardContent}>
-              <img src="/exampleImg.png" alt="search" />
-              <span>ROI Calculator</span>
-              <section className={styles.cardFooter}>
-                <p>Shared file • 1 Excel</p>
-                <button className={styles.trashButton} title="Delete project">🗑️</button>
-              </section>
-            </div>
-          </div>
+          ))}
         </div>
       </main>
     </div>

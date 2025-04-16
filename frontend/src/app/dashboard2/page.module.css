@@ -215,6 +215,22 @@
     align-items: center;
   }
   
+  .editButton {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 50%; /* makes it a circle */
+    transition: none;
+    filter: grayscale(1);
+    color: #222;
+    margin-right: 0;
+}
+.editButton:hover {
+    background: none;
+    color: #222;
+    filter: grayscale(1);
+}
   .trashButton {
     background: none;
     border: none;
@@ -222,6 +238,7 @@
     padding: 6px;
     border-radius: 50%; /* makes it a circle */
     transition: background-color 0.2s ease, color 0.2s ease;
+    margin-left: 2px;
   }
   
   .trashButton:hover {
