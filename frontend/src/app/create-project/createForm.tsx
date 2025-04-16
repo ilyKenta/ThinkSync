@@ -19,7 +19,7 @@ export default function CreateForm({ onClose, onCreate }: CreateFormProps) {
   const [research_areas, setResArea] = useState("");
   const [start_date, setStart] = useState("");
   const [end_date, setEnd] = useState("");
-  const [funding_available, setFunding] = useState("");
+  const [funding_available, setFunding] = useState<boolean | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -126,14 +126,32 @@ export default function CreateForm({ onClose, onCreate }: CreateFormProps) {
             onChange={(e) => setEnd(e.target.value)}
             required
           />
-          <label htmlFor="setFunding">Fundings</label>
-          <input
-            type="number"
-            id="setFunding"
-            value={funding_available}
-            onChange={(e) => setFunding(e.target.value)}
-            required
-          />
+          <section className={styles.radioContainer}>
+            <label>Fundings</label>
+            <label>
+              <input
+                type="radio"
+                name="funding"
+                value="true"
+                className={styles.radioInput}
+                checked={funding_available === true}
+                onChange={() => setFunding(true)}
+              />
+              Yes
+            </label>
+
+            <label>
+              <input
+                type="radio"
+                name="funding"
+                value="false"
+                className={styles.radioInput}
+                checked={funding_available === false}
+                onChange={() => setFunding(false)}
+              />
+              No
+            </label>
+          </section>
 
           <button type="submit" aria-label="submit information">
             Create →
