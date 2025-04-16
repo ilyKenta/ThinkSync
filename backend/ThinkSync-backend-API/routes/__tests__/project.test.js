@@ -149,7 +149,7 @@ describe('Project Routes', () => {
     });
   });
 
-  describe('GET /owner/:ownerId', () => {
+  describe('GET /owner', () => {
     it('should get all projects for an owner', async () => {
       const mockProjects = [
         {
@@ -174,7 +174,7 @@ describe('Project Routes', () => {
       db.executeQuery.mockResolvedValueOnce(mockProjects);
 
       const response = await request(app)
-        .get(`/api/project/owner/${mockUserId}`)
+        .get(`/api/project/owner`)
         .set('Authorization', `Bearer ${mockToken}`);
 
       expect(response.status).toBe(200);
@@ -189,7 +189,7 @@ describe('Project Routes', () => {
       db.executeQuery.mockResolvedValueOnce([]);
 
       const response = await request(app)
-        .get(`/api/project/owner/${mockUserId}`)
+        .get(`/api/project/owner`)
         .set('Authorization', `Bearer ${mockToken}`);
 
       expect(response.status).toBe(404);

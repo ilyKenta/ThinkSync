@@ -130,10 +130,6 @@ router.get('/owner', async (req, res) => {
         const token = extractToken(req);
         const userId = await getUserIdFromToken(token);
 
-        if (userId !== req.params.ownerId) {
-            return res.status(403).json({ error: 'Unauthorized' });
-        }
-
         const projects = await db.executeQuery(`
             SELECT p.*, pr.requirement_ID, pr.skill_required, pr.experience_level, pr.role, pr.technical_requirements
             FROM projects p

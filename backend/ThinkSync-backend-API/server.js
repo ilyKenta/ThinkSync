@@ -2,6 +2,7 @@ const express = require("express");
 const dotenv = require("dotenv");
 const authRoutes = require("./routes/auth");
 const projRoutes = require("./routes/project");
+const collabRoutes = require("./routes/collaboration");
 const db = require("./db");
 const cors = require("cors");
 const helmet = require("helmet");
@@ -28,6 +29,7 @@ app.get('/health', (req, res) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/projects', projRoutes);
+app.use('/api/collaborations', collabRoutes);
 
 // Use environment variable for port
 const PORT = process.env.PORT || 5000;
