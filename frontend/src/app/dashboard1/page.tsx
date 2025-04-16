@@ -1,6 +1,8 @@
 "use client";
 
+
 import React, { useState } from "react";
+
 import styles from "./page.module.css";
 import CreateForm from "../create-project/createForm";
 import CreateReqForm from "../create-req/createReqForm";
@@ -40,6 +42,7 @@ const Page = () => {
   };
 
   const [showForm, setShowForm] = useState(false);
+
   const [showRequirementsForm, setShowReqForm] = useState(false);
 
   const [currentProjectName, setCurrentProjectName] = useState("");
@@ -51,6 +54,7 @@ const Page = () => {
   const [currentfunding_available, setCurrentFunding] = useState("");
 
   const [projects, setProjects] = useState<any[]>([]); // Projects could be objects, not just strings
+
 
   return (
     <div className={styles.container}>
@@ -90,7 +94,7 @@ const Page = () => {
           >
             + Create
           </button>
-          {showForm && (
+          {isMounted && showForm && (
             <CreateForm
               onClose={() => setShowForm(false)}
               onCreate={(projectName: string, projectDesc:string, goals: string, setResArea: string, setStart: string, setEnd: string, Funding:string ) => {
