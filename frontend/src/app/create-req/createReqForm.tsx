@@ -41,7 +41,7 @@ export default function CreateForm({ onClose, onCreate }: CreateFormProps) {
     // NEED TO RUN ON CREATE
 
     try {
-      const res = await fetch("http://localhost:5000/api/project/create", {
+      const res = await fetch("http://localhost:5000/api/projects/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

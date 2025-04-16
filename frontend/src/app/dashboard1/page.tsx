@@ -40,7 +40,7 @@ const Page = () => {
   };
 
   const [showForm, setShowForm] = useState(false);
-  const [showRequirementsForm, setShowRequirementsForm] = useState(false);
+  const [showRequirementsForm, setShowReqForm] = useState(false);
   const [projects, setProjects] = useState<any[]>([]); // Projects could be objects, not just strings
 
   return (
@@ -90,16 +90,16 @@ const Page = () => {
                   { project_ID: Date.now(), name: projectName },
                 ]);
                 setShowForm(false); // Close the first modal after creating
-                setShowRequirementsForm(true); // Open the second modal
+                setShowReqForm(true); // Open the second modal
               }}
             />
          )}
 
         {showRequirementsForm && (
           <CreateReqForm
-            onClose={() => setShowForm(false)}
+            onClose={() => setShowReqForm(false)}
             onCreate={(projectName: string) => {
-              setShowRequirementsForm(false);
+              setShowReqForm(false);
             }}
           />
         )}
