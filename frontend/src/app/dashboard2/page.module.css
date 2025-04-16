@@ -215,6 +215,13 @@
     align-items: center;
   }
   
+  /* Container for the edit and trash buttons */
+  .buttonContainer {
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+  }
+  
   .editButton {
     background: none;
     border: none;
@@ -224,7 +231,8 @@
     transition: none;
     filter: grayscale(1);
     color: #222;
-    margin-right: 0;
+    margin: 0;
+    font-size: 16px;
 }
 .editButton:hover {
     background: none;
@@ -238,7 +246,8 @@
     padding: 6px;
     border-radius: 50%; /* makes it a circle */
     transition: background-color 0.2s ease, color 0.2s ease;
-    margin-left: 2px;
+    margin: 0;
+    font-size: 16px;
   }
   
   .trashButton:hover {

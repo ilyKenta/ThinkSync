@@ -159,17 +159,19 @@ const Page = () => {
                 <span>{project.title}</span>
                 <section className={styles.cardFooter}>
                   <p>{project.info}</p>
-                  <button
-                    className={styles.editButton}
-                    title="Edit project"
-                    onClick={() => {
-                      setEditProject(project);
-                      setShowEditForm(true);
-                    }}
-                  >
-                    ✏️
-                  </button>
-                  <button className={styles.trashButton} title="Delete project">🗑️</button>
+                  <div className={styles.buttonContainer}>
+                    <button
+                      className={styles.editButton}
+                      title="Edit project"
+                      onClick={() => {
+                        setEditProject(project);
+                        setShowEditForm(true);
+                      }}
+                    >
+                      ✏️
+                    </button>
+                    <button className={styles.trashButton} title="Delete project">🗑️</button>
+                  </div>
                 </section>
               </div>
             </div>
