@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 
 type CreateFormProps = {
   onClose: () => void;
-  onCreate: (projectName: string) => void;
+  onCreate: (projectName: string,   projectDesc: string, goals: string, setResArea: string, setStart: string, setEnd: string, Funding:string ) => void;
 };
 export default function CreateForm({ onClose, onCreate }: CreateFormProps) {
   const router = useRouter();
@@ -40,7 +40,7 @@ export default function CreateForm({ onClose, onCreate }: CreateFormProps) {
       requirementsData,
     };
 
-    onCreate(title);
+    onCreate(title, description, goals, research_areas, start_date,end_date, funding_available);
     onClose();
 
     console.log(JSON.stringify(payload));
@@ -128,8 +128,9 @@ export default function CreateForm({ onClose, onCreate }: CreateFormProps) {
             onChange={(e) => setEnd(e.target.value)}
             required
           />
+
           <section className={styles.radioContainer}>
-            <label>Fundings</label>
+            <label htmlFor="Funding">Fundings</label>
             <label>
               <input
                 type="radio"
@@ -154,6 +155,7 @@ export default function CreateForm({ onClose, onCreate }: CreateFormProps) {
               No
             </label>
           </section>
+
 
           <button type="submit" aria-label="submit information">
             Create →

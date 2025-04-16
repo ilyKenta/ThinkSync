@@ -180,12 +180,16 @@
 }
 
 .card {
+
+  all: unset; /* reset default button styles */
   background-color: var(--primary-color);
   border: 1px solid #ddd;
   border-radius: 8px;
   padding: 10px;
-  text-align: left; /* Align text to the left */
+  text-align: left;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  display: block;
+  cursor: pointer;
 }
 
 .cardContent {
