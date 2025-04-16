@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import styles from "./page.module.css";
 import Image from "next/image";
 import CreateForm from "../create-project/createForm";
@@ -11,6 +11,10 @@ const Page = () => {
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
   const [projects, setProjects] = useState<string[]>([]);
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
   return (
     <div className={styles.container}>
       <aside className={styles.sidebar}>
@@ -53,7 +57,7 @@ const Page = () => {
           >
             + Create
           </button>
-          {showForm && (
+          {isMounted && showForm && (
             <CreateForm
               onClose={() => setShowForm(false)}
               onCreate={(projectName: string) => {
