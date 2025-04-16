@@ -9,6 +9,16 @@ import { useRouter } from "next/navigation";
 
 const Page = () => {
   const router = useRouter();
+
+  const handleCardClick = (name: string) => {
+    //const encodedName = encodeURIComponent(name); // make URL safe
+    router.push(`/projectInfo`);
+  };
+
+  const handleDelete = (nameToDelete: string) => {
+    setProjects((prev) => prev.filter((name) => name !== nameToDelete));
+  };
+
   const [showForm, setShowForm] = useState(false);
   const [projects, setProjects] = useState<string[]>([]);
   return (
@@ -77,17 +87,24 @@ const Page = () => {
 
         <div className={styles.cardContainer}>
           {projects.map((name, index) => (
-            <div key={index} className={styles.card}>
+            <button key={index} className={styles.card} onClick={() => handleCardClick(name)}>
               <div className={styles.cardContent}>
                 <img src="/exampleImg.png" alt="project" />
                 <span>{name}</span>
                 <section className={styles.cardFooter}>
-                  <button className={styles.trashButton} title="Delete project">
+                  <button
+                    className={styles.trashButton}
+                    title="Delete project"
+                    onClick={(e) => {
+                      e.stopPropagation(); // prevent triggering card click
+                      handleDelete(name);
+                    }}
+                   >
                     🗑️
                   </button>
                 </section>
               </div>
-            </div>
+            </button>
           ))}
         </div>
       </main>
