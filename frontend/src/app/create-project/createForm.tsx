@@ -20,6 +20,7 @@ export default function CreateForm({ onClose, onCreate }: CreateFormProps) {
   const [start_date, setStart] = useState("");
   const [end_date, setEnd] = useState("");
   const [funding_available, setFunding] = useState<boolean | null>(null);
+  const [requirementsData, setRequirementsData] = useState([]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,6 +37,7 @@ export default function CreateForm({ onClose, onCreate }: CreateFormProps) {
       start_date,
       end_date,
       funding_available,
+      requirementsData,
     };
 
     onCreate(title);
@@ -46,7 +48,7 @@ export default function CreateForm({ onClose, onCreate }: CreateFormProps) {
     // NEED TO RUN ON CREATE
 
     try {
-      const res = await fetch("http://localhost:5000/api/project/create", {
+      const res = await fetch("http://localhost:5000/api/projects/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
