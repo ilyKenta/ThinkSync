@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 
 type CreateFormProps = {
   onClose: () => void;
-  onCreate: (projectName: string) => void;
+  onCreate: (projectName: string,   projectDesc: string, goals: string, setResArea: string, setStart: string, setEnd: string, Funding:string ) => void;
 };
 export default function CreateForm({ onClose, onCreate }: CreateFormProps) {
   const router = useRouter();
@@ -38,7 +38,7 @@ export default function CreateForm({ onClose, onCreate }: CreateFormProps) {
       funding_available,
     };
 
-    onCreate(title);
+    onCreate(title, description, goals, research_areas, start_date,end_date, funding_available);
     onClose();
 
     console.log(JSON.stringify(payload));
@@ -126,10 +126,10 @@ export default function CreateForm({ onClose, onCreate }: CreateFormProps) {
             onChange={(e) => setEnd(e.target.value)}
             required
           />
-          <label htmlFor="setFunding">Fundings</label>
+          <label htmlFor="Funding">Fundings</label>
           <input
             type="number"
-            id="setFunding"
+            id="Funding"
             value={funding_available}
             onChange={(e) => setFunding(e.target.value)}
             required

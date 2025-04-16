@@ -3,13 +3,21 @@
 import styles from "./page.module.css";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import CreateForm from "../create-project/createForm";
 //import useAuth from "../useAuth";
 
 type CreateFormProps = {
+  projectName: string;
+  projectDesc: string;
+  goals: string;
+  setResArea: string;
+  setStart: string;
+  setEnd: string;
+  Funding:string;
   onClose: () => void;
   onCreate: (projectName: string) => void;
 };
-export default function CreateForm({ onClose, onCreate }: CreateFormProps) {
+export default function CreateReqForm({ projectName,projectDesc, goals,setResArea,setStart,setEnd,Funding, onClose, onCreate }: CreateFormProps) {
   const router = useRouter();
   // useAuth(); // Check authentication
 
@@ -26,11 +34,40 @@ export default function CreateForm({ onClose, onCreate }: CreateFormProps) {
       alert("User ID is missing.");
       return;
     }*/
-    const payload = {
+    /*const payload = {
+      projectName,
+      projectDesc,
+      goals,
+      setResArea,
+      setStart,
+      setEnd,
+      Funding,
+
+
       skill,
       experience,
       reqrole,
       techReq,
+    };*/
+
+    const payload = {
+      project: {
+        title: projectName,
+        description: projectDesc,
+        goals,
+        research_areas: setResArea,
+        start_date: setStart,
+        end_date: setEnd,
+        funding_available: Funding,
+      },
+      requirements: [
+        {
+          skill_required: skill,
+          experience_level: experience.toLowerCase(),
+          role: reqrole,
+          technical_requirements: techReq,
+        },
+      ],
     };
 
     onCreate(skill);

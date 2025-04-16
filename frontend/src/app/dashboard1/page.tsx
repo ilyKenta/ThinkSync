@@ -41,6 +41,15 @@ const Page = () => {
 
   const [showForm, setShowForm] = useState(false);
   const [showRequirementsForm, setShowReqForm] = useState(false);
+
+  const [currentProjectName, setCurrentProjectName] = useState("");
+  const [currentprojectDesc, setCurrentprojectDesc] = useState("");
+  const [currentgoals, setCurrentGoals] = useState("");
+  const [currentresearch_areas, setCurrentResArea] = useState("");
+  const [currentstart_date, setCurrentStart] = useState("");
+  const [currentend_date, setCurrentEnd] = useState("");
+  const [currentfunding_available, setCurrentFunding] = useState("");
+
   const [projects, setProjects] = useState<any[]>([]); // Projects could be objects, not just strings
 
   return (
@@ -84,7 +93,15 @@ const Page = () => {
           {showForm && (
             <CreateForm
               onClose={() => setShowForm(false)}
-              onCreate={(projectName: string) => {
+              onCreate={(projectName: string, projectDesc:string, goals: string, setResArea: string, setStart: string, setEnd: string, Funding:string ) => {
+                setCurrentProjectName(projectName);
+                setCurrentprojectDesc(projectDesc);
+                setCurrentGoals(goals);
+                setCurrentResArea(setResArea);
+                setCurrentStart(setStart);
+                setCurrentEnd(setEnd);
+                setCurrentFunding(Funding);
+
                 setProjects((prev) => [
                   ...prev,
                   { project_ID: Date.now(), name: projectName },
@@ -97,6 +114,13 @@ const Page = () => {
 
         {showRequirementsForm && (
           <CreateReqForm
+            projectName={currentProjectName}
+            projectDesc={currentprojectDesc}
+            goals={currentgoals}
+            setResArea={currentresearch_areas}
+            setStart={currentstart_date}
+            setEnd={currentend_date}
+            Funding={currentfunding_available}
             onClose={() => setShowReqForm(false)}
             onCreate={(projectName: string) => {
               setShowReqForm(false);
