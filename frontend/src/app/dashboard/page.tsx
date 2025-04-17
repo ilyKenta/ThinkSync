@@ -1,232 +1,281 @@
 "use client";
 
+import React, { useState, useEffect } from "react";
 import styles from "./page.module.css";
-import useAuth from '../useAuth';
+import CreateForm from "../create-project/createForm";
+import CreateReqForm from "../create-req/createReqForm";
+import EditProjectForm from "../edit-project/editProjectForm";
+import EditReqForm from "../edit-project/editReqForm";
+import { useRouter } from "next/navigation";
 
-const mockProjects = [
-  {
-    title: "AI for Health",
-    progress: 70,
-    fundingUsed: 50000,
-    fundingTotal: 100000,
-  },
-  {
-    title: "Climate Change Model",
-    progress: 40,
-    fundingUsed: 30000,
-    fundingTotal: 50000,
-  },
-];
+const Page = () => {
+  const router = useRouter();
+  const [projects, setProjects] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-const mockCollabs = [
-    {
-      title: "Quantum Research",
-      progress: 60,
-      fundingUsed: 20000,
-      fundingTotal: 40000,
-      collaborators: [
-        { name: "dr.researcher@wits.ac.za", role: "Researcher" },
-        { name: "jane.admin@wits.ac.za", role: "Admin" },
-        { name: "reviewer@wits.ac.za", role: "Reviewer" },
-      ],
-    },
-    {
-      title: "Machine Learning",
-      progress: 20,
-      fundingUsed: 1000,
-      fundingTotal: 9000,
-      collaborators: [
-        { name: "pano@wits.ac.za", role: "Researcher" },
-        { name: "arshia.admin@wits.ac.za", role: "Admin" },
-        { name: "reviewer@wits.ac.za", role: "Reviewer" },
-      ],
-    },
-    {
-      title: "Big Data Analytics",
-      progress: 95,
-      fundingUsed: 18000,
-      fundingTotal: 15000,
-      collaborators: [
-        { name: "pano@wits.ac.za", role: "Researcher" },
-        { name: "arshia.admin@wits.ac.za", role: "Admin" },
-        { name: "reviewer@wits.ac.za", role: "Reviewer" },
-      ],
-    },
-  ];
-  
+  // State for editing project and requirements
+  const [editProject, setEditProject] = useState<any | null>(null);
+  const [showEditForm, setShowEditForm] = useState(false);
 
-const Dashboard = () => {
-  useAuth(); // Check authentication
+  // Fetch projects on component mount
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        //const token = localStorage.getItem('accessToken');
+        const token = 'dummyToken';
+        if (!token) {
+          throw new Error('No access token found');
+        }
+
+        const response = await fetch('http://localhost:5000/api/projects/owner', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch projects');
+        }
+
+        const data = await response.json();
+        setProjects(data.projects);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An error occurred');
+        console.error('Error fetching projects:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, []);
+
+  const handleCardClick = (projectId: string) => {
+    router.push(`/projectInfo/${projectId}`);
+  };
+
+  const handleDelete = async (projectId: string) => {
+    try {
+      // const token = localStorage.getItem('accessToken');
+      const token = 'dummyToken';
+      if (!token) {
+        throw new Error('No access token found');
+      }
+
+      const res = await fetch(
+        `http://localhost:5000/api/projects/delete/${projectId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to delete project");
+      }
+
+      setProjects((prev) =>
+        prev.filter((project) => project.project_ID !== projectId)
+      );
+    } catch (error) {
+      console.error("Delete error:", error);
+      alert("Could not delete project.");
+    }
+  };
+
+  const [showForm, setShowForm] = useState(false);
+  const [showRequirementsForm, setShowReqForm] = useState(false);
+
+  const [currentProjectName, setCurrentProjectName] = useState("");
+  const [currentprojectDesc, setCurrentprojectDesc] = useState("");
+  const [currentgoals, setCurrentGoals] = useState("");
+  const [currentresearch_areas, setCurrentResArea] = useState("");
+  const [currentstart_date, setCurrentStart] = useState("");
+  const [currentend_date, setCurrentEnd] = useState("");
+  const [currentfunding_available, setCurrentFunding] = useState<
+    boolean | null
+  >(null);
+
+  if (loading) {
+    return <div className={styles.container}>Loading projects...</div>;
+  }
+
+  if (error) {
+    return <div className={styles.container}>Error: {error}</div>;
+  }
 
   return (
-    <main className={styles.dashboardPage}>
-      <header className={styles.header}>
-        <button onClick={() => window.location.href = '/'} className={styles.logo}>ThinkSync</button>
-        <nav className={styles.navButtons}>
-          <button className={styles.loginButton} type="button">
-            login
-          </button>
-          <button className={styles.signupButton} type="button">
-            sign up
-          </button>
-        </nav>
-      </header>
+    <div className={styles.container}>
+      <aside className={styles.sidebar}>
+        <h2>ThinkSync</h2>
+        <h3>DASHBOARD</h3>
+        <ul>
+          <li>
+            <button type="button" onClick={() => router.push("/dashboard")}>
+              Current Projects
+            </button>
+          </li>
+          <li>
+            <button type="button" onClick={() => router.push("/dashboard2")}>
+              Collaboration
+            </button>
+          </li>
+        </ul>
+      </aside>
 
-      <h1 className={styles.title}>Your Dashboard</h1>
+      <main className={styles.mainContent}>
+        <section className={styles.heading}>
+          <h2>Current projects</h2>
+          <div className={styles.searchContainer}>
+            <input
+              className={styles.searchInput}
+              type="text"
+              placeholder="Search projects..."
+            />
+          </div>
+        </section>
 
-      <section className={styles.section}>
-        <h2>Current Projects</h2>
+        <section className={styles.buttonHeader}>
+          <button
+            className={styles.createButton}
+            onClick={() => setShowForm(true)}
+          >
+            + Create
+          </button>
+          {showForm && (
+            <CreateForm
+              onClose={() => setShowForm(false)}
+              onCreate={(
+                projectName: string,
+                projectDesc: string,
+                goals: string,
+                setResArea: string,
+                setStart: string,
+                setEnd: string,
+                Funding: boolean | null
+              ) => {
+                setCurrentProjectName(projectName);
+                setCurrentprojectDesc(projectDesc);
+                setCurrentGoals(goals);
+                setCurrentResArea(setResArea);
+                setCurrentStart(setStart);
+                setCurrentEnd(setEnd);
+                setCurrentFunding(Funding);
+
+                setShowForm(false); // Close the first modal after creating
+                setShowReqForm(true); // Open the second modal
+              }}
+            />
+          )}
+
+          {showRequirementsForm && (
+            <CreateReqForm
+              projectName={currentProjectName}
+              projectDesc={currentprojectDesc}
+              goals={currentgoals}
+              setResArea={currentresearch_areas}
+              setStart={currentstart_date}
+              setEnd={currentend_date}
+              Funding={currentfunding_available}
+              onClose={() => setShowReqForm(false)}
+              onCreate={(projectName: string) => {
+                setShowReqForm(false);
+              }}
+            />
+          )}
+
+          <div className={styles.buttonGroup}>
+            <button>Upload</button>
+            <button>Create folder</button>
+            <button>Record</button>
+          </div>
+        </section>
+
+        <div className={styles.tabGroup}>
+          <button>Recent</button>
+          <button>Starred</button>
+          <button>Shared</button>
+        </div>
+
         <div className={styles.cardContainer}>
-          {mockProjects.map((proj, i) => (
-            <div className={styles.card} key={i}>
-              <h3>{proj.title}</h3>
-              <p>Progress: {proj.progress}%</p>
-              <div className={styles.progressBarWrapper}>
-                <div className={styles.progressBar} style={{ width: `${proj.progress}%` }} />
-              </div>
-              <p>Funding: R{proj.fundingUsed} / R{proj.fundingTotal}</p>
-              <div className={styles.progressBarWrapper}>
-                <div
-                  className={styles.fundingBar}
-                  style={{ width: `${(proj.fundingUsed / proj.fundingTotal) * 100}%` }}
-                />
+          {projects.map((project) => (
+            <div 
+              key={project.project_ID} 
+              className={styles.card}
+              onClick={() => handleCardClick(project.project_ID)}
+            >
+              <div className={styles.cardContent}>
+                <img src="/exampleImg.png" alt="project" />
+                <div className={styles.projectInfo}>
+                  <h3>{project.title}</h3>
+                  <p className={styles.description}>{project.description}</p>
+                  <div className={styles.projectDetails}>
+                    <span>Start: {new Date(project.start_date).toLocaleDateString()}</span>
+                    <span>End: {new Date(project.end_date).toLocaleDateString()}</span>
+                    <span>Funding: {project.funding_available ? 'Available' : 'Not Available'}</span>
+                  </div>
+                </div>
+                <section className={styles.cardFooter}>
+                  <div className={styles.buttonContainer}>
+                    <button
+                      className={styles.editButton}
+                      title="Edit project"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditProject(project);
+                        setShowEditForm(true);
+                      }}
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 20h9" />
+                        <path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19.5 3 21l1.5-4L16.5 3.5z" />
+                      </svg>
+                    </button>
+                    <button
+                      className={styles.trashButton}
+                      title="Delete project"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(project.project_ID);
+                      }}
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                </section>
               </div>
             </div>
           ))}
         </div>
-      </section>
-
-      <section className={styles.section}>
-        <h2>Collaborations</h2>
-        <div className={styles.cardContainer}>
-          {mockCollabs.map((collab, i) => (
-            <div className={styles.card} key={i}>
-              <h3>{collab.title}</h3>
-              <p>Progress: {collab.progress}%</p>
-              <div className={styles.progressBarWrapper}>
-                <div className={styles.progressBar} style={{ width: `${collab.progress}%` }} />
-              </div>
-              <p>Funding: R{collab.fundingUsed} / R{collab.fundingTotal}</p>
-              <div className={styles.progressBarWrapper}>
-                <div
-                  className={styles.fundingBar}
-                  style={{ width: `${(collab.fundingUsed / collab.fundingTotal) * 100}%` }}
-                />
-              </div>
-              <div className={styles.collabList}>
-                <strong>Collaborators:</strong>
-                <ul>
-                  {collab.collaborators.map((person, j) => (
-                    <li key={j}>
-                      {person.name} <span className={styles.roleTag}>({person.role})</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-    </main>
+        {/* Edit Project Modal */}
+        {showEditForm && editProject && (
+          <EditProjectForm
+            initialValues={editProject}
+            onClose={() => {
+              setShowEditForm(false);
+              setEditProject(null);
+            }}
+            onEdit={(updatedProject) => {
+              // Update the project in the list
+              setProjects((prev) =>
+                prev.map((p) =>
+                  p.project_ID === updatedProject.project_ID
+                    ? { ...p, ...updatedProject }
+                    : p
+                )
+              );
+              setShowEditForm(false);
+              setEditProject(null);
+            }}
+          />
+        )}
+      </main>
+    </div>
   );
 };
 
-export default Dashboard;
-
-
-
-
-/*
-"use client";
-
-import styles from "./page.module.css";
-
-export default function AdminSignupPage() {
-  return (
-    <main className={styles.signupPage}>
-      <header className={styles.header}>
-        <div className={styles.logo}>ThinkSync</div>
-        <nav className={styles.navButtons}>
-          <button className={styles.loginButton} type="button">
-            login
-          </button>
-          <button className={styles.signupButton} type="button">
-            sign up
-          </button>
-        </nav>
-      </header>
-      <div className={styles.signupBox}>
-        <h1 className={styles.title}>Admin Sign Up</h1>
-        <form className={styles.signupForm}>
-        <label htmlFor="name">Name</label>
-      <input 
-        type="text" 
-        id="name" 
-        name="name" 
-        required 
-        placeholder="john" 
-      />
-      
-      <label htmlFor="surname">Surname</label>
-      <input 
-        type="text" 
-        id="surname" 
-        name="surname" 
-        required 
-        placeholder="smith" 
-      />
-
-      <label htmlFor="email">Email</label>
-      <input 
-        type="email" 
-        id="email" 
-        name="email" 
-        required 
-        placeholder="john@gmail.com" 
-      />
-
-      <label htmlFor="contact">Contact Number</label>
-      <input 
-        type="tel" 
-        id="number" 
-        name="number" 
-        required 
-        placeholder="+27814366553" 
-      />
-
-      <label htmlFor="department">Current Department</label>
-      <select 
-        name="department" 
-        id="department" 
-        className="drop-down" 
-        required
-      >
-        <option value="science">Science</option>
-        <option value="commerce">Commerce</option>
-        <option value="engineering">Engineering</option>
-      </select> 
-
-      <label htmlFor="role">Current Academic Role</label>
-      <input 
-        type="text" 
-        id="role" 
-        name="role" 
-        required 
-        placeholder="Lecturer" 
-      />
-
-      <label htmlFor="password">Password</label>
-      <input 
-        type="password" 
-        id="password" 
-        name="password" 
-        required 
-        placeholder="********" 
-      />
-
-          <button type="submit">Continue →</button>
-        </form>
-      </div>
-    </main>
-  );
-}*/
+export default Page;

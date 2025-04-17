@@ -28,8 +28,14 @@ const Page = () => {
       research_areas: "Sales, Marketing",
       start_date: "2025-01-01",
       end_date: "2025-06-30",
-      funding_available: "10000",
-      info: "Shared folder • 8 presentations"
+      funding_available: true,
+      info: "Shared folder • 8 presentations",
+      requirements: [{
+        skill_required: "Sales",
+        experience_level: "intermediate",
+        role: "Sales Manager",
+        technical_requirements: "CRM experience"
+      }]
     },
     {
       projectId: "2",
@@ -39,8 +45,14 @@ const Page = () => {
       research_areas: "Video, Marketing",
       start_date: "2025-02-01",
       end_date: "2025-07-31",
-      funding_available: "7000",
-      info: "Shared folder • 5 videos"
+      funding_available: true,
+      info: "Shared folder • 5 videos",
+      requirements: [{
+        skill_required: "Video Editing",
+        experience_level: "professional",
+        role: "Video Editor",
+        technical_requirements: "Adobe Premier Pro"
+      }]
     },
     {
       projectId: "3",
@@ -50,8 +62,14 @@ const Page = () => {
       research_areas: "Finance, Analytics",
       start_date: "2025-03-01",
       end_date: "2025-08-31",
-      funding_available: "5000",
-      info: "Shared file • 1 Excel"
+      funding_available: false,
+      info: "Shared file • 1 Excel",
+      requirements: [{
+        skill_required: "Financial Analysis",
+        experience_level: "intermediate",
+        role: "Financial Analyst",
+        technical_requirements: "Excel, SQL"
+      }]
     }
   ];
 
@@ -76,7 +94,7 @@ const Page = () => {
               end_date: updatedProject.end_date,
               funding_available: updatedProject.funding_available
             },
-            requirements: [] // Add requirements if needed
+            requirements: updatedProject.requirements || []
           })
         }
       );
@@ -101,7 +119,7 @@ const Page = () => {
 
         <h3>COLLECTIONS</h3>
         <ul>
-          <li> <button type="button" onClick={() => router.push("/dashboard1")}> Current Projects</button></li>
+          <li> <button type="button" onClick={() => router.push("/dashboard")}> Current Projects</button></li>
           <li> <button type="button" onClick={() => router.push("/dashboard2")}> Collaboration</button></li>
         </ul>
       </aside>
@@ -188,8 +206,20 @@ const Page = () => {
           {showEditReqForm && editReqProject && (
             <EditReqForm
               projectId={editReqProject.projectId}
-              requirements={editReqProject.requirements || { skill: '', experience: '', reqrole: '', techReq: '' }}
-              onClose={() => { setShowEditReqForm(false); setEditReqProject(null); }}
+              projectData={{
+                title: editReqProject.title,
+                description: editReqProject.description,
+                goals: editReqProject.goals,
+                research_areas: editReqProject.research_areas,
+                start_date: editReqProject.start_date,
+                end_date: editReqProject.end_date,
+                funding_available: editReqProject.funding_available
+              }}
+              requirements={editReqProject.requirements || []}
+              onClose={() => { 
+                setShowEditReqForm(false); 
+                setEditReqProject(null); 
+              }}
               onEdit={(updatedRequirements) => {
                 // Update requirements in the project list (dummy for now)
                 // You can add API call here

@@ -1,20 +1,21 @@
 "use client";
 
 import styles from "../create-project/page.module.css";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import EditReqForm from "./editReqForm";
 
 export type EditProjectFormProps = {
   onClose: () => void;
   initialValues: {
-    projectId: string;
-    title?: string;
-    description?: string;
-    goals?: string;
-    research_areas?: string;
-    start_date?: string;
-    end_date?: string;
-    funding_available?: string;
-    // requirements?: any[]
+    project_ID: string;
+    title: string;
+    description: string;
+    goals: string;
+    research_areas: string;
+    start_date: string;
+    end_date: string;
+    funding_available: boolean;
+    requirements?: any[];
   };
   onEdit: (updatedProject: any) => void;
 };
@@ -24,81 +25,71 @@ export default function EditProjectForm({
   onEdit,
   initialValues,
 }: EditProjectFormProps) {
-  const [title, setTitle] = useState(initialValues.title || "");
-  const [description, setDescription] = useState(
-    initialValues.description || ""
-  );
-  const [goals, setGoals] = useState(initialValues.goals || "");
-  const [research_areas, setResArea] = useState(
-    initialValues.research_areas || ""
-  );
-  const [start_date, setStart] = useState(initialValues.start_date || "");
-  const [end_date, setEnd] = useState(initialValues.end_date || "");
-  const [funding_available, setFunding] = useState<boolean | null>(
-    typeof initialValues.funding_available === "boolean"
-      ? initialValues.funding_available
-      : initialValues.funding_available === "true"
-      ? true
-      : initialValues.funding_available === "false"
-      ? false
-      : null
-  );
+  const [title, setTitle] = useState(initialValues.title);
+  const [description, setDescription] = useState(initialValues.description);
+  const [goals, setGoals] = useState(initialValues.goals);
+  const [research_areas, setResArea] = useState(initialValues.research_areas);
+  const [start_date, setStart] = useState(initialValues.start_date);
+  const [end_date, setEnd] = useState(initialValues.end_date);
+  const [funding_available, setFunding] = useState(initialValues.funding_available);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [showRequirementsForm, setShowRequirementsForm] = useState(false);
+  const [requirements, setRequirements] = useState(initialValues.requirements || []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Update state when initialValues change
+  useEffect(() => {
+    setTitle(initialValues.title);
+    setDescription(initialValues.description);
+    setGoals(initialValues.goals);
+    setResArea(initialValues.research_areas);
+    setStart(initialValues.start_date);
+    setEnd(initialValues.end_date);
+    setFunding(initialValues.funding_available);
+    setRequirements(initialValues.requirements || []);
+  }, [initialValues]);
+
+  const handleProjectSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
     setSuccess(false);
-    const payload = {
+
+    // Show the requirements form
+    setShowRequirementsForm(true);
+  };
+
+  // Format date for input field
+  const formatDateForInput = (dateString: string) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toISOString().split('T')[0];
+  };
+
+  if (showRequirementsForm) {
+    const projectData = {
       title,
       description,
       goals,
       research_areas,
-      start_date,
-      end_date,
-      funding_available,
+      start_date: new Date(start_date).toISOString().split('T')[0],
+      end_date: new Date(end_date).toISOString().split('T')[0],
+      funding_available
     };
-    console.log(
-      "[EditProjectForm] Submitting update for projectId:",
-      initialValues.projectId
+
+    return (
+      <EditReqForm
+        projectId={initialValues.project_ID}
+        projectData={projectData}
+        requirements={requirements}
+        onClose={() => {
+          setShowRequirementsForm(false);
+          onClose();
+        }}
+        onEdit={onEdit}
+      />
     );
-    console.log("[EditProjectForm] Payload:", payload);
-    try {
-      const token = localStorage.getItem("jwt");
-      const res = await fetch(
-        `http://localhost:5000/api/projects/update/${initialValues.projectId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          body: JSON.stringify({
-            project: payload,
-            requirements: [], // Add requirements if needed
-          }),
-        }
-      );
-      const data = await res.json();
-      console.log("[EditProjectForm] API response:", data);
-      if (res.ok) {
-        setSuccess(true);
-        onEdit({ projectId: initialValues.projectId, ...payload });
-        console.log("[EditProjectForm] Closing form after successful edit.");
-        onClose();
-      } else {
-        setError(data.error || "Unknown error");
-      }
-    } catch (err: any) {
-      setError(err.message || "An error occurred");
-      console.error("[EditProjectForm] Submission error:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }
 
   return (
     <main className={styles.createModal}>
@@ -107,8 +98,8 @@ export default function EditProjectForm({
           X
         </button>
         <h1 className={styles.title}>Edit Project</h1>
-        <form className={styles.createForm} onSubmit={handleSubmit}>
-          <label htmlFor="projectName">Project name</label>
+        <form className={styles.createForm} onSubmit={handleProjectSubmit}>
+          <label htmlFor="projName">Project name</label>
           <input
             type="text"
             id="projName"
@@ -133,6 +124,7 @@ export default function EditProjectForm({
             onChange={(e) => setGoals(e.target.value)}
             required
           />
+
           <label htmlFor="setResArea">Research Area</label>
           <input
             type="text"
@@ -146,7 +138,7 @@ export default function EditProjectForm({
           <input
             type="date"
             id="setStart"
-            value={start_date}
+            value={formatDateForInput(start_date)}
             onChange={(e) => setStart(e.target.value)}
             required
           />
@@ -155,12 +147,13 @@ export default function EditProjectForm({
           <input
             type="date"
             id="setEnd"
-            value={end_date}
+            value={formatDateForInput(end_date)}
             onChange={(e) => setEnd(e.target.value)}
             required
           />
+
           <section className={styles.radioContainer}>
-            <label htmlFor="Funding">Fundings</label>
+            <label htmlFor="Funding">Funding Available *</label>
             <label>
               <input
                 type="radio"
@@ -169,6 +162,7 @@ export default function EditProjectForm({
                 className={styles.radioInput}
                 checked={funding_available === true}
                 onChange={() => setFunding(true)}
+                required
               />
               Yes
             </label>
@@ -191,7 +185,7 @@ export default function EditProjectForm({
             disabled={loading}
             style={{ backgroundColor: 'black', color: 'white', border: 'none', borderRadius: 'var(--button-radius)', fontSize: 20, fontWeight: 600 }}
           >
-            {loading ? "Saving..." : "Save Changes"}
+            Next: Edit Requirements
           </button>
           {error && <div style={{ color: "red", marginTop: 8 }}>{error}</div>}
           {success && (

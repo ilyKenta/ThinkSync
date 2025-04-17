@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 //import useAuth from "../useAuth";
 
-type CreateFormProps = {
+export type CreateFormProps = {
   onClose: () => void;
   onCreate: (
     projectName: string,
@@ -17,6 +17,7 @@ type CreateFormProps = {
     Funding: boolean | null
   ) => void;
 };
+
 export default function CreateForm({ onClose, onCreate }: CreateFormProps) {
   const router = useRouter();
   // useAuth(); // Check authentication
@@ -37,6 +38,15 @@ export default function CreateForm({ onClose, onCreate }: CreateFormProps) {
       alert("User ID is missing.");
       return;
     }*/
+    
+    // Check if funding is selected
+    if (funding_available === null) {
+      const fundingInputs = document.getElementsByName('funding');
+      (fundingInputs[0] as HTMLInputElement).setCustomValidity('Please select a funding option');
+      (fundingInputs[0] as HTMLInputElement).reportValidity();
+      return;
+    }
+
     const payload = {
       title,
       description,
@@ -85,6 +95,13 @@ export default function CreateForm({ onClose, onCreate }: CreateFormProps) {
     }*/
   };
 
+  // Clear custom validity when funding selection changes
+  const handleFundingChange = (value: boolean) => {
+    setFunding(value);
+    const fundingInputs = document.getElementsByName('funding');
+    (fundingInputs[0] as HTMLInputElement).setCustomValidity('');
+  };
+
   return (
     <main className={styles.createModal}>
       <section className={styles.createBox}>
@@ -92,8 +109,8 @@ export default function CreateForm({ onClose, onCreate }: CreateFormProps) {
           X
         </button>
         <h1 className={styles.title}>Project Information</h1>
-        <form className={styles.createForm} onSubmit={handleSubmit}>
-          <label htmlFor="projectName">Project name</label>
+        <form className={styles.createForm} onSubmit={handleSubmit} noValidate>
+          <label htmlFor="projName">Project name</label>
           <input
             type="text"
             id="projName"
@@ -146,7 +163,7 @@ export default function CreateForm({ onClose, onCreate }: CreateFormProps) {
           />
 
           <section className={styles.radioContainer}>
-            <label htmlFor="Funding">Fundings</label>
+            <label htmlFor="Funding">Funding Available *</label>
             <label>
               <input
                 type="radio"
@@ -154,7 +171,7 @@ export default function CreateForm({ onClose, onCreate }: CreateFormProps) {
                 value="true"
                 className={styles.radioInput}
                 checked={funding_available === true}
-                onChange={() => setFunding(true)}
+                onChange={() => handleFundingChange(true)}
               />
               Yes
             </label>
@@ -166,14 +183,18 @@ export default function CreateForm({ onClose, onCreate }: CreateFormProps) {
                 value="false"
                 className={styles.radioInput}
                 checked={funding_available === false}
-                onChange={() => setFunding(false)}
+                onChange={() => handleFundingChange(false)}
               />
               No
             </label>
           </section>
 
-          <button type="submit" aria-label="submit information">
-            Create →
+          <button
+            type="submit"
+            aria-label="submit information"
+            style={{ backgroundColor: 'black', color: 'white', border: 'none', borderRadius: 'var(--button-radius)', fontSize: 20, fontWeight: 600 }}
+          >
+            Next: Add Requirements
           </button>
         </form>
       </section>

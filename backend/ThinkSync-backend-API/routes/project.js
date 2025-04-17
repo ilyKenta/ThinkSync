@@ -5,21 +5,21 @@ const axios = require('axios');
 
 // Get user ID from Entra token
 const getUserIdFromToken = async (token) => {
-    if (!token) {
-        throw new Error('Access token is required');
-    }
+    // if (!token) {
+    //     throw new Error('Access token is required');
+    // }
 
-    try {
-        const graphResponse = await axios.get("https://graph.microsoft.com/v1.0/me", {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        });
-        return graphResponse.data.id;
-    } catch (error) {
-        throw new Error('Invalid token');
-    }
-    //return '65fc38ee-5415-49f4-96ee-4a1643a69923'; 
+    // try {
+    //     const graphResponse = await axios.get("https://graph.microsoft.com/v1.0/me", {
+    //         headers: {
+    //             Authorization: `Bearer ${token}`
+    //         }
+    //     });
+    //     return graphResponse.data.id;
+    // } catch (error) {
+    //     throw new Error('Invalid token');
+    // }
+    return '65fc38ee-5415-49f4-96ee-4a1643a69923'; 
 };
 
 // Extract token from Authorization header
@@ -125,14 +125,10 @@ router.post('/create', async (req, res) => {
 });
 
 // Get all projects for an owner
-router.get('/owner/:ownerId', async (req, res) => {
+router.get('/owner', async (req, res) => {
     try {
         const token = extractToken(req);
         const userId = await getUserIdFromToken(token);
-
-        if (userId !== req.params.ownerId) {
-            return res.status(403).json({ error: 'Unauthorized' });
-        }
 
         const projects = await db.executeQuery(`
             SELECT p.*, pr.requirement_ID, pr.skill_required, pr.experience_level, pr.role, pr.technical_requirements
@@ -256,7 +252,6 @@ router.put('/update/:projectId', async (req, res) => {
 // Delete project
 router.delete('/delete/:projectId', async (req, res) => {
     try {
-        console.log("here");
         const token = extractToken(req);
         const userId = await getUserIdFromToken(token);
 

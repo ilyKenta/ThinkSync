@@ -1,59 +1,158 @@
 "use client";
 
 import styles from "../create-req/page.module.css";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 
-// Props for editing requirements
 export type EditReqFormProps = {
   projectId: string;
-  requirements: {
-    skill: string;
-    experience: string;
-    reqrole: string;
-    techReq: string;
+  projectData: {
+    title: string;
+    description: string;
+    goals: string;
+    research_areas: string;
+    start_date: string;
+    end_date: string;
+    funding_available: boolean;
   };
+  requirements: {
+    skill_required: string;
+    experience_level: string;
+    role: string;
+    technical_requirements: string;
+  }[];
   onClose: () => void;
-  onEdit: (updatedRequirements: any) => void;
+  onEdit: (updatedProject: any) => void;
 };
 
 export default function EditReqForm({
   projectId,
+  projectData,
   requirements,
   onClose,
   onEdit,
 }: EditReqFormProps) {
-  const router = useRouter();
-  const [skill, setSkill] = useState(requirements.skill || "");
-  const [experience, setExp] = useState(requirements.experience || "");
-  const [reqrole, setRole] = useState(requirements.reqrole || "");
-  const [techReq, setReq] = useState(requirements.techReq || "");
+  const [skill, setSkill] = useState("");
+  const [experience, setExp] = useState("");
+  const [reqrole, setRole] = useState("");
+  const [techReq, setReq] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Initialize form fields with current requirement data
+  useEffect(() => {
+    if (requirements && requirements.length > 0) {
+      const currentReq = requirements[0];
+      setSkill(currentReq.skill_required || "");
+      setExp(currentReq.experience_level || "");
+      setRole(currentReq.role || "");
+      setReq(currentReq.technical_requirements || "");
+    }
+  }, [requirements]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Add API call to update requirements for this project
-    const updated = { skill, experience, reqrole, techReq };
-    onEdit(updated);
-    onClose();
+    setLoading(true);
+    setError(null);
+
+    try {
+      const token = 'dummyToken';
+      if (!token) {
+        throw new Error('No access token found');
+      }
+
+      const payload = {
+        project: projectData,
+        requirements: [{
+          skill_required: skill,
+          experience_level: experience.toLowerCase(),
+          role: reqrole,
+          technical_requirements: techReq,
+        }]
+      };
+
+      const res = await fetch(
+        `http://localhost:5000/api/projects/update/${projectId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to update project");
+      }
+
+      const data = await res.json();
+      onEdit(data);
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className={styles.overlay}>
-      <form className={styles.form} onSubmit={handleSubmit}>
-        <h2>Edit Project Requirements</h2>
-        <label>Skill:</label>
-        <input value={skill} onChange={e => setSkill(e.target.value)} />
-        <label>Experience:</label>
-        <input value={experience} onChange={e => setExp(e.target.value)} />
-        <label>Role:</label>
-        <input value={reqrole} onChange={e => setRole(e.target.value)} />
-        <label>Technical Requirements:</label>
-        <input value={techReq} onChange={e => setReq(e.target.value)} />
-        <div className={styles.buttonRow}>
-          <button type="submit">Save</button>
-          <button type="button" onClick={onClose}>Cancel</button>
-        </div>
-      </form>
-    </div>
+    <main className={styles.createModal}>
+      <section className={styles.createBox}>
+        <button onClick={onClose} className={styles.closeButton}>
+          X
+        </button>
+        <h1 className={styles.title}>Edit Project Requirements</h1>
+        <form className={styles.createForm} onSubmit={handleSubmit}>
+          <label htmlFor="skillReq">Skill Required</label>
+          <input
+            type="text"
+            id="skillReq"
+            value={skill}
+            onChange={(e) => setSkill(e.target.value)}
+            required
+          />
+          <label htmlFor="explvl">Level of experience</label>
+          <select
+            name="explvl"
+            id="explvl"
+            className="drop-down"
+            value={experience}
+            onChange={(e) => setExp(e.target.value)}
+          >
+            <option value=""></option>
+            <option value="beginner">Beginner</option>
+            <option value="intermediate">Intermediate</option>
+            <option value="professional">Professional</option>
+          </select>
+          <label htmlFor="role">Role</label>
+          <input
+            type="text"
+            id="reqrole"
+            value={reqrole}
+            onChange={(e) => setRole(e.target.value)}
+            required
+          />
+          <label htmlFor="techReq">Technical Requirements</label>
+          <input
+            type="text"
+            id="techReq"
+            value={techReq}
+            onChange={(e) => setReq(e.target.value)}
+            required
+          />
+          <button 
+            type="submit" 
+            aria-label="submit information"
+            disabled={loading}
+            style={{ backgroundColor: 'black', color: 'white', border: 'none', borderRadius: 'var(--button-radius)', fontSize: 20, fontWeight: 600 }}
+          >
+            {loading ? "Saving..." : "Save Changes"}
+          </button>
+          {error && <div style={{ color: "red", marginTop: 8 }}>{error}</div>}
+        </form>
+      </section>
+    </main>
   );
 }

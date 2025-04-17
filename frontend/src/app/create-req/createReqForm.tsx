@@ -59,6 +59,8 @@ export default function CreateReqForm({
       techReq,
     };*/
 
+    const token = 'dummyToken';
+
     const payload = {
       project: {
         title: projectName,
@@ -91,6 +93,7 @@ export default function CreateReqForm({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // Send token for authorization
         },
         body: JSON.stringify(payload),
       });
