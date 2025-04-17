@@ -1,14 +1,15 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, use } from "react";
 import styles from "./page.module.css";
 import CreateForm from "../create-project/createForm";
 import CreateReqForm from "../create-req/createReqForm";
 import EditProjectForm from "../edit-project/editProjectForm";
-import EditReqForm from "../edit-project/editReqForm";
 import { useRouter } from "next/navigation";
+import useAuth from "../useAuth";
 
 const Page = () => {
+  useAuth();
   const router = useRouter();
   const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -22,8 +23,7 @@ const Page = () => {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        //const token = localStorage.getItem('accessToken');
-        const token = 'dummyToken';
+        const token = localStorage.getItem('jwt');
         if (!token) {
           throw new Error('No access token found');
         }
@@ -57,8 +57,7 @@ const Page = () => {
 
   const handleDelete = async (projectId: string) => {
     try {
-      // const token = localStorage.getItem('accessToken');
-      const token = 'dummyToken';
+      const token = localStorage.getItem('jwt');
       if (!token) {
         throw new Error('No access token found');
       }

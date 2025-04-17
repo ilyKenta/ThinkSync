@@ -1,5 +1,6 @@
 "use client";
 
+import { LocalStorage } from "@azure/msal-browser";
 import styles from "../create-req/page.module.css";
 import { useState, useEffect } from "react";
 
@@ -55,7 +56,7 @@ export default function EditReqForm({
     setError(null);
 
     try {
-      const token = 'dummyToken';
+      const token = localStorage.getItem("jwt");
       if (!token) {
         throw new Error('No access token found');
       }

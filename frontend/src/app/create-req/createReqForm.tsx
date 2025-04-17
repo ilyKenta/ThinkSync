@@ -38,11 +38,11 @@ export default function CreateReqForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    /*const token = localStorage.getItem("jwt");
+    const token = localStorage.getItem("jwt");
     if (!token) {
-      alert("User ID is missing.");
+      alert("User not logged in");
       return;
-    }*/
+    }
     /*const payload = {
       projectName,
       projectDesc,
@@ -59,7 +59,7 @@ export default function CreateReqForm({
       techReq,
     };*/
 
-    const token = 'dummyToken';
+    //const token = 'dummyToken';
 
     const payload = {
       project: {
