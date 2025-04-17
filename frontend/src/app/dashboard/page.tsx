@@ -6,10 +6,11 @@ import CreateForm from "../create-project/createForm";
 import CreateReqForm from "../create-req/createReqForm";
 import EditProjectForm from "../edit-project/editProjectForm";
 import { useRouter } from "next/navigation";
-import useAuth from "../useAuth";
+import { FaPaperPlane, FaEnvelope, FaUserCircle, FaUserPlus  } from "react-icons/fa";
+//import useAuth from "../useAuth";
 
 const Page = () => {
-  useAuth();
+  //useAuth();
   const router = useRouter();
   const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -20,7 +21,7 @@ const Page = () => {
   const [showEditForm, setShowEditForm] = useState(false);
 
   // Fetch projects on component mount
-  useEffect(() => {
+  /*useEffect(() => {
     const fetchProjects = async () => {
       try {
         const token = localStorage.getItem('jwt');
@@ -49,7 +50,7 @@ const Page = () => {
     };
 
     fetchProjects();
-  }, []);
+  }, []);*/
 
   const handleCardClick = (projectId: string) => {
     router.push(`/projectInfo/${projectId}`);
@@ -99,13 +100,14 @@ const Page = () => {
     boolean | null
   >(null);
 
-  if (loading) {
+
+ /* if (loading) {
     return <div className={styles.container}>Loading projects...</div>;
   }
 
   if (error) {
     return <div className={styles.container}>Error: {error}</div>;
-  }
+  }*/
 
   return (
     <div className={styles.container}>
@@ -129,13 +131,19 @@ const Page = () => {
       <main className={styles.mainContent}>
         <section className={styles.heading}>
           <h2>Current projects</h2>
-          <div className={styles.searchContainer}>
-            <input
-              className={styles.searchInput}
-              type="text"
-              placeholder="Search projects..."
-            />
-          </div>
+          <nav className={styles.colabGroup}>
+            <button className={styles.iconButton}>
+              <FaPaperPlane />
+            </button>
+
+            <button className={styles.iconButton}>
+              <FaEnvelope />
+            </button>
+
+            <button className={styles.iconButton}>
+              <FaUserCircle />
+            </button>
+          </nav>
         </section>
 
         <section className={styles.buttonHeader}>
@@ -165,6 +173,11 @@ const Page = () => {
                 setCurrentEnd(setEnd);
                 setCurrentFunding(Funding);
 
+                setProjects((prev)=>[
+                  ...prev,
+                  {project_ID: Date.now(), name:projectName},                   /////TAKE THIS OUT< TESTING ONLY
+                ])
+
                 setShowForm(false); // Close the first modal after creating
                 setShowReqForm(true); // Open the second modal
               }}
@@ -187,18 +200,26 @@ const Page = () => {
             />
           )}
 
-          <div className={styles.buttonGroup}>
+            <div className={styles.searchContainer}>
+              <input
+                className={styles.searchInput}
+                type="text"
+                placeholder="Search projects..."
+              />
+            </div>
+
+          {/*<div className={styles.buttonGroup}>
             <button>Upload</button>
             <button>Create folder</button>
             <button>Record</button>
-          </div>
+          </div>*/}
         </section>
 
-        <div className={styles.tabGroup}>
+      {/*<div className={styles.tabGroup}>
           <button>Recent</button>
           <button>Starred</button>
           <button>Shared</button>
-        </div>
+        </div>*/}
 
         <div className={styles.cardContainer}>
           {projects.map((project) => (
@@ -234,6 +255,11 @@ const Page = () => {
                         <path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19.5 3 21l1.5-4L16.5 3.5z" />
                       </svg>
                     </button>
+
+                    <button className={styles.addButton}>
+                      <FaUserPlus />
+                    </button>
+
                     <button
                       className={styles.trashButton}
                       title="Delete project"
