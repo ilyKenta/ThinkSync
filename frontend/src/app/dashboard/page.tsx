@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, use } from "react";
 import styles from "./page.module.css";
+import InviteCollaborators from "../components/InviteCollaborators";
 import CreateForm from "../create-project/createForm";
 import CreateReqForm from "../create-req/createReqForm";
 import EditProjectForm from "../edit-project/editProjectForm";
@@ -19,6 +20,10 @@ const Page = () => {
   // State for editing project and requirements
   const [editProject, setEditProject] = useState<any | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
+
+  // State for invite modal
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const [inviteProject, setInviteProject] = useState<any | null>(null);
 
   // Fetch projects on component mount
   /*useEffect(() => {
@@ -111,6 +116,21 @@ const Page = () => {
 
   return (
     <div className={styles.container}>
+      {showEditForm && editProject && (
+        <EditProjectForm
+          onClose={() => setShowEditForm(false)}
+          initialValues={editProject}
+          onEdit={(updatedProject) => {
+            setProjects((prev) =>
+              prev.map((proj) =>
+                proj.project_ID === updatedProject.project_ID ? { ...proj, ...updatedProject } : proj
+              )
+            );
+            setShowEditForm(false);
+            setEditProject(null);
+          }}
+        />
+      )}
       <aside className={styles.sidebar}>
         <h2>ThinkSync</h2>
         <h3>DASHBOARD</h3>
@@ -175,7 +195,18 @@ const Page = () => {
 
                 setProjects((prev)=>[
                   ...prev,
-                  {project_ID: Date.now(), name:projectName},                   /////TAKE THIS OUT< TESTING ONLY
+                  {
+                    project_ID: Date.now(),
+                    name: projectName,
+                    title: projectName,
+                    description: projectDesc,
+                    projectDesc: projectDesc,
+                    start_date: setStart,
+                    end_date: setEnd,
+                    funding_available: Funding,
+                    goals: goals,
+                    research_areas: setResArea,
+                  }
                 ])
 
                 setShowForm(false); // Close the first modal after creating
@@ -231,13 +262,7 @@ const Page = () => {
               <div className={styles.cardContent}>
                 <img src="/exampleImg.png" alt="project" />
                 <div className={styles.projectInfo}>
-                  <h3>{project.title}</h3>
-                  <p className={styles.description}>{project.description}</p>
-                  <div className={styles.projectDetails}>
-                    <span>Start: {new Date(project.start_date).toLocaleDateString()}</span>
-                    <span>End: {new Date(project.end_date).toLocaleDateString()}</span>
-                    <span>Funding: {project.funding_available ? 'Available' : 'Not Available'}</span>
-                  </div>
+                  <h3>{project.name || project.title}</h3>
                 </div>
                 <section className={styles.cardFooter}>
                   <div className={styles.buttonContainer}>
@@ -255,11 +280,17 @@ const Page = () => {
                         <path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19.5 3 21l1.5-4L16.5 3.5z" />
                       </svg>
                     </button>
-
-                    <button className={styles.addButton}>
-                      <FaUserPlus />
-                    </button>
-
+                    <button
+  className={styles.addButton}
+  onClick={(e) => {
+    e.stopPropagation();
+    setInviteProject(project);
+    setInviteModalOpen(true);
+  }}
+  title="Invite Collaborators"
+>
+  <FaUserPlus />
+</button>
                     <button
                       className={styles.trashButton}
                       title="Delete project"
@@ -276,28 +307,17 @@ const Page = () => {
             </div>
           ))}
         </div>
-        {/* Edit Project Modal */}
-        {showEditForm && editProject && (
-          <EditProjectForm
-            initialValues={editProject}
-            onClose={() => {
-              setShowEditForm(false);
-              setEditProject(null);
-            }}
-            onEdit={(updatedProject) => {
-              // Update the project in the list
-              setProjects((prev) =>
-                prev.map((p) =>
-                  p.project_ID === updatedProject.project_ID
-                    ? { ...p, ...updatedProject }
-                    : p
-                )
-              );
-              setShowEditForm(false);
-              setEditProject(null);
-            }}
-          />
-        )}
+        {inviteModalOpen && inviteProject && (
+  <InviteCollaborators
+    projectId={inviteProject.project_ID}
+    projectTitle={inviteProject.title || ''}
+    projectDescription={inviteProject.description || ''}
+    onClose={() => {
+      setInviteModalOpen(false);
+      setInviteProject(null);
+    }}
+  />
+)}
       </main>
     </div>
   );
