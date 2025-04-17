@@ -6,8 +6,20 @@ import CreateForm from "../create-project/createForm";
 import CreateReqForm from "../create-req/createReqForm";
 import EditProjectForm from "../edit-project/editProjectForm";
 import { useRouter } from "next/navigation";
-import { FaPaperPlane, FaEnvelope, FaUserCircle, FaUserPlus  } from "react-icons/fa";
+import {
+  FaPaperPlane,
+  FaEnvelope,
+  FaUserCircle,
+  FaUserPlus,
+} from "react-icons/fa";
+import Sidebar from "../sent-sidebar/sidebar";
 //import useAuth from "../useAuth";
+
+interface Invite {
+  recipient_name: string;
+  project_name: string;
+  status: string;
+}
 
 const Page = () => {
   //useAuth();
@@ -19,6 +31,41 @@ const Page = () => {
   // State for editing project and requirements
   const [editProject, setEditProject] = useState<any | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [invites, setInvites] = useState<Invite[]>([]);
+
+  const togglerSidebar = () => {
+    setIsSidebarOpen((prev) => !prev);
+  };
+
+  useEffect(() => {
+    if (isSidebarOpen) {
+      const fetchInvites = async () => {
+        setLoading(true);
+        try {
+          const res = await fetch(
+            "http://localhost:5000/api/collaborations/invite",
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            }
+          );
+          if (!res.ok) throw new Error("Failed to fetch invites");
+
+          const data = await res.json();
+          console.log("Fetched invites:", data);
+          setInvites(data);
+        } catch (err) {
+          console.error("Error fetching invites:", err);
+          setInvites([]);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchInvites();
+    }
+  }, [isSidebarOpen]);
 
   // Fetch projects on component mount
   /*useEffect(() => {
@@ -58,9 +105,9 @@ const Page = () => {
 
   const handleDelete = async (projectId: string) => {
     try {
-      const token = localStorage.getItem('jwt');
+      const token = localStorage.getItem("jwt");
       if (!token) {
-        throw new Error('No access token found');
+        throw new Error("No access token found");
       }
 
       const res = await fetch(
@@ -100,8 +147,7 @@ const Page = () => {
     boolean | null
   >(null);
 
-
- /* if (loading) {
+  /* if (loading) {
     return <div className={styles.container}>Loading projects...</div>;
   }
 
@@ -132,9 +178,17 @@ const Page = () => {
         <section className={styles.heading}>
           <h2>Current projects</h2>
           <nav className={styles.colabGroup}>
-            <button className={styles.iconButton}>
-              <FaPaperPlane />
-            </button>
+            <section className="styles.sidebar">
+              <button className={styles.iconButton} onClick={togglerSidebar}>
+                <FaPaperPlane />
+              </button>
+              <Sidebar
+                isOpen={isSidebarOpen}
+                onClose={togglerSidebar}
+                invites={invites}
+                loading={loading}
+              />
+            </section>
 
             <button className={styles.iconButton}>
               <FaEnvelope />
@@ -173,10 +227,10 @@ const Page = () => {
                 setCurrentEnd(setEnd);
                 setCurrentFunding(Funding);
 
-                setProjects((prev)=>[
+                setProjects((prev) => [
                   ...prev,
-                  {project_ID: Date.now(), name:projectName},                   /////TAKE THIS OUT< TESTING ONLY
-                ])
+                  { project_ID: Date.now(), name: projectName }, /////TAKE THIS OUT< TESTING ONLY
+                ]);
 
                 setShowForm(false); // Close the first modal after creating
                 setShowReqForm(true); // Open the second modal
@@ -200,13 +254,13 @@ const Page = () => {
             />
           )}
 
-            <div className={styles.searchContainer}>
-              <input
-                className={styles.searchInput}
-                type="text"
-                placeholder="Search projects..."
-              />
-            </div>
+          <div className={styles.searchContainer}>
+            <input
+              className={styles.searchInput}
+              type="text"
+              placeholder="Search projects..."
+            />
+          </div>
 
           {/*<div className={styles.buttonGroup}>
             <button>Upload</button>
@@ -215,7 +269,7 @@ const Page = () => {
           </div>*/}
         </section>
 
-      {/*<div className={styles.tabGroup}>
+        {/*<div className={styles.tabGroup}>
           <button>Recent</button>
           <button>Starred</button>
           <button>Shared</button>
@@ -223,8 +277,8 @@ const Page = () => {
 
         <div className={styles.cardContainer}>
           {projects.map((project) => (
-            <div 
-              key={project.project_ID} 
+            <div
+              key={project.project_ID}
               className={styles.card}
               onClick={() => handleCardClick(project.project_ID)}
             >
@@ -234,9 +288,18 @@ const Page = () => {
                   <h3>{project.title}</h3>
                   <p className={styles.description}>{project.description}</p>
                   <div className={styles.projectDetails}>
-                    <span>Start: {new Date(project.start_date).toLocaleDateString()}</span>
-                    <span>End: {new Date(project.end_date).toLocaleDateString()}</span>
-                    <span>Funding: {project.funding_available ? 'Available' : 'Not Available'}</span>
+                    <span>
+                      Start: {new Date(project.start_date).toLocaleDateString()}
+                    </span>
+                    <span>
+                      End: {new Date(project.end_date).toLocaleDateString()}
+                    </span>
+                    <span>
+                      Funding:{" "}
+                      {project.funding_available
+                        ? "Available"
+                        : "Not Available"}
+                    </span>
                   </div>
                 </div>
                 <section className={styles.cardFooter}>
@@ -250,7 +313,16 @@ const Page = () => {
                         setShowEditForm(true);
                       }}
                     >
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
                         <path d="M12 20h9" />
                         <path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19.5 3 21l1.5-4L16.5 3.5z" />
                       </svg>
