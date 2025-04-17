@@ -1,0 +1,140 @@
+.title {
+  color: black;
+  font-weight: var(--font-weight-bold);
+  font-size: 30px;
+  padding: 1.5rem;
+  align-self: center;
+}
+
+.createBox {
+  max-width: 600px;
+  min-height: 600px;
+  margin: 4rem auto;
+  padding: 2rem;
+  background: var(--box-color);
+  border-radius: 12px;
+  box-shadow: 10px 10px 10px var(--shadows-color);
+  background-color: var(--box-color);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  background: var(--primary-color);
+  padding: 2rem;
+  border-radius: 10px;
+  position: relative;
+  width: 500px;
+  max-width: 90%;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+}
+
+.createBox label {
+  align-self: flex-start;
+  font-weight: var(--font-weight-regular);
+  margin-bottom: 0.2rem;
+  font-size: 15px;
+}
+.createBox input {
+  width: var(--input-fields-width);
+  height: var(--input-fields-height);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: var(--input-radius);
+  border: 1px solid #ccc;
+  background-color: var(--box-color);
+}
+.createBox select {
+  width: var(--input-fields-width);
+  height: var(--input-fields-height);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: var(--input-radius);
+  border: 1px solid #ccc;
+  background-color: var(--box-color);
+}
+.createForm input:hover {
+  background-color: var(--field-hover-color);
+}
+
+.createForm button {
+  width: var(--card-buttons-width);
+  height: var(--card-buttons-height);
+  padding: 1rem;
+  background-color: var(--secondary-color);
+  color: white;
+  font-size: 25px;
+  font-weight: var(--font-weight-medium);
+  border: none;
+  border-radius: var(--button-radius);
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+}
+.closeButton {
+  color: var(--secondary-color);
+  background-color: var(--box-color);
+  height: 2rem;
+  width: 2rem;
+  border-radius: var(--button-radius);
+  border: 1px solid #ccc;
+  display: block;
+  margin-left: auto;
+  margin-right: 0;
+}
+.closeButton:hover {
+  background-color: var(--field-hover-color);
+  cursor: pointer;
+}
+.createModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.createForm input {
+  width: 100%;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.radioContainer {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 1rem 0;
+  cursor: pointer;
+}
+
+.radioInput {
+  appearance: none; /* Remove default */
+  -webkit-appearance: none;
+  width: 16px;
+  height: 10px;
+  border: 2px solid #555;
+  border-radius: 100%;
+  position: relative;
+  transition: 0.2s all ease-in-out;
+}
+
+.radioInput:checked {
+  border-color: #000000;
+  background-color: #000000;
+}
+
+.radioInput:checked::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 6px;
+  height: 6px;
+  background-color: rgb(0, 0, 0);
+  border-radius: 50%;
+}
