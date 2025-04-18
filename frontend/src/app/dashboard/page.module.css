@@ -92,25 +92,22 @@
   box-shadow: 0 0 5px var(--shadows-color);
 }
 
+
+
 .heading {
-  display: grid;
-  grid-template-columns: repeat(
-    auto-fit,
-    minmax(250px, 1fr)
-  ); /* Responsive grid */
-  align-items: center;
+  display: flex;
   justify-content: space-between;
+  align-items: center;
   border-bottom: 1px solid #000000;
   margin-bottom: 2rem;
-  gap: 60rem;
+  padding: 0 20px; /* optional, keeps some space around */
 }
 
 .colabGroup {
   display: flex;
   gap: 1rem;
   align-items: center;
-  width: 100%;
-  padding: 0px 20px;
+  padding: 0px 60px;
 }
 
 .iconButton {
