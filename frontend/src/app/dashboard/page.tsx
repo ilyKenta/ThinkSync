@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, use } from "react";
+import React, { useState, useEffect } from "react";
 import styles from "./page.module.css";
 import CreateForm from "../create-project/createForm";
 import CreateReqForm from "../create-req/createReqForm";
@@ -13,7 +13,7 @@ import {
   FaUserPlus,
 } from "react-icons/fa";
 import Sidebar from "../sent-sidebar/sidebar";
-//import useAuth from "../useAuth";
+import InboxSidebar from "../inbox-sidebar/inb_sidebar";
 
 interface Invite {
   recipient_name: string;
@@ -22,20 +22,24 @@ interface Invite {
 }
 
 const Page = () => {
-  //useAuth();
   const router = useRouter();
   const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // State for editing project and requirements
   const [editProject, setEditProject] = useState<any | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [invites, setInvites] = useState<Invite[]>([]);
+  const [isInboxSidebarOpen, setIsInboxSidebarOpen] = useState(false);
+  const [receivedInvites, setReceivedInvites] = useState<any[]>([]);
 
   const togglerSidebar = () => {
     setIsSidebarOpen((prev) => !prev);
+  };
+
+  const toggleInboxSidebar = () => {
+    setIsInboxSidebarOpen((prev) => !prev);
   };
 
   useEffect(() => {
@@ -54,10 +58,8 @@ const Page = () => {
           if (!res.ok) throw new Error("Failed to fetch invites");
 
           const data = await res.json();
-          console.log("Fetched invites:", data);
           setInvites(data);
         } catch (err) {
-          console.error("Error fetching invites:", err);
           setInvites([]);
         } finally {
           setLoading(false);
@@ -67,37 +69,29 @@ const Page = () => {
     }
   }, [isSidebarOpen]);
 
-  // Fetch projects on component mount
-  /*useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        const token = localStorage.getItem('jwt');
-        if (!token) {
-          throw new Error('No access token found');
+  useEffect(() => {
+    if (isInboxSidebarOpen) {
+      const fetchReceivedInvites = async () => {
+        setLoading(true);
+        try {
+          const res = await fetch("http://localhost:5000/api/collaborations/invitations/received", {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          });
+          if (!res.ok) throw new Error("Failed to fetch received invites");
+  
+          const data = await res.json();
+          setReceivedInvites(data.invitations);
+        } catch (err) {
+          setReceivedInvites([]);
+        } finally {
+          setLoading(false);
         }
-
-        const response = await fetch('http://localhost:5000/api/projects/owner', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch projects');
-        }
-
-        const data = await response.json();
-        setProjects(data.projects);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
-        console.error('Error fetching projects:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProjects();
-  }, []);*/
+      };
+      fetchReceivedInvites();
+    }
+  }, [isInboxSidebarOpen]);
 
   const handleCardClick = (projectId: string) => {
     router.push(`/projectInfo/${projectId}`);
@@ -147,52 +141,50 @@ const Page = () => {
     boolean | null
   >(null);
 
-  /* if (loading) {
-    return <div className={styles.container}>Loading projects...</div>;
-  }
-
-  if (error) {
-    return <div className={styles.container}>Error: {error}</div>;
-  }*/
-
   return (
     <div className={styles.container}>
       <aside className={styles.sidebar}>
         <h2>ThinkSync</h2>
         <h3>DASHBOARD</h3>
-        <ul>
-          <li>
-            <button type="button" onClick={() => router.push("/dashboard")}>
-              Current Projects
-            </button>
-          </li>
-          <li>
-            <button type="button" onClick={() => router.push("/dashboard2")}>
-              Collaboration
-            </button>
-          </li>
-        </ul>
+        <nav>
+          <ul>
+            <li>
+              <button type="button" onClick={() => router.push("/dashboard")}>
+                Current Projects
+              </button>
+            </li>
+            <li>
+              <button type="button" onClick={() => router.push("/dashboard2")}>
+                Collaboration
+              </button>
+            </li>
+          </ul>
+        </nav>
       </aside>
 
       <main className={styles.mainContent}>
         <section className={styles.heading}>
           <h2>Current projects</h2>
           <nav className={styles.colabGroup}>
-            <section className="styles.sidebar">
-              <button className={styles.iconButton} onClick={togglerSidebar}>
-                <FaPaperPlane />
-              </button>
-              <Sidebar
-                isOpen={isSidebarOpen}
-                onClose={togglerSidebar}
-                invites={invites}
-                loading={loading}
-              />
-            </section>
+            <button className={styles.iconButton} onClick={togglerSidebar}>
+              <FaPaperPlane />
+            </button>
+            <Sidebar
+              isOpen={isSidebarOpen}
+              onClose={togglerSidebar}
+              invites={invites}
+              loading={loading}
+            />
 
-            <button className={styles.iconButton}>
+            <button className={styles.iconButton} onClick={toggleInboxSidebar}>
               <FaEnvelope />
             </button>
+            <InboxSidebar
+              isOpen={isInboxSidebarOpen}
+              onClose={toggleInboxSidebar}
+              invites={receivedInvites}
+              loading={loading}
+            />
 
             <button className={styles.iconButton}>
               <FaUserCircle />
@@ -229,11 +221,11 @@ const Page = () => {
 
                 setProjects((prev) => [
                   ...prev,
-                  { project_ID: Date.now(), name: projectName }, /////TAKE THIS OUT< TESTING ONLY
+                  { project_ID: Date.now(), name: projectName },
                 ]);
 
-                setShowForm(false); // Close the first modal after creating
-                setShowReqForm(true); // Open the second modal
+                setShowForm(false);
+                setShowReqForm(true);
               }}
             />
           )}
@@ -261,23 +253,11 @@ const Page = () => {
               placeholder="Search projects..."
             />
           </div>
-
-          {/*<div className={styles.buttonGroup}>
-            <button>Upload</button>
-            <button>Create folder</button>
-            <button>Record</button>
-          </div>*/}
         </section>
 
-        {/*<div className={styles.tabGroup}>
-          <button>Recent</button>
-          <button>Starred</button>
-          <button>Shared</button>
-        </div>*/}
-
-        <div className={styles.cardContainer}>
+        <section className={styles.cardContainer}>
           {projects.map((project) => (
-            <div
+            <article
               key={project.project_ID}
               className={styles.card}
               onClick={() => handleCardClick(project.project_ID)}
@@ -288,12 +268,12 @@ const Page = () => {
                   <h3>{project.title}</h3>
                   <p className={styles.description}>{project.description}</p>
                   <div className={styles.projectDetails}>
-                    <span>
+                    <time>
                       Start: {new Date(project.start_date).toLocaleDateString()}
-                    </span>
-                    <span>
+                    </time>
+                    <time>
                       End: {new Date(project.end_date).toLocaleDateString()}
-                    </span>
+                    </time>
                     <span>
                       Funding:{" "}
                       {project.funding_available
@@ -302,7 +282,7 @@ const Page = () => {
                     </span>
                   </div>
                 </div>
-                <section className={styles.cardFooter}>
+                <footer className={styles.cardFooter}>
                   <div className={styles.buttonContainer}>
                     <button
                       className={styles.editButton}
@@ -343,12 +323,12 @@ const Page = () => {
                       🗑️
                     </button>
                   </div>
-                </section>
+                </footer>
               </div>
-            </div>
+            </article>
           ))}
-        </div>
-        {/* Edit Project Modal */}
+        </section>
+
         {showEditForm && editProject && (
           <EditProjectForm
             initialValues={editProject}
@@ -357,7 +337,6 @@ const Page = () => {
               setEditProject(null);
             }}
             onEdit={(updatedProject) => {
-              // Update the project in the list
               setProjects((prev) =>
                 prev.map((p) =>
                   p.project_ID === updatedProject.project_ID
@@ -376,3 +355,6 @@ const Page = () => {
 };
 
 export default Page;
+
+
+
