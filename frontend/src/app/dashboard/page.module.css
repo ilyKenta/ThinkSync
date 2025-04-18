@@ -1,13 +1,13 @@
 .container {
   display: flex;
-  min-height: 100vh; /* Ensure the container takes at least the full viewport height */
+  min-height: 100vh;
 }
 
 .sidebar {
-  width: 280px; /* Slightly wider sidebar */
+  width: 280px;
   background-color: var(--primary-color);
-  padding: 25px; /* Add a bit more padding */
-  border-right: 1px solid #ddd; /* Lighter border */
+  padding: 25px;
+  border-right: 1px solid #ddd;
   box-shadow: 10px 10px 10px var(--shadows-color);
 }
 .sidebar h2 {
@@ -67,7 +67,6 @@
   margin-bottom: 20px;
   min-width: 3rem;
   padding-right: 3rem;
- 
 }
 
 .searchInput {
@@ -83,13 +82,13 @@
   background-repeat: no-repeat;
   font-size: 1.2rem;
   cursor: pointer;
-  background-color: var(--field-hover-color);
-  
+  background-color: var(--box-color);
+  cursor: text;
 }
 
 .searchInput:focus {
   outline: none;
-  border-color: #007bff; /* Example focus color */
+  border-color: #000000; /* Example focus color */
   box-shadow: 0 0 5px var(--shadows-color);
 }
 
@@ -129,9 +128,8 @@
 }
 
 .iconButton:hover {
-  background-color: #3730a3;
+  background-color: var(--field-hover-color);
 }
-
 
 .buttonHeader {
   display: flex;
@@ -195,7 +193,7 @@
 
 .tabGroup button:hover,
 .tabGroup button.active {
-  border-bottom-color: #007bff; /* Example active/hover color */
+  border-bottom-color: #000000; /* Example active/hover color */
 }
 
 .tabGroup button.active {
@@ -216,7 +214,6 @@
 }
 
 .card {
-
   all: unset; /* reset default button styles */
   background-color: var(--primary-color);
   border: 1px solid #ddd;
@@ -245,8 +242,6 @@
 .cardContent p {
   font-size: 0.9rem;
   color: #777;
-
-
 }
 
 .cardFooter {
@@ -255,7 +250,7 @@
   justify-content: space-between;
 }
 
-.buttonContainer{
+.buttonContainer {
   display: flex;
   align-items: center;
 }
@@ -280,7 +275,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  padding: 6px 5px 10px 10px ;
+  padding: 6px 5px 10px 10px;
   border-radius: 50%; /* makes it a circle */
   color: #222;
   font-size: 15px;
@@ -292,14 +287,14 @@
 }
 
 .addButton {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 6px;
-    border-radius: 50%; /* makes it a circle */
-    color: #222;
-    font-size: 20px;
-    transition: background-color 0.2s, color 0.2s;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%; /* makes it a circle */
+  color: #222;
+  font-size: 20px;
+  transition: background-color 0.2s, color 0.2s;
 }
 
 .addButton:hover {

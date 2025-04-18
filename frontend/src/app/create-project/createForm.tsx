@@ -136,47 +136,43 @@ export default function CreateForm({ onClose, onCreate }: CreateFormProps) {
             required
           />
 
-          <section className={styles.radioContainer}>
+          <section className={styles.radioGroup}>
             <label htmlFor="Funding">Funding Available *</label>
-            <label>
-              <input
-                type="radio"
-                name="funding"
-                value="true"
-                className={styles.radioInput}
-                checked={funding_available === true}
-                onChange={() => handleFundingChange(true)}
-              />
-              Yes
-            </label>
+            <section className={styles.radioOptions}>
+              <label className={styles.radioContainer}>
+                <input
+                  type="radio"
+                  name="funding"
+                  value="true"
+                  className={styles.radioInput}
+                  checked={funding_available === true}
+                  onChange={() => handleFundingChange(true)}
+                />
+                Yes
+              </label>
 
-            <label>
-              <input
-                type="radio"
-                name="funding"
-                value="false"
-                className={styles.radioInput}
-                checked={funding_available === false}
-                onChange={() => handleFundingChange(false)}
-              />
-              No
-            </label>
+              <label className={styles.radioContainer}>
+                <input
+                  type="radio"
+                  name="funding"
+                  value="false"
+                  className={styles.radioInput}
+                  checked={funding_available === false}
+                  onChange={() => handleFundingChange(false)}
+                />
+                No
+              </label>
+            </section>
           </section>
-
-          <button
-            type="submit"
-            aria-label="submit information"
-            style={{
-              backgroundColor: "black",
-              color: "white",
-              border: "none",
-              borderRadius: "var(--button-radius)",
-              fontSize: 20,
-              fontWeight: 600,
-            }}
-          >
-            Next: Add Requirements
-          </button>
+          <section className={styles.buttonWrap}>
+            <button
+              type="submit"
+              aria-label="submit information"
+              className={styles.buttonNext}
+            >
+              Next: Add Requirements
+            </button>
+          </section>
         </form>
       </section>
     </main>

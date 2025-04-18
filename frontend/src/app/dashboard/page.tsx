@@ -44,7 +44,7 @@ const Page = () => {
         setLoading(true);
         try {
           const res = await fetch(
-            "http://localhost:5000/api/collaborations/invite",
+            `http://localhost:5000/api/collaborations/invitations/sent/`,
             {
               headers: {
                 Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -55,7 +55,7 @@ const Page = () => {
 
           const data = await res.json();
           console.log("Fetched invites:", data);
-          setInvites(data);
+          setInvites(data.invitations);
         } catch (err) {
           console.error("Error fetching invites:", err);
           setInvites([]);
@@ -163,12 +163,12 @@ const Page = () => {
         <ul>
           <li>
             <button type="button" onClick={() => router.push("/dashboard")}>
-              Current Projects
+              My Projects
             </button>
           </li>
           <li>
             <button type="button" onClick={() => router.push("/dashboard2")}>
-              Collaboration
+              Shared Projects
             </button>
           </li>
         </ul>
@@ -176,7 +176,7 @@ const Page = () => {
 
       <main className={styles.mainContent}>
         <section className={styles.heading}>
-          <h2>Current projects</h2>
+          <h2>My Projects</h2>
           <nav className={styles.colabGroup}>
             <section className="styles.sidebar">
               <button className={styles.iconButton} onClick={togglerSidebar}>
