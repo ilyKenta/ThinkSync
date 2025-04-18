@@ -6,12 +6,15 @@ interface Invite {
   recipient_name: string;
   project_name: string;
   status: string;
+  invitation_ID: string;
+  current_status: string;
 }
 interface SidebarProps {
   isOpen: Boolean;
   onClose: () => void;
   invites: Invite[];
   loading?: Boolean;
+  cancelInvite: (invitationId: string) => void;
   children?: React.ReactNode;
 }
 const Sidebar: React.FC<SidebarProps> = ({
@@ -19,6 +22,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onClose,
   invites,
   loading,
+  cancelInvite,
   children,
 }) => {
   return (
@@ -34,13 +38,22 @@ const Sidebar: React.FC<SidebarProps> = ({
       ) : invites.length === 0 ? (
         <p>You have sent no invites.</p>
       ) : (
-        invites.map((invite, index) => (
-          <section key={index} className={styles.inviteCard}>
+        invites.map((invite) => (
+          <section key={invite.invitation_ID} className={styles.inviteCard}>
             <p>
               You've invited <strong>{invite.recipient_name}</strong> to{" "}
               <strong>{invite.project_name}</strong>, invite request{" "}
               <em>{invite.status}</em>.
             </p>
+            {invite.current_status === "pending" && (
+              <button
+                className="mt-2 px-3 py-1 bg-red-600 text-white rounded"
+                onClick={() => cancelInvite(invite.invitation_ID)}
+              >
+                {" "}
+                Cancel{" "}
+              </button>
+            )}
           </section>
         ))
       )}

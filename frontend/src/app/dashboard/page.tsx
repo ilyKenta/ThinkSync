@@ -16,9 +16,12 @@ import Sidebar from "../sent-sidebar/sidebar";
 //import useAuth from "../useAuth";
 
 interface Invite {
+  invitation_ID: string;
   recipient_name: string;
   project_name: string;
   status: string;
+  sent_at: string;
+  current_status: string;
 }
 
 const Page = () => {
@@ -66,6 +69,34 @@ const Page = () => {
       fetchInvites();
     }
   }, [isSidebarOpen]);
+  const cancelInvite = async (invitationId: string) => {
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/invitation/${invitationId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify({ status: "cancelled" }),
+        }
+      );
+      if (!res.ok) throw new Error("Failed to cancel invitation");
+
+      // Refresh the invite list after canceling
+      setInvites((prev) =>
+        prev.map((invite) =>
+          invite.invitation_ID === invitationId
+            ? { ...invite, current_status: "cancelled" }
+            : invite
+        )
+      );
+    } catch (error) {
+      console.error("Error canceling invitation:", error);
+      alert("Could not cancel invitation");
+    }
+  };
 
   // Fetch projects on component mount
   /*useEffect(() => {
@@ -187,6 +218,7 @@ const Page = () => {
                 onClose={togglerSidebar}
                 invites={invites}
                 loading={loading}
+                cancelInvite={cancelInvite}
               />
             </section>
 

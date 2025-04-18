@@ -170,7 +170,7 @@ export default function CreateForm({ onClose, onCreate }: CreateFormProps) {
               aria-label="submit information"
               className={styles.buttonNext}
             >
-              Next: Add Requirements
+              Next →
             </button>
           </section>
         </form>
