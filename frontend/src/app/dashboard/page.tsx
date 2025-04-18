@@ -16,9 +16,12 @@ import Sidebar from "../sent-sidebar/sidebar";
 import InboxSidebar from "../inbox-sidebar/inb_sidebar";
 
 interface Invite {
+  invitation_ID: string;
   recipient_name: string;
   project_name: string;
   status: string;
+  sent_at: string;
+  current_status: string;
 }
 
 const Page = () => {
@@ -48,7 +51,7 @@ const Page = () => {
         setLoading(true);
         try {
           const res = await fetch(
-            "http://localhost:5000/api/collaborations/invite",
+            `http://localhost:5000/api/collaborations/invitations/sent/`,
             {
               headers: {
                 Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -58,7 +61,9 @@ const Page = () => {
           if (!res.ok) throw new Error("Failed to fetch invites");
 
           const data = await res.json();
-          setInvites(data);
+
+          console.log("Fetched invites:", data);
+          setInvites(data.invitations);
         } catch (err) {
           setInvites([]);
         } finally {
@@ -68,6 +73,34 @@ const Page = () => {
       fetchInvites();
     }
   }, [isSidebarOpen]);
+  const cancelInvite = async (invitationId: string) => {
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/invitation/${invitationId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify({ status: "cancelled" }),
+        }
+      );
+      if (!res.ok) throw new Error("Failed to cancel invitation");
+
+      // Refresh the invite list after canceling
+      setInvites((prev) =>
+        prev.map((invite) =>
+          invite.invitation_ID === invitationId
+            ? { ...invite, current_status: "cancelled" }
+            : invite
+        )
+      );
+    } catch (error) {
+      console.error("Error canceling invitation:", error);
+      alert("Could not cancel invitation");
+    }
+  };
 
   useEffect(() => {
     if (isInboxSidebarOpen) {
@@ -146,35 +179,40 @@ const Page = () => {
       <aside className={styles.sidebar}>
         <h2>ThinkSync</h2>
         <h3>DASHBOARD</h3>
-        <nav>
-          <ul>
-            <li>
-              <button type="button" onClick={() => router.push("/dashboard")}>
-                Current Projects
-              </button>
-            </li>
-            <li>
-              <button type="button" onClick={() => router.push("/dashboard2")}>
-                Collaboration
-              </button>
-            </li>
-          </ul>
-        </nav>
+
+        <ul>
+          <li>
+            <button type="button" onClick={() => router.push("/dashboard")}>
+              My Projects
+            </button>
+          </li>
+          <li>
+            <button type="button" onClick={() => router.push("/dashboard2")}>
+              Shared Projects
+            </button>
+          </li>
+        </ul>
+
       </aside>
 
       <main className={styles.mainContent}>
         <section className={styles.heading}>
-          <h2>Current projects</h2>
+          <h2>My Projects</h2>
           <nav className={styles.colabGroup}>
-            <button className={styles.iconButton} onClick={togglerSidebar}>
-              <FaPaperPlane />
-            </button>
-            <Sidebar
-              isOpen={isSidebarOpen}
-              onClose={togglerSidebar}
-              invites={invites}
-              loading={loading}
-            />
+
+            <section className="styles.sidebar">
+              <button className={styles.iconButton} onClick={togglerSidebar}>
+                <FaPaperPlane />
+              </button>
+              <Sidebar
+                isOpen={isSidebarOpen}
+                onClose={togglerSidebar}
+                invites={invites}
+                loading={loading}
+                cancelInvite={cancelInvite}
+              />
+            </section>
+
 
             <button className={styles.iconButton} onClick={toggleInboxSidebar}>
               <FaEnvelope />
