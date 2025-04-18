@@ -239,6 +239,14 @@
   margin-bottom: 5px;
 }
 
+.cardContent time {
+  margin-top: 1rem;
+  font-size: 1.1rem;
+  font-weight: var(--font-weight-medium);
+  color: #333;
+  margin-bottom: 5px;
+}
+
 .cardContent p {
   font-size: 0.9rem;
   color: #777;
