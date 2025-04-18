@@ -14,6 +14,7 @@ import {
 } from "react-icons/fa";
 import Sidebar from "../sent-sidebar/sidebar";
 import InboxSidebar from "../inbox-sidebar/inb_sidebar";
+//import useAuth from "../useAuth";
 
 interface Invite {
   invitation_ID: string;
@@ -25,6 +26,7 @@ interface Invite {
 }
 
 const Page = () => {
+  //useAuth();
   const router = useRouter();
   const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -126,6 +128,38 @@ const Page = () => {
     }
   }, [isInboxSidebarOpen]);
 
+  // Fetch projects on component mount
+  /*useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const token = localStorage.getItem('jwt');
+        if (!token) {
+          throw new Error('No access token found');
+        }
+
+        const response = await fetch('http://localhost:5000/api/projects/owner', {
+          headers: {
+            'Authorization': Bearer ${token}
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch projects');
+        }
+
+        const data = await response.json();
+        setProjects(data.projects);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An error occurred');
+        console.error('Error fetching projects:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, []);*/
+
   const handleCardClick = (projectId: string) => {
     router.push(`/projectInfo/${projectId}`);
   };
@@ -173,6 +207,14 @@ const Page = () => {
   const [currentfunding_available, setCurrentFunding] = useState<
     boolean | null
   >(null);
+
+/* if (loading) {
+    return <div className={styles.container}>Loading projects...</div>;
+  }
+
+  if (error) {
+    return <div className={styles.container}>Error: {error}</div>;
+  }*/
 
   return (
     <div className={styles.container}>
