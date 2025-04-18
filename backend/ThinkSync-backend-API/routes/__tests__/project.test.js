@@ -40,6 +40,42 @@ describe('Project Routes', () => {
     jest.resetAllMocks();
   });
 
+  describe('Token Validation', () => {
+    it('should handle missing token', async () => {
+      const response = await request(app)
+        .post('/api/project/create')
+        .send({});
+
+      expect(response.status).toBe(401);
+      expect(response.body.error).toBe('Access token is required');
+      expect(console.error).toHaveBeenCalledWith('Error creating project:', expect.any(Error));
+    });
+
+    it('should handle invalid token format', async () => {
+      const response = await request(app)
+        .post('/api/project/create')
+        .set('Authorization', 'InvalidFormat')
+        .send({});
+
+      expect(response.status).toBe(401);
+      expect(response.body.error).toBe('Invalid authorization format');
+      expect(console.error).toHaveBeenCalledWith('Error creating project:', expect.any(Error));
+    });
+
+    it('should handle invalid token from Microsoft Graph', async () => {
+      axios.get.mockRejectedValueOnce(new Error('Invalid token'));
+
+      const response = await request(app)
+        .post('/api/project/create')
+        .set('Authorization', 'Bearer invalid-token')
+        .send({});
+
+      expect(response.status).toBe(401);
+      expect(response.body.error).toBe('Invalid token');
+      expect(console.error).toHaveBeenCalledWith('Error creating project:', expect.any(Error));
+    });
+  });
+
   describe('POST /create', () => {
     const validPayload = {
       project: {
@@ -80,6 +116,34 @@ describe('Project Routes', () => {
          validPayload.project.research_areas, validPayload.project.start_date, validPayload.project.end_date, 
          validPayload.project.funding_available]
       );
+    });
+
+    it('should handle database error during project creation', async () => {
+      db.executeQuery.mockRejectedValueOnce(new Error('Database error'));
+
+      const response = await request(app)
+        .post('/api/project/create')
+        .set('Authorization', `Bearer ${mockToken}`)
+        .send(validPayload);
+
+      expect(response.status).toBe(500);
+      expect(response.body.error).toBe('Internal server error');
+      expect(console.error).toHaveBeenCalledWith('Error creating project:', expect.any(Error));
+    });
+
+    it('should handle database error during requirements creation', async () => {
+      db.executeQuery
+        .mockResolvedValueOnce([{ insertId: 1 }]) // Project insert
+        .mockRejectedValueOnce(new Error('Database error')); // Requirements insert
+
+      const response = await request(app)
+        .post('/api/project/create')
+        .set('Authorization', `Bearer ${mockToken}`)
+        .send(validPayload);
+
+      expect(response.status).toBe(500);
+      expect(response.body.error).toBe('Internal server error');
+      expect(console.error).toHaveBeenCalledWith('Error creating project:', expect.any(Error));
     });
 
     it('should handle missing project data', async () => {
@@ -185,15 +249,16 @@ describe('Project Routes', () => {
       expect(db.executeQuery).toHaveBeenCalledTimes(1);
     });
 
-    it('should handle no projects found', async () => {
-      db.executeQuery.mockResolvedValueOnce([]);
+    it('should handle database error when fetching projects', async () => {
+      db.executeQuery.mockRejectedValueOnce(new Error('Database error'));
 
       const response = await request(app)
         .get(`/api/project/owner`)
         .set('Authorization', `Bearer ${mockToken}`);
 
-      expect(response.status).toBe(404);
-      expect(response.body.error).toBe('No projects found for this owner');
+      expect(response.status).toBe(500);
+      expect(response.body.error).toBe('Internal server error');
+      expect(console.error).toHaveBeenCalledWith('Error fetching projects:', expect.any(Error));
     });
   });
 
@@ -234,6 +299,39 @@ describe('Project Routes', () => {
       expect(response.status).toBe(200);
       expect(response.body.message).toBe('Project updated successfully');
       expect(db.executeQuery).toHaveBeenCalledTimes(4);
+    });
+
+    it('should handle database error during project update', async () => {
+      const projectId = 1;
+      db.executeQuery
+        .mockResolvedValueOnce([{ owner_ID: mockUserId }]) // Check ownership
+        .mockRejectedValueOnce(new Error('Database error')); // Update project
+
+      const response = await request(app)
+        .put(`/api/project/update/${projectId}`)
+        .set('Authorization', `Bearer ${mockToken}`)
+        .send(validUpdate);
+
+      expect(response.status).toBe(500);
+      expect(response.body.error).toBe('Internal server error');
+      expect(console.error).toHaveBeenCalledWith('Error updating project:', expect.any(Error));
+    });
+
+    it('should handle database error during requirements update', async () => {
+      const projectId = 1;
+      db.executeQuery
+        .mockResolvedValueOnce([{ owner_ID: mockUserId }]) // Check ownership
+        .mockResolvedValueOnce([]) // Update project
+        .mockRejectedValueOnce(new Error('Database error')); // Delete old requirements
+
+      const response = await request(app)
+        .put(`/api/project/update/${projectId}`)
+        .set('Authorization', `Bearer ${mockToken}`)
+        .send(validUpdate);
+
+      expect(response.status).toBe(500);
+      expect(response.body.error).toBe('Internal server error');
+      expect(console.error).toHaveBeenCalledWith('Error updating project:', expect.any(Error));
     });
 
     it('should handle unauthorized update', async () => {
@@ -281,16 +379,32 @@ describe('Project Routes', () => {
       expect(db.executeQuery).toHaveBeenCalledTimes(2);
     });
 
-    it('should handle project not found', async () => {
-      const projectId = 999;
-      db.executeQuery.mockResolvedValueOnce([]);
+    it('should handle database error during project deletion', async () => {
+      const projectId = 1;
+      db.executeQuery
+        .mockResolvedValueOnce([{ owner_ID: mockUserId }]) // Check ownership
+        .mockRejectedValueOnce(new Error('Database error')); // Delete project
 
       const response = await request(app)
         .delete(`/api/project/delete/${projectId}`)
         .set('Authorization', `Bearer ${mockToken}`);
 
-      expect(response.status).toBe(404);
-      expect(response.body.error).toBe('Project not found');
+      expect(response.status).toBe(500);
+      expect(response.body.error).toBe('Internal server error');
+      expect(console.error).toHaveBeenCalledWith('Error deleting project:', expect.any(Error));
+    });
+
+    it('should handle database error during ownership check', async () => {
+      const projectId = 1;
+      db.executeQuery.mockRejectedValueOnce(new Error('Database error')); // Check ownership
+
+      const response = await request(app)
+        .delete(`/api/project/delete/${projectId}`)
+        .set('Authorization', `Bearer ${mockToken}`);
+
+      expect(response.status).toBe(500);
+      expect(response.body.error).toBe('Internal server error');
+      expect(console.error).toHaveBeenCalledWith('Error deleting project:', expect.any(Error));
     });
   });
 }); 

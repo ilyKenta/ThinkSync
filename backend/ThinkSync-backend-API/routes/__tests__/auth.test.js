@@ -11,7 +11,7 @@ process.env.JWT_SECRET = 'test-secret';
 // Mock modules
 jest.mock('axios');
 jest.mock('../../db', () => ({
-  execute: jest.fn()
+  executeQuery: jest.fn()
 }));
 
 describe('Auth Routes', () => {
@@ -25,28 +25,6 @@ describe('Auth Routes', () => {
   });
 
   describe('Helper Functions', () => {
-    describe('executeQuery', () => {
-      it('should resolve with results on success', async () => {
-        const mockResults = [{ id: 1 }];
-        db.execute.mockImplementation((query, params, callback) => {
-          callback(null, mockResults);
-        });
-
-        const result = await authRoutes.executeQuery('SELECT * FROM users', []);
-        expect(result).toEqual(mockResults);
-      });
-
-      it('should reject with error on failure', async () => {
-        const mockError = new Error('Database error');
-        db.execute.mockImplementation((query, params, callback) => {
-          callback(mockError, null);
-        });
-
-        await expect(authRoutes.executeQuery('SELECT * FROM users', []))
-          .rejects.toThrow('Database error');
-      });
-    });
-
     describe('fetchUserIdFromGraph', () => {
       it('should return user ID on success', async () => {
         const mockId = 'test-user-id';
@@ -172,10 +150,9 @@ describe('Auth Routes', () => {
         });
 
         // First query returns empty (user doesn't exist)
-        // Second query is the insert
-        db.execute
-          .mockImplementationOnce((query, params, callback) => callback(null, []))
-          .mockImplementationOnce((query, params, callback) => callback(null, { insertId: 1 }));
+        db.executeQuery
+          .mockResolvedValueOnce([])
+          .mockResolvedValueOnce({ insertId: 1 });
 
         const response = await request(app)
           .post('/api/auth/microsoft')
@@ -196,9 +173,7 @@ describe('Auth Routes', () => {
         });
 
         // Query returns existing user
-        db.execute.mockImplementationOnce((query, params, callback) => 
-          callback(null, [{ user_ID: 'test-id' }])
-        );
+        db.executeQuery.mockResolvedValueOnce([{ user_ID: 'test-id' }]);
 
         const response = await request(app)
           .post('/api/auth/microsoft')
@@ -218,15 +193,55 @@ describe('Auth Routes', () => {
           }
         });
 
-        db.execute.mockImplementationOnce((query, params, callback) => 
-          callback(new Error('Database error'), null)
-        );
+        db.executeQuery.mockRejectedValueOnce(new Error('Database error'));
 
         const response = await request(app)
           .post('/api/auth/microsoft')
           .send({ token: 'valid-token' });
 
         expect(response.status).toBe(400);
+      });
+
+      it('should handle database error during user check', async () => {
+        axios.get.mockResolvedValueOnce({
+          data: {
+            id: 'test-id',
+            givenName: 'Test',
+            surname: 'User',
+            mail: 'test@student.wits.ac.za'
+          }
+        });
+
+        db.executeQuery.mockRejectedValueOnce(new Error('Database error'));
+
+        const response = await request(app)
+          .post('/api/auth/microsoft')
+          .send({ token: 'valid-token' });
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toBe('Invalid Microsoft token');
+      });
+
+      it('should handle database error during user creation', async () => {
+        axios.get.mockResolvedValueOnce({
+          data: {
+            id: 'test-id',
+            givenName: 'Test',
+            surname: 'User',
+            mail: 'test@student.wits.ac.za'
+          }
+        });
+
+        db.executeQuery
+          .mockResolvedValueOnce([]) // User doesn't exist
+          .mockRejectedValueOnce(new Error('Database error')); // Error during insert
+
+        const response = await request(app)
+          .post('/api/auth/microsoft')
+          .send({ token: 'valid-token' });
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toBe('Invalid Microsoft token');
       });
     });
 
@@ -271,9 +286,7 @@ describe('Auth Routes', () => {
           data: { id: 'test-id' }
         });
 
-        db.execute.mockImplementationOnce((query, params, callback) => 
-          callback(null, []) // Empty result means user doesn't exist
-        );
+        db.executeQuery.mockResolvedValueOnce([]); // Empty result means user doesn't exist
 
         const response = await request(app)
           .post('/api/auth/reviewer')
@@ -290,9 +303,9 @@ describe('Auth Routes', () => {
 
         // First query returns user exists
         // Second query returns reviewer already exists
-        db.execute
-          .mockImplementationOnce((query, params, callback) => callback(null, [{ user_ID: 'test-id' }]))
-          .mockImplementationOnce((query, params, callback) => callback(null, [{ user_ID: 'test-id' }]));
+        db.executeQuery
+          .mockResolvedValueOnce([{ user_ID: 'test-id' }])
+          .mockResolvedValueOnce([{ user_ID: 'test-id' }]);
 
         const response = await request(app)
           .post('/api/auth/reviewer')
@@ -308,12 +321,12 @@ describe('Auth Routes', () => {
         });
 
         // Mock all necessary database calls
-        db.execute
-          .mockImplementationOnce((query, params, callback) => callback(null, [{ user_ID: 'test-id' }])) // User exists
-          .mockImplementationOnce((query, params, callback) => callback(null, [])) // Not already a reviewer
-          .mockImplementationOnce((query, params, callback) => callback(null, { affectedRows: 1 })) // Update user
-          .mockImplementationOnce((query, params, callback) => callback(null, { insertId: 1 })) // Insert reviewer
-          .mockImplementationOnce((query, params, callback) => callback(null, { affectedRows: 1 })); // Insert role
+        db.executeQuery
+          .mockResolvedValueOnce([{ user_ID: 'test-id' }]) // User exists
+          .mockResolvedValueOnce([]) // Not already a reviewer
+          .mockResolvedValueOnce({ affectedRows: 1 }) // Update user
+          .mockResolvedValueOnce({ insertId: 1 }) // Insert reviewer
+          .mockResolvedValueOnce({ affectedRows: 1 }); // Insert role
 
         const response = await request(app)
           .post('/api/auth/reviewer')
@@ -321,6 +334,38 @@ describe('Auth Routes', () => {
 
         expect(response.status).toBe(201);
         expect(response.body.message).toBe('All input successful');
+      });
+
+      it('should handle database error during user check', async () => {
+        axios.get.mockResolvedValueOnce({
+          data: { id: 'test-id' }
+        });
+
+        db.executeQuery.mockRejectedValueOnce(new Error('Database error'));
+
+        const response = await request(app)
+          .post('/api/auth/reviewer')
+          .send(validReviewerData);
+
+        expect(response.status).toBe(500);
+        expect(response.body.error).toBe('Server error');
+      });
+
+      it('should handle database error during reviewer check', async () => {
+        axios.get.mockResolvedValueOnce({
+          data: { id: 'test-id' }
+        });
+
+        db.executeQuery
+          .mockResolvedValueOnce([{ user_ID: 'test-id' }]) // User exists
+          .mockRejectedValueOnce(new Error('Database error')); // Error during reviewer check
+
+        const response = await request(app)
+          .post('/api/auth/reviewer')
+          .send(validReviewerData);
+
+        expect(response.status).toBe(500);
+        expect(response.body.error).toBe('Server error');
       });
     });
 
@@ -365,9 +410,7 @@ describe('Auth Routes', () => {
           data: { id: 'test-id' }
         });
 
-        db.execute.mockImplementationOnce((query, params, callback) => 
-          callback(null, []) // Empty result means user doesn't exist
-        );
+        db.executeQuery.mockResolvedValueOnce([]); // Empty result means user doesn't exist
 
         const response = await request(app)
           .post('/api/auth/researcher')
@@ -384,9 +427,9 @@ describe('Auth Routes', () => {
 
         // First query returns user exists
         // Second query returns researcher already exists
-        db.execute
-          .mockImplementationOnce((query, params, callback) => callback(null, [{ user_ID: 'test-id' }]))
-          .mockImplementationOnce((query, params, callback) => callback(null, [{ user_ID: 'test-id' }]));
+        db.executeQuery
+          .mockResolvedValueOnce([{ user_ID: 'test-id' }])
+          .mockResolvedValueOnce([{ user_ID: 'test-id' }]);
 
         const response = await request(app)
           .post('/api/auth/researcher')
@@ -402,12 +445,12 @@ describe('Auth Routes', () => {
         });
 
         // Mock all necessary database calls
-        db.execute
-          .mockImplementationOnce((query, params, callback) => callback(null, [{ user_ID: 'test-id' }])) // User exists
-          .mockImplementationOnce((query, params, callback) => callback(null, [])) // Not already a researcher
-          .mockImplementationOnce((query, params, callback) => callback(null, { affectedRows: 1 })) // Update user
-          .mockImplementationOnce((query, params, callback) => callback(null, { insertId: 1 })) // Insert researcher
-          .mockImplementationOnce((query, params, callback) => callback(null, { affectedRows: 1 })); // Insert role
+        db.executeQuery
+          .mockResolvedValueOnce([{ user_ID: 'test-id' }]) // User exists
+          .mockResolvedValueOnce([]) // Not already a researcher
+          .mockResolvedValueOnce({ affectedRows: 1 }) // Update user
+          .mockResolvedValueOnce({ insertId: 1 }) // Insert researcher
+          .mockResolvedValueOnce({ affectedRows: 1 }); // Insert role
 
         const response = await request(app)
           .post('/api/auth/researcher')
@@ -415,6 +458,38 @@ describe('Auth Routes', () => {
 
         expect(response.status).toBe(201);
         expect(response.body.message).toBe('All input successful');
+      });
+
+      it('should handle database error during user check', async () => {
+        axios.get.mockResolvedValueOnce({
+          data: { id: 'test-id' }
+        });
+
+        db.executeQuery.mockRejectedValueOnce(new Error('Database error'));
+
+        const response = await request(app)
+          .post('/api/auth/researcher')
+          .send(validResearcherData);
+
+        expect(response.status).toBe(500);
+        expect(response.body.error).toBe('Server error');
+      });
+
+      it('should handle database error during researcher check', async () => {
+        axios.get.mockResolvedValueOnce({
+          data: { id: 'test-id' }
+        });
+
+        db.executeQuery
+          .mockResolvedValueOnce([{ user_ID: 'test-id' }]) // User exists
+          .mockRejectedValueOnce(new Error('Database error')); // Error during researcher check
+
+        const response = await request(app)
+          .post('/api/auth/researcher')
+          .send(validResearcherData);
+
+        expect(response.status).toBe(500);
+        expect(response.body.error).toBe('Server error');
       });
     });
 
@@ -456,9 +531,7 @@ describe('Auth Routes', () => {
           data: { id: 'test-id' }
         });
 
-        db.execute.mockImplementationOnce((query, params, callback) => 
-          callback(null, []) // Empty result means user doesn't exist
-        );
+        db.executeQuery.mockResolvedValueOnce([]); // Empty result means user doesn't exist
 
         const response = await request(app)
           .post('/api/auth/admin')
@@ -475,9 +548,9 @@ describe('Auth Routes', () => {
 
         // First query returns user exists
         // Second query returns admin already exists
-        db.execute
-          .mockImplementationOnce((query, params, callback) => callback(null, [{ user_ID: 'test-id' }]))
-          .mockImplementationOnce((query, params, callback) => callback(null, [{ user_ID: 'test-id' }]));
+        db.executeQuery
+          .mockResolvedValueOnce([{ user_ID: 'test-id' }])
+          .mockResolvedValueOnce([{ user_ID: 'test-id' }]);
 
         const response = await request(app)
           .post('/api/auth/admin')
@@ -493,12 +566,11 @@ describe('Auth Routes', () => {
         });
 
         // Mock all necessary database calls
-        db.execute
-          .mockImplementationOnce((query, params, callback) => callback(null, [{ user_ID: 'test-id' }])) // User exists
-          .mockImplementationOnce((query, params, callback) => callback(null, [])) // Not already an admin
-          .mockImplementationOnce((query, params, callback) => callback(null, { affectedRows: 1 })) // Update user
-          .mockImplementationOnce((query, params, callback) => callback(null, { insertId: 1 })) // Insert admin
-          .mockImplementationOnce((query, params, callback) => callback(null, { affectedRows: 1 })); // Insert role
+        db.executeQuery
+          .mockResolvedValueOnce([{ user_ID: 'test-id' }]) // User exists
+          .mockResolvedValueOnce([]) // Not already an admin
+          .mockResolvedValueOnce({ affectedRows: 1 }) // Update user
+          .mockResolvedValueOnce({ affectedRows: 1 }); // Insert role
 
         const response = await request(app)
           .post('/api/auth/admin')
@@ -506,6 +578,38 @@ describe('Auth Routes', () => {
 
         expect(response.status).toBe(201);
         expect(response.body.message).toBe('All input successful');
+      });
+
+      it('should handle database error during user check', async () => {
+        axios.get.mockResolvedValueOnce({
+          data: { id: 'test-id' }
+        });
+
+        db.executeQuery.mockRejectedValueOnce(new Error('Database error'));
+
+        const response = await request(app)
+          .post('/api/auth/admin')
+          .send(validAdminData);
+
+        expect(response.status).toBe(500);
+        expect(response.body.error).toBe('Server error');
+      });
+
+      it('should handle database error during admin check', async () => {
+        axios.get.mockResolvedValueOnce({
+          data: { id: 'test-id' }
+        });
+
+        db.executeQuery
+          .mockResolvedValueOnce([{ user_ID: 'test-id' }]) // User exists
+          .mockRejectedValueOnce(new Error('Database error')); // Error during admin check
+
+        const response = await request(app)
+          .post('/api/auth/admin')
+          .send(validAdminData);
+
+        expect(response.status).toBe(500);
+        expect(response.body.error).toBe('Server error');
       });
     });
   });

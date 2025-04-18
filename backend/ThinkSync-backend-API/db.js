@@ -55,5 +55,5 @@ async function executeQuery(sql, params = []) {
 module.exports = {
     connect,
     connectWithRetry,
-    executeQuery
+    executeQuery // Export connection for testing
 };
