@@ -1,0 +1,36 @@
+/* src/components/Sidebar/Sidebar.module.css */
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  right: -300px;
+  width: 300px;
+  height: 100%;
+  background-color: #fff;
+  transition: right 0.3s ease;
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.sidebar.open {
+  right: 0;
+}
+
+.closeButton {
+  color: var(--secondary-color);
+  background-color: var(--box-color);
+  height: 2rem;
+  width: 2rem;
+  border-radius: var(--button-radius);
+  border: 1px solid #ccc;
+  display: block;
+  margin-left: auto;
+  margin-right: 0;
+}
+.inviteCard {
+  background: #f4f4f4;
+  margin-bottom: 10px;
+  padding: 10px;
+  border-radius: 8px;
+}

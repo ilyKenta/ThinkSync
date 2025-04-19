@@ -1,13 +1,13 @@
 .container {
   display: flex;
-  min-height: 100vh; /* Ensure the container takes at least the full viewport height */
+  min-height: 100vh;
 }
 
 .sidebar {
-  width: 280px; /* Slightly wider sidebar */
+  width: 280px;
   background-color: var(--primary-color);
-  padding: 25px; /* Add a bit more padding */
-  border-right: 1px solid #ddd; /* Lighter border */
+  padding: 25px;
+  border-right: 1px solid #ddd;
   box-shadow: 10px 10px 10px var(--shadows-color);
 }
 .sidebar h2 {
@@ -67,7 +67,6 @@
   margin-bottom: 20px;
   min-width: 3rem;
   padding-right: 3rem;
- 
 }
 
 .searchInput {
@@ -83,35 +82,32 @@
   background-repeat: no-repeat;
   font-size: 1.2rem;
   cursor: pointer;
-  background-color: var(--field-hover-color);
-  
+  background-color: var(--box-color);
+  cursor: text;
 }
 
 .searchInput:focus {
   outline: none;
-  border-color: #007bff; /* Example focus color */
+  border-color: #000000; /* Example focus color */
   box-shadow: 0 0 5px var(--shadows-color);
 }
 
+
+
 .heading {
-  display: grid;
-  grid-template-columns: repeat(
-    auto-fit,
-    minmax(250px, 1fr)
-  ); /* Responsive grid */
-  align-items: center;
+  display: flex;
   justify-content: space-between;
+  align-items: center;
   border-bottom: 1px solid #000000;
   margin-bottom: 2rem;
-  gap: 60rem;
+  padding: 0 20px; /* optional, keeps some space around */
 }
 
 .colabGroup {
   display: flex;
   gap: 1rem;
   align-items: center;
-  width: 100%;
-  padding: 0px 20px;
+  padding: 0px 60px;
 }
 
 .iconButton {
@@ -129,9 +125,8 @@
 }
 
 .iconButton:hover {
-  background-color: #3730a3;
+  background-color: var(--field-hover-color);
 }
-
 
 .buttonHeader {
   display: flex;
@@ -195,7 +190,7 @@
 
 .tabGroup button:hover,
 .tabGroup button.active {
-  border-bottom-color: #007bff; /* Example active/hover color */
+  border-bottom-color: #000000; /* Example active/hover color */
 }
 
 .tabGroup button.active {
@@ -216,7 +211,6 @@
 }
 
 .card {
-
   all: unset; /* reset default button styles */
   background-color: var(--primary-color);
   border: 1px solid #ddd;
@@ -242,11 +236,17 @@
   margin-bottom: 5px;
 }
 
+.cardContent time {
+  margin-top: 1rem;
+  font-size: 1.1rem;
+  font-weight: var(--font-weight-medium);
+  color: #333;
+  margin-bottom: 5px;
+}
+
 .cardContent p {
   font-size: 0.9rem;
   color: #777;
-
-
 }
 
 .cardFooter {
@@ -255,7 +255,7 @@
   justify-content: space-between;
 }
 
-.buttonContainer{
+.buttonContainer {
   display: flex;
   align-items: center;
 }
@@ -280,7 +280,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  padding: 6px 5px 10px 10px ;
+  padding: 6px 5px 10px 10px;
   border-radius: 50%; /* makes it a circle */
   color: #222;
   font-size: 15px;
@@ -292,14 +292,14 @@
 }
 
 .addButton {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 6px;
-    border-radius: 50%; /* makes it a circle */
-    color: #222;
-    font-size: 20px;
-    transition: background-color 0.2s, color 0.2s;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%; /* makes it a circle */
+  color: #222;
+  font-size: 20px;
+  transition: background-color 0.2s, color 0.2s;
 }
 
 .addButton:hover {
