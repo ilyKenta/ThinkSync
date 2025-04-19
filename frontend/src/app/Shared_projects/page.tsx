@@ -135,7 +135,7 @@ const Page = () => {
           </li>
           <li>
             {" "}
-            <button type="button" onClick={() => router.push("/dashboard2")}>
+            <button type="button" onClick={() => router.push("/Shared_projects")}>
               {" "}
               Shared Projects
             </button>
