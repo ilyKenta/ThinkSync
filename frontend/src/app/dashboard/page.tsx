@@ -17,15 +17,6 @@ import Sidebar from "../sent-sidebar/sidebar";
 import InboxSidebar from "../inbox-sidebar/inb_sidebar";
 import useAuth from "../useAuth";
 
-interface Invite {
-  invitation_ID: string;
-  recipient_name: string;
-  project_name: string;
-  status: string;
-  sent_at: string;
-  current_status: string;
-}
-
 const Page = () => {
   useAuth();
   const router = useRouter();
@@ -36,9 +27,7 @@ const Page = () => {
   const [editProject, setEditProject] = useState<any | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [invites, setInvites] = useState<Invite[]>([]);
   const [isInboxSidebarOpen, setIsInboxSidebarOpen] = useState(false);
-  const [receivedInvites, setReceivedInvites] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -79,94 +68,9 @@ const Page = () => {
     setIsInboxSidebarOpen((prev) => !prev);
   };
 
-  useEffect(() => {
-    if (isSidebarOpen) {
-      const fetchInvites = async () => {
-        setLoading(true);
-        try {
-          const res = await fetch(
-            `http://localhost:5000/api/collaborations/invitations/sent/`,
-            {
-              headers: {
-                Authorization: `Bearer ${localStorage.getItem("token")}`,
-              },
-            }
-          );
-          if (!res.ok) throw new Error("Failed to fetch invites");
-
-          const data = await res.json();
-
-          console.log("Fetched invites:", data);
-          setInvites(data.invitations);
-        } catch (err) {
-          setInvites([]);
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchInvites();
-    }
-  }, [isSidebarOpen]);
-  const cancelInvite = async (invitationId: string) => {
-    try {
-      const res = await fetch(
-        `http://localhost:5000/api/invitation/${invitationId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-          body: JSON.stringify({ status: "cancelled" }),
-        }
-      );
-      if (!res.ok) throw new Error("Failed to cancel invitation");
-
-      // Refresh the invite list after canceling
-      setInvites((prev) =>
-        prev.map((invite) =>
-          invite.invitation_ID === invitationId
-            ? { ...invite, current_status: "cancelled" }
-            : invite
-        )
-      );
-    } catch (error) {
-      console.error("Error canceling invitation:", error);
-      alert("Could not cancel invitation");
-    }
-  };
-
-  useEffect(() => {
-    if (isInboxSidebarOpen) {
-      const fetchReceivedInvites = async () => {
-        setLoading(true);
-        try {
-          const res = await fetch(
-            "http://localhost:5000/api/collaborations/invitations/received",
-            {
-              headers: {
-                Authorization: `Bearer ${localStorage.getItem("token")}`,
-              },
-            }
-          );
-          if (!res.ok) throw new Error("Failed to fetch received invites");
-
-          const data = await res.json();
-          setReceivedInvites(data.invitations);
-        } catch (err) {
-          setReceivedInvites([]);
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchReceivedInvites();
-    }
-  }, [isInboxSidebarOpen]);
-
   // State for invite modal
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [inviteProject, setInviteProject] = useState<any | null>(null);
-
 
   const handleCardClick = (projectId: string) => {
     router.push(`/projectInfo/${projectId}`);
@@ -212,9 +116,7 @@ const Page = () => {
   const [currentresearch_areas, setCurrentResArea] = useState("");
   const [currentstart_date, setCurrentStart] = useState("");
   const [currentend_date, setCurrentEnd] = useState("");
-  const [currentfunding_available, setCurrentFunding] = useState<
-    boolean | null
-  >(null);
+  const [currentfunding_available, setCurrentFunding] = useState<boolean | null>(null);
 
   if (loading) {
     return <div className={styles.container}>Loading projects...</div>;
@@ -226,23 +128,6 @@ const Page = () => {
 
   return (
     <div className={styles.container}>
-      {showEditForm && editProject && (
-        <EditProjectForm
-          onClose={() => setShowEditForm(false)}
-          initialValues={editProject}
-          onEdit={(updatedProject) => {
-            setProjects((prev) =>
-              prev.map((proj) =>
-                proj.project_ID === updatedProject.project_ID
-                  ? { ...proj, ...updatedProject }
-                  : proj
-              )
-            );
-            setShowEditForm(false);
-            setEditProject(null);
-          }}
-        />
-      )}
       <aside className={styles.sidebar}>
         <h2>ThinkSync</h2>
         <h3>DASHBOARD</h3>
@@ -254,7 +139,7 @@ const Page = () => {
             </button>
           </li>
           <li>
-            <button type="button" onClick={() => router.push("/dashboard2")}>
+            <button type="button" onClick={() => router.push("/Shared_projects")}>
               Shared Projects
             </button>
           </li>
@@ -265,28 +150,25 @@ const Page = () => {
         <section className={styles.heading}>
           <h2>My Projects</h2>
           <nav className={styles.colabGroup}>
-            <section className="styles.sidebar">
+            <section className={styles.sidebarSection}>
               <button className={styles.iconButton} onClick={togglerSidebar}>
                 <FaPaperPlane />
               </button>
               <Sidebar
                 isOpen={isSidebarOpen}
                 onClose={togglerSidebar}
-                invites={invites}
-                loading={loading}
-                cancelInvite={cancelInvite}
               />
             </section>
 
-            <button className={styles.iconButton} onClick={toggleInboxSidebar}>
-              <FaEnvelope />
-            </button>
-            <InboxSidebar
-              isOpen={isInboxSidebarOpen}
-              onClose={toggleInboxSidebar}
-              invites={receivedInvites}
-              loading={loading}
-            />
+            <section className={styles.sidebarSection}>
+              <button className={styles.iconButton} onClick={toggleInboxSidebar}>
+                <FaEnvelope />
+              </button>
+              <InboxSidebar
+                isOpen={isInboxSidebarOpen}
+                onClose={toggleInboxSidebar}
+              />
+            </section>
 
             <button className={styles.iconButton}>
               <FaUserCircle />
@@ -323,7 +205,6 @@ const Page = () => {
 
                 setProjects((prev) => [
                   ...prev,
-
                   { project_ID: Date.now(), name: projectName },
                 ]);
 
@@ -378,10 +259,7 @@ const Page = () => {
                       End: {new Date(project.end_date).toLocaleDateString()}
                     </time>
                     <span>
-                      Funding:{" "}
-                      {project.funding_available
-                        ? "Available"
-                        : "Not Available"}
+                      Funding: {project.funding_available ? "Available" : "Not Available"}
                     </span>
                   </div>
                 </div>

@@ -23,7 +23,7 @@ const getUserIdFromToken = async (token) => {
 };
 
 // Search for potential collaborators
-router.get('/search', async (req, res) => {
+router.post('/search', async (req, res) => {
     try {
         const { searchTerm, searchType } = req.body;
         const token = req.headers.authorization?.split(' ')[1];
@@ -179,9 +179,8 @@ router.get('/invitations/received', async (req, res) => {
 });
 
 // Get invitations sent by project owner
-router.get('/invitations/sent/:projectId', async (req, res) => {
+router.get('/invitations/sent', async (req, res) => {
     try {
-        const { projectId } = req.params;
         const token = req.headers.authorization?.split(' ')[1];
         
         if (!token) {
@@ -190,16 +189,9 @@ router.get('/invitations/sent/:projectId', async (req, res) => {
 
         const userId = await getUserIdFromToken(token);
 
-        // Verify project ownership
-        const projectQuery = 'SELECT owner_ID FROM projects WHERE project_ID = ?';
-        const [project] = await db.executeQuery(projectQuery, [projectId]);
-
-        if (!project || project.owner_ID !== userId) {
-            return res.status(403).json({ error: 'Unauthorized to view these invitations' });
-        }
-
         const query = `
             SELECT i.*, u.fname as recipient_fname, u.sname as recipient_sname,
+                   p.title as project_title,
                    CASE 
                        WHEN i.status = 'pending' AND TIMESTAMPDIFF(DAY, i.sent_at, CURRENT_TIMESTAMP) > 7 
                        THEN 'expired' 
@@ -207,21 +199,22 @@ router.get('/invitations/sent/:projectId', async (req, res) => {
                    END as current_status
             FROM invitations i
             JOIN users u ON i.recipient_ID = u.user_ID
-            WHERE i.project_ID = ?
+            JOIN projects p ON i.project_ID = p.project_ID
+            WHERE i.sender_ID = ?
             ORDER BY i.sent_at DESC
         `;
 
-        const invitations = await db.executeQuery(query, [projectId]);
+        const invitations = await db.executeQuery(query, [userId]);
 
         // Update expired invitations
         const updateExpiredQuery = `
             UPDATE invitations 
             SET status = 'expired'
-            WHERE project_ID = ? 
+            WHERE sender_ID = ? 
             AND status = 'pending'
             AND TIMESTAMPDIFF(DAY, sent_at, CURRENT_TIMESTAMP) > 7
         `;
-        await db.executeQuery(updateExpiredQuery, [projectId]);
+        await db.executeQuery(updateExpiredQuery, [userId]);
 
         res.status(200).json({ invitations });
     } catch (error) {

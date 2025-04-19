@@ -44,7 +44,7 @@ const InviteCollaborators: React.FC<InviteCollaboratorsProps> = ({
       const res = await fetch(
         "http://localhost:5000/api/collaborations/search",
         {
-          method: "GET",
+          method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,

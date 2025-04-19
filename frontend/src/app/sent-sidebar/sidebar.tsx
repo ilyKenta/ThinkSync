@@ -1,65 +1,36 @@
 // src/components/Sidebar/Sidebar.jsx
-import React from "react";
+import React, { useEffect, useState } from "react";
 import styles from "./sidebar.module.css";
+import SentInvitations from '../components/SentInvitations';
 
-interface Invite {
-  recipient_name: string;
-  project_name: string;
-  status: string;
-  invitation_ID: string;
-  current_status: string;
-}
 interface SidebarProps {
-  isOpen: Boolean;
+  isOpen: boolean;
   onClose: () => void;
-  invites: Invite[];
-  loading?: Boolean;
-  cancelInvite: (invitationId: string) => void;
-  children?: React.ReactNode;
 }
-const Sidebar: React.FC<SidebarProps> = ({
-  isOpen,
-  onClose,
-  invites,
-  loading,
-  cancelInvite,
-  children,
-}) => {
+
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
+  const [key, setKey] = useState(0);
+
+  useEffect(() => {
+    if (isOpen) {
+      // Force SentInvitations to remount and refetch when sidebar opens
+      setKey(prev => prev + 1);
+    }
+  }, [isOpen]);
+
   return (
-    <div className={`${styles.sidebar} ${isOpen ? styles.open : ""}`}>
-      <button className={styles.closeButton} onClick={onClose}>
-        X
-      </button>
-
-      <h3> Sent Invitations</h3>
-
-      {loading ? (
-        <p> Loading invites...</p>
-      ) : invites.length === 0 ? (
-        <p>You have sent no invites.</p>
-      ) : (
-        invites.map((invite) => (
-          <section key={invite.invitation_ID} className={styles.inviteCard}>
-            <p>
-              You've invited <strong>{invite.recipient_name}</strong> to{" "}
-              <strong>{invite.project_name}</strong>, invite request{" "}
-              <em>{invite.status}</em>.
-            </p>
-            {invite.current_status === "pending" && (
-              <button
-                className="mt-2 px-3 py-1 bg-red-600 text-white rounded"
-                onClick={() => cancelInvite(invite.invitation_ID)}
-              >
-                {" "}
-                Cancel{" "}
-              </button>
-            )}
-          </section>
-        ))
-      )}
-      {children && (
-        <section className={styles.extraContent}>{children}</section>
-      )}
+    <div className={`${styles.sidebar} ${isOpen ? styles.open : ''}`}>
+      <div className={styles.sidebarHeader}>
+        <h2>Sent Invitations</h2>
+        <button onClick={onClose} className={styles.closeButton}>×</button>
+      </div>
+      <div className={styles.sidebarContent}>
+        <div className={styles.invitationsContainer}>
+          <div className={styles.invitationsList}>
+            <SentInvitations key={key} />
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
