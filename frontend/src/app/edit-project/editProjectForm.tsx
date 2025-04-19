@@ -8,13 +8,14 @@ export type EditProjectFormProps = {
   onClose: () => void;
   initialValues: {
     project_ID: string;
-    title: string;
-    description: string;
-    goals: string;
-    research_areas: string;
-    start_date: string;
-    end_date: string;
-    funding_available: boolean;
+    name?: string;
+    title?: string;
+    description?: string;
+    goals?: string;
+    research_areas?: string;
+    start_date?: string;
+    end_date?: string;
+    funding_available?: boolean;
     requirements?: any[];
   };
   onEdit: (updatedProject: any) => void;
@@ -25,28 +26,44 @@ export default function EditProjectForm({
   onEdit,
   initialValues,
 }: EditProjectFormProps) {
-  const [title, setTitle] = useState(initialValues.title);
-  const [description, setDescription] = useState(initialValues.description);
-  const [goals, setGoals] = useState(initialValues.goals);
-  const [research_areas, setResArea] = useState(initialValues.research_areas);
-  const [start_date, setStart] = useState(initialValues.start_date);
-  const [end_date, setEnd] = useState(initialValues.end_date);
-  const [funding_available, setFunding] = useState(initialValues.funding_available);
+  const [title, setTitle] = useState(
+    initialValues.title || initialValues.name || ""
+  );
+  const [description, setDescription] = useState(
+    initialValues.description || ""
+  );
+  const [goals, setGoals] = useState(initialValues.goals || "");
+  const [research_areas, setResArea] = useState(
+    initialValues.research_areas || ""
+  );
+  const [start_date, setStart] = useState(initialValues.start_date || "");
+  const [end_date, setEnd] = useState(initialValues.end_date || "");
+  const [funding_available, setFunding] = useState(
+    initialValues.funding_available !== undefined
+      ? initialValues.funding_available
+      : false
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [showRequirementsForm, setShowRequirementsForm] = useState(false);
-  const [requirements, setRequirements] = useState(initialValues.requirements || []);
+  const [requirements, setRequirements] = useState(
+    initialValues.requirements || []
+  );
 
   // Update state when initialValues change
   useEffect(() => {
-    setTitle(initialValues.title);
-    setDescription(initialValues.description);
-    setGoals(initialValues.goals);
-    setResArea(initialValues.research_areas);
-    setStart(initialValues.start_date);
-    setEnd(initialValues.end_date);
-    setFunding(initialValues.funding_available);
+    setTitle(initialValues.title || initialValues.name || "");
+    setDescription(initialValues.description || "");
+    setGoals(initialValues.goals || "");
+    setResArea(initialValues.research_areas || "");
+    setStart(initialValues.start_date || "");
+    setEnd(initialValues.end_date || "");
+    setFunding(
+      initialValues.funding_available !== undefined
+        ? initialValues.funding_available
+        : false
+    );
     setRequirements(initialValues.requirements || []);
   }, [initialValues]);
 
@@ -61,9 +78,9 @@ export default function EditProjectForm({
 
   // Format date for input field
   const formatDateForInput = (dateString: string) => {
-    if (!dateString) return '';
+    if (!dateString) return "";
     const date = new Date(dateString);
-    return date.toISOString().split('T')[0];
+    return date.toISOString().split("T")[0];
   };
 
   if (showRequirementsForm) {
@@ -72,9 +89,9 @@ export default function EditProjectForm({
       description,
       goals,
       research_areas,
-      start_date: new Date(start_date).toISOString().split('T')[0],
-      end_date: new Date(end_date).toISOString().split('T')[0],
-      funding_available
+      start_date: new Date(start_date).toISOString().split("T")[0],
+      end_date: new Date(end_date).toISOString().split("T")[0],
+      funding_available,
     };
 
     return (
@@ -152,38 +169,47 @@ export default function EditProjectForm({
             required
           />
 
-          <section className={styles.radioContainer}>
+          <section className={styles.radioGroup}>
             <label htmlFor="Funding">Funding Available *</label>
-            <label>
-              <input
-                type="radio"
-                name="funding"
-                value="true"
-                className={styles.radioInput}
-                checked={funding_available === true}
-                onChange={() => setFunding(true)}
-                required
-              />
-              Yes
-            </label>
-            <label>
-              <input
-                type="radio"
-                name="funding"
-                value="false"
-                className={styles.radioInput}
-                checked={funding_available === false}
-                onChange={() => setFunding(false)}
-              />
-              No
-            </label>
+            <section className={styles.radioOptions}>
+              <label className={styles.radioContainer}>
+                <input
+                  type="radio"
+                  name="funding"
+                  value="true"
+                  className={styles.radioInput}
+                  checked={funding_available === true}
+                  onChange={() => setFunding(true)}
+                />
+                Yes
+              </label>
+
+              <label className={styles.radioContainer}>
+                <input
+                  type="radio"
+                  name="funding"
+                  value="false"
+                  className={styles.radioInput}
+                  checked={funding_available === false}
+                  onChange={() => setFunding(false)}
+                />
+                No
+              </label>
+            </section>
           </section>
 
           <button
             type="submit"
             aria-label="submit information"
             disabled={loading}
-            style={{ backgroundColor: 'black', color: 'white', border: 'none', borderRadius: 'var(--button-radius)', fontSize: 20, fontWeight: 600 }}
+            style={{
+              backgroundColor: "black",
+              color: "white",
+              border: "none",
+              borderRadius: "var(--button-radius)",
+              fontSize: 20,
+              fontWeight: 600,
+            }}
           >
             Next: Edit Requirements
           </button>

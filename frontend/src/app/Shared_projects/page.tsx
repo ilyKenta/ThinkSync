@@ -30,12 +30,14 @@ const Page = () => {
       end_date: "2025-06-30",
       funding_available: true,
       info: "Shared folder • 8 presentations",
-      requirements: [{
-        skill_required: "Sales",
-        experience_level: "intermediate",
-        role: "Sales Manager",
-        technical_requirements: "CRM experience"
-      }]
+      requirements: [
+        {
+          skill_required: "Sales",
+          experience_level: "intermediate",
+          role: "Sales Manager",
+          technical_requirements: "CRM experience",
+        },
+      ],
     },
     {
       projectId: "2",
@@ -47,12 +49,14 @@ const Page = () => {
       end_date: "2025-07-31",
       funding_available: true,
       info: "Shared folder • 5 videos",
-      requirements: [{
-        skill_required: "Video Editing",
-        experience_level: "professional",
-        role: "Video Editor",
-        technical_requirements: "Adobe Premier Pro"
-      }]
+      requirements: [
+        {
+          skill_required: "Video Editing",
+          experience_level: "professional",
+          role: "Video Editor",
+          technical_requirements: "Adobe Premier Pro",
+        },
+      ],
     },
     {
       projectId: "3",
@@ -64,25 +68,28 @@ const Page = () => {
       end_date: "2025-08-31",
       funding_available: false,
       info: "Shared file • 1 Excel",
-      requirements: [{
-        skill_required: "Financial Analysis",
-        experience_level: "intermediate",
-        role: "Financial Analyst",
-        technical_requirements: "Excel, SQL"
-      }]
-    }
+      requirements: [
+        {
+          skill_required: "Financial Analysis",
+          experience_level: "intermediate",
+          role: "Financial Analyst",
+          technical_requirements: "Excel, SQL",
+        },
+      ],
+    },
   ];
 
   // Handler for edit submit
   const handleEdit = async (updatedProject: any) => {
     try {
       const token = localStorage.getItem("jwt");
-      const res = await fetch(`http://localhost:5000/api/project/update/${updatedProject.projectId}`,
+      const res = await fetch(
+        `http://localhost:5000/api/project/update/${updatedProject.projectId}`,
         {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {})
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
           body: JSON.stringify({
             project: {
@@ -92,10 +99,10 @@ const Page = () => {
               research_areas: updatedProject.research_areas,
               start_date: updatedProject.start_date,
               end_date: updatedProject.end_date,
-              funding_available: updatedProject.funding_available
+              funding_available: updatedProject.funding_available,
             },
-            requirements: updatedProject.requirements || []
-          })
+            requirements: updatedProject.requirements || [],
+          }),
         }
       );
       const data = await res.json();
@@ -117,16 +124,28 @@ const Page = () => {
       <aside className={styles.sidebar}>
         <h2>ThinkSync</h2>
 
-        <h3>COLLECTIONS</h3>
+        <h3>DASHBOARD</h3>
         <ul>
-          <li> <button type="button" onClick={() => router.push("/dashboard")}> Current Projects</button></li>
-          <li> <button type="button" onClick={() => router.push("/dashboard2")}> Collaboration</button></li>
+          <li>
+            {" "}
+            <button type="button" onClick={() => router.push("/dashboard")}>
+              {" "}
+              My Projects
+            </button>
+          </li>
+          <li>
+            {" "}
+            <button type="button" onClick={() => router.push("/Shared_projects")}>
+              {" "}
+              Shared Projects
+            </button>
+          </li>
         </ul>
       </aside>
 
       <main className={styles.mainContent}>
         <section className={styles.heading}>
-          <h2>Collaborations</h2>
+          <h2>Shared Projects</h2>
           <div className={styles.searchContainer}>
             <input
               className={styles.searchInput}
@@ -135,38 +154,41 @@ const Page = () => {
             />
           </div>
         </section>
-          <section className={styles.buttonHeader}>
-            <button
+        <section className={styles.buttonHeader}>
+          <button
             className={styles.createButton}
             onClick={() => setShowForm(true)}
-           >
+          >
             + Create
-            </button>
-            {showForm && (
-  <CreateForm 
-    onClose={() => setShowForm(false)}
-    onCreate={(projectName) => {
-      setShowForm(false);
-      // Add more logic here if needed
-      console.log("Project created:", projectName);
-    }}
-  />
-)}
-{showEditForm && editProject && (
-  <EditProjectForm
-    initialValues={editProject}
-    onClose={() => { setShowEditForm(false); setEditProject(null); }}
-    onEdit={handleEdit}
-  />
-)}
+          </button>
+          {showForm && (
+            <CreateForm
+              onClose={() => setShowForm(false)}
+              onCreate={(projectName) => {
+                setShowForm(false);
+                // Add more logic here if needed
+                console.log("Project created:", projectName);
+              }}
+            />
+          )}
+          {showEditForm && editProject && (
+            <EditProjectForm
+              initialValues={editProject}
+              onClose={() => {
+                setShowEditForm(false);
+                setEditProject(null);
+              }}
+              onEdit={handleEdit}
+            />
+          )}
 
-            <div className={styles.buttonGroup}>
-              <button>Upload</button>
-              <button>Create folder</button>
-              <button>Record</button>
-            </div>
-          </section>
-        
+          <div className={styles.buttonGroup}>
+            <button>Upload</button>
+            <button>Create folder</button>
+            <button>Record</button>
+          </div>
+        </section>
+
         <div className={styles.tabGroup}>
           <button>Recent</button>
           <button>Starred</button>
@@ -190,13 +212,27 @@ const Page = () => {
                         setShowEditForm(true);
                       }}
                     >
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
                         <path d="M12 20h9" />
                         <path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19.5 3 21l1.5-4L16.5 3.5z" />
                       </svg>
                     </button>
 
-                    <button className={styles.trashButton} title="Delete project">🗑️</button>
+                    <button
+                      className={styles.trashButton}
+                      title="Delete project"
+                    >
+                      🗑️
+                    </button>
                   </div>
                 </section>
               </div>
@@ -213,12 +249,12 @@ const Page = () => {
                 research_areas: editReqProject.research_areas,
                 start_date: editReqProject.start_date,
                 end_date: editReqProject.end_date,
-                funding_available: editReqProject.funding_available
+                funding_available: editReqProject.funding_available,
               }}
               requirements={editReqProject.requirements || []}
-              onClose={() => { 
-                setShowEditReqForm(false); 
-                setEditReqProject(null); 
+              onClose={() => {
+                setShowEditReqForm(false);
+                setEditReqProject(null);
               }}
               onEdit={(updatedRequirements) => {
                 // Update requirements in the project list (dummy for now)

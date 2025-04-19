@@ -1,12 +1,30 @@
 "use client";
 
-import React, { useState, useEffect, use } from "react";
+import React, { useState, useEffect } from "react";
 import styles from "./page.module.css";
+import InviteCollaborators from "../components/InviteCollaborators";
 import CreateForm from "../create-project/createForm";
 import CreateReqForm from "../create-req/createReqForm";
 import EditProjectForm from "../edit-project/editProjectForm";
 import { useRouter } from "next/navigation";
+import {
+  FaPaperPlane,
+  FaEnvelope,
+  FaUserCircle,
+  FaUserPlus,
+} from "react-icons/fa";
+import Sidebar from "../sent-sidebar/sidebar";
+import InboxSidebar from "../inbox-sidebar/inb_sidebar";
 import useAuth from "../useAuth";
+
+interface Invite {
+  invitation_ID: string;
+  recipient_name: string;
+  project_name: string;
+  status: string;
+  sent_at: string;
+  current_status: string;
+}
 
 const Page = () => {
   useAuth();
@@ -15,11 +33,13 @@ const Page = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // State for editing project and requirements
   const [editProject, setEditProject] = useState<any | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [invites, setInvites] = useState<Invite[]>([]);
+  const [isInboxSidebarOpen, setIsInboxSidebarOpen] = useState(false);
+  const [receivedInvites, setReceivedInvites] = useState<any[]>([]);
 
-  // Fetch projects on component mount
   useEffect(() => {
     const fetchProjects = async () => {
       try {
@@ -51,15 +71,112 @@ const Page = () => {
     fetchProjects();
   }, []);
 
+  const togglerSidebar = () => {
+    setIsSidebarOpen((prev) => !prev);
+  };
+
+  const toggleInboxSidebar = () => {
+    setIsInboxSidebarOpen((prev) => !prev);
+  };
+
+  useEffect(() => {
+    if (isSidebarOpen) {
+      const fetchInvites = async () => {
+        setLoading(true);
+        try {
+          const res = await fetch(
+            `http://localhost:5000/api/collaborations/invitations/sent/`,
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            }
+          );
+          if (!res.ok) throw new Error("Failed to fetch invites");
+
+          const data = await res.json();
+
+          console.log("Fetched invites:", data);
+          setInvites(data.invitations);
+        } catch (err) {
+          setInvites([]);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchInvites();
+    }
+  }, [isSidebarOpen]);
+  const cancelInvite = async (invitationId: string) => {
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/invitation/${invitationId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify({ status: "cancelled" }),
+        }
+      );
+      if (!res.ok) throw new Error("Failed to cancel invitation");
+
+      // Refresh the invite list after canceling
+      setInvites((prev) =>
+        prev.map((invite) =>
+          invite.invitation_ID === invitationId
+            ? { ...invite, current_status: "cancelled" }
+            : invite
+        )
+      );
+    } catch (error) {
+      console.error("Error canceling invitation:", error);
+      alert("Could not cancel invitation");
+    }
+  };
+
+  useEffect(() => {
+    if (isInboxSidebarOpen) {
+      const fetchReceivedInvites = async () => {
+        setLoading(true);
+        try {
+          const res = await fetch(
+            "http://localhost:5000/api/collaborations/invitations/received",
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            }
+          );
+          if (!res.ok) throw new Error("Failed to fetch received invites");
+
+          const data = await res.json();
+          setReceivedInvites(data.invitations);
+        } catch (err) {
+          setReceivedInvites([]);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchReceivedInvites();
+    }
+  }, [isInboxSidebarOpen]);
+
+  // State for invite modal
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const [inviteProject, setInviteProject] = useState<any | null>(null);
+
+
   const handleCardClick = (projectId: string) => {
     router.push(`/projectInfo/${projectId}`);
   };
 
   const handleDelete = async (projectId: string) => {
     try {
-      const token = localStorage.getItem('jwt');
+      const token = localStorage.getItem("jwt");
       if (!token) {
-        throw new Error('No access token found');
+        throw new Error("No access token found");
       }
 
       const res = await fetch(
@@ -109,18 +226,36 @@ const Page = () => {
 
   return (
     <div className={styles.container}>
+      {showEditForm && editProject && (
+        <EditProjectForm
+          onClose={() => setShowEditForm(false)}
+          initialValues={editProject}
+          onEdit={(updatedProject) => {
+            setProjects((prev) =>
+              prev.map((proj) =>
+                proj.project_ID === updatedProject.project_ID
+                  ? { ...proj, ...updatedProject }
+                  : proj
+              )
+            );
+            setShowEditForm(false);
+            setEditProject(null);
+          }}
+        />
+      )}
       <aside className={styles.sidebar}>
         <h2>ThinkSync</h2>
         <h3>DASHBOARD</h3>
+
         <ul>
           <li>
             <button type="button" onClick={() => router.push("/dashboard")}>
-              Current Projects
+              My Projects
             </button>
           </li>
           <li>
             <button type="button" onClick={() => router.push("/dashboard2")}>
-              Collaboration
+              Shared Projects
             </button>
           </li>
         </ul>
@@ -128,14 +263,35 @@ const Page = () => {
 
       <main className={styles.mainContent}>
         <section className={styles.heading}>
-          <h2>Current projects</h2>
-          <div className={styles.searchContainer}>
-            <input
-              className={styles.searchInput}
-              type="text"
-              placeholder="Search projects..."
+          <h2>My Projects</h2>
+          <nav className={styles.colabGroup}>
+            <section className="styles.sidebar">
+              <button className={styles.iconButton} onClick={togglerSidebar}>
+                <FaPaperPlane />
+              </button>
+              <Sidebar
+                isOpen={isSidebarOpen}
+                onClose={togglerSidebar}
+                invites={invites}
+                loading={loading}
+                cancelInvite={cancelInvite}
+              />
+            </section>
+
+            <button className={styles.iconButton} onClick={toggleInboxSidebar}>
+              <FaEnvelope />
+            </button>
+            <InboxSidebar
+              isOpen={isInboxSidebarOpen}
+              onClose={toggleInboxSidebar}
+              invites={receivedInvites}
+              loading={loading}
             />
-          </div>
+
+            <button className={styles.iconButton}>
+              <FaUserCircle />
+            </button>
+          </nav>
         </section>
 
         <section className={styles.buttonHeader}>
@@ -165,8 +321,14 @@ const Page = () => {
                 setCurrentEnd(setEnd);
                 setCurrentFunding(Funding);
 
-                setShowForm(false); // Close the first modal after creating
-                setShowReqForm(true); // Open the second modal
+                setProjects((prev) => [
+                  ...prev,
+
+                  { project_ID: Date.now(), name: projectName },
+                ]);
+
+                setShowForm(false);
+                setShowReqForm(true);
               }}
             />
           )}
@@ -187,23 +349,19 @@ const Page = () => {
             />
           )}
 
-          <div className={styles.buttonGroup}>
-            <button>Upload</button>
-            <button>Create folder</button>
-            <button>Record</button>
+          <div className={styles.searchContainer}>
+            <input
+              className={styles.searchInput}
+              type="text"
+              placeholder="Search projects..."
+            />
           </div>
         </section>
 
-        <div className={styles.tabGroup}>
-          <button>Recent</button>
-          <button>Starred</button>
-          <button>Shared</button>
-        </div>
-
-        <div className={styles.cardContainer}>
+        <section className={styles.cardContainer}>
           {projects.map((project) => (
-            <div 
-              key={project.project_ID} 
+            <article
+              key={project.project_ID}
               className={styles.card}
               onClick={() => handleCardClick(project.project_ID)}
             >
@@ -213,12 +371,21 @@ const Page = () => {
                   <h3>{project.title}</h3>
                   <p className={styles.description}>{project.description}</p>
                   <div className={styles.projectDetails}>
-                    <span>Start: {new Date(project.start_date).toLocaleDateString()}</span>
-                    <span>End: {new Date(project.end_date).toLocaleDateString()}</span>
-                    <span>Funding: {project.funding_available ? 'Available' : 'Not Available'}</span>
+                    <time>
+                      Start: {new Date(project.start_date).toLocaleDateString()}
+                    </time>
+                    <time>
+                      End: {new Date(project.end_date).toLocaleDateString()}
+                    </time>
+                    <span>
+                      Funding:{" "}
+                      {project.funding_available
+                        ? "Available"
+                        : "Not Available"}
+                    </span>
                   </div>
                 </div>
-                <section className={styles.cardFooter}>
+                <footer className={styles.cardFooter}>
                   <div className={styles.buttonContainer}>
                     <button
                       className={styles.editButton}
@@ -229,10 +396,30 @@ const Page = () => {
                         setShowEditForm(true);
                       }}
                     >
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
                         <path d="M12 20h9" />
                         <path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19.5 3 21l1.5-4L16.5 3.5z" />
                       </svg>
+                    </button>
+                    <button
+                      className={styles.addButton}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setInviteProject(project);
+                        setInviteModalOpen(true);
+                      }}
+                      title="Invite Collaborators"
+                    >
+                      <FaUserPlus />
                     </button>
                     <button
                       className={styles.trashButton}
@@ -245,12 +432,23 @@ const Page = () => {
                       🗑️
                     </button>
                   </div>
-                </section>
+                </footer>
               </div>
-            </div>
+            </article>
           ))}
-        </div>
-        {/* Edit Project Modal */}
+        </section>
+        {inviteModalOpen && inviteProject && (
+          <InviteCollaborators
+            projectId={inviteProject.project_ID}
+            projectTitle={inviteProject.title || ""}
+            projectDescription={inviteProject.description || ""}
+            onClose={() => {
+              setInviteModalOpen(false);
+              setInviteProject(null);
+            }}
+          />
+        )}
+
         {showEditForm && editProject && (
           <EditProjectForm
             initialValues={editProject}
@@ -259,7 +457,6 @@ const Page = () => {
               setEditProject(null);
             }}
             onEdit={(updatedProject) => {
-              // Update the project in the list
               setProjects((prev) =>
                 prev.map((p) =>
                   p.project_ID === updatedProject.project_ID

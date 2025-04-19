@@ -33,11 +33,13 @@ export default function CreateForm({ onClose, onCreate }: CreateFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Check if funding is selected
     if (funding_available === null) {
-      const fundingInputs = document.getElementsByName('funding');
-      (fundingInputs[0] as HTMLInputElement).setCustomValidity('Please select a funding option');
+      const fundingInputs = document.getElementsByName("funding");
+      (fundingInputs[0] as HTMLInputElement).setCustomValidity(
+        "Please select a funding option"
+      );
       (fundingInputs[0] as HTMLInputElement).reportValidity();
       return;
     }
@@ -70,8 +72,8 @@ export default function CreateForm({ onClose, onCreate }: CreateFormProps) {
   // Clear custom validity when funding selection changes
   const handleFundingChange = (value: boolean) => {
     setFunding(value);
-    const fundingInputs = document.getElementsByName('funding');
-    (fundingInputs[0] as HTMLInputElement).setCustomValidity('');
+    const fundingInputs = document.getElementsByName("funding");
+    (fundingInputs[0] as HTMLInputElement).setCustomValidity("");
   };
 
   return (
@@ -134,40 +136,43 @@ export default function CreateForm({ onClose, onCreate }: CreateFormProps) {
             required
           />
 
-          <section className={styles.radioContainer}>
+          <section className={styles.radioGroup}>
             <label htmlFor="Funding">Funding Available *</label>
-            <label>
-              <input
-                type="radio"
-                name="funding"
-                value="true"
-                className={styles.radioInput}
-                checked={funding_available === true}
-                onChange={() => handleFundingChange(true)}
-              />
-              Yes
-            </label>
+            <section className={styles.radioOptions}>
+              <label className={styles.radioContainer}>
+                <input
+                  type="radio"
+                  name="funding"
+                  value="true"
+                  className={styles.radioInput}
+                  checked={funding_available === true}
+                  onChange={() => handleFundingChange(true)}
+                />
+                Yes
+              </label>
 
-            <label>
-              <input
-                type="radio"
-                name="funding"
-                value="false"
-                className={styles.radioInput}
-                checked={funding_available === false}
-                onChange={() => handleFundingChange(false)}
-              />
-              No
-            </label>
+              <label className={styles.radioContainer}>
+                <input
+                  type="radio"
+                  name="funding"
+                  value="false"
+                  className={styles.radioInput}
+                  checked={funding_available === false}
+                  onChange={() => handleFundingChange(false)}
+                />
+                No
+              </label>
+            </section>
           </section>
-
-          <button
-            type="submit"
-            aria-label="submit information"
-            style={{ backgroundColor: 'black', color: 'white', border: 'none', borderRadius: 'var(--button-radius)', fontSize: 20, fontWeight: 600 }}
-          >
-            Next: Add Requirements
-          </button>
+          <section className={styles.buttonWrap}>
+            <button
+              type="submit"
+              aria-label="submit information"
+              className={styles.buttonNext}
+            >
+              Next →
+            </button>
+          </section>
         </form>
       </section>
     </main>

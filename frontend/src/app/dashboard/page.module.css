@@ -1,13 +1,13 @@
 .container {
   display: flex;
-  min-height: 100vh; /* Ensure the container takes at least the full viewport height */
+  min-height: 100vh;
 }
 
 .sidebar {
-  width: 280px; /* Slightly wider sidebar */
+  width: 280px;
   background-color: var(--primary-color);
-  padding: 25px; /* Add a bit more padding */
-  border-right: 1px solid #ddd; /* Lighter border */
+  padding: 25px;
+  border-right: 1px solid #ddd;
   box-shadow: 10px 10px 10px var(--shadows-color);
 }
 .sidebar h2 {
@@ -64,43 +64,74 @@
 
 .searchContainer {
   position: relative;
-  margin-bottom: 10px;
+  margin-bottom: 20px;
+  min-width: 3rem;
+  padding-right: 3rem;
 }
 
 .searchInput {
   width: 300px;
-  padding: 5px 5px 5px 35px;
-
+  padding: 6px 6px 10px 40px;
+  border-radius: var(--button-radius);
   box-sizing: border-box;
   border: 1px solid #ccc;
   border-radius: 8px;
   background-image: url("/search.png");
-  background-position: 10px center;
+  background-position: 12px 8px;
   background-size: 18px 18px;
   background-repeat: no-repeat;
-  font-size: 0.9rem;
+  font-size: 1.2rem;
+  cursor: pointer;
+  background-color: var(--box-color);
+  cursor: text;
 }
 
 .searchInput:focus {
   outline: none;
-  border-color: #007bff; /* Example focus color */
+  border-color: #000000; /* Example focus color */
   box-shadow: 0 0 5px var(--shadows-color);
 }
 
+
+
 .heading {
-  display: grid;
-  grid-template-columns: repeat(
-    auto-fit,
-    minmax(250px, 1fr)
-  ); /* Responsive grid */
-  gap: 15rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   border-bottom: 1px solid #000000;
   margin-bottom: 2rem;
+  padding: 0 20px; /* optional, keeps some space around */
+}
+
+.colabGroup {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  padding: 0px 60px;
+}
+
+.iconButton {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* space between icon and text */
+
+  color: black;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 25px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.iconButton:hover {
+  background-color: var(--field-hover-color);
 }
 
 .buttonHeader {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 20px; /* spacing between button and tabs */
 }
 
@@ -109,10 +140,10 @@
   background-color: var(--secondary-color);
   color: var(--primary-color);
   border: none;
-  padding: 12px 20px;
+  padding: 12px 28px;
   border-radius: var(--button-radius);
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 1.5rem;
   transition: background-color 0.3s ease;
 }
 
@@ -159,7 +190,7 @@
 
 .tabGroup button:hover,
 .tabGroup button.active {
-  border-bottom-color: #007bff; /* Example active/hover color */
+  border-bottom-color: #000000; /* Example active/hover color */
 }
 
 .tabGroup button.active {
@@ -180,7 +211,6 @@
 }
 
 .card {
-
   all: unset; /* reset default button styles */
   background-color: var(--primary-color);
   border: 1px solid #ddd;
@@ -206,6 +236,14 @@
   margin-bottom: 5px;
 }
 
+.cardContent time {
+  margin-top: 1rem;
+  font-size: 1.1rem;
+  font-weight: var(--font-weight-medium);
+  color: #333;
+  margin-bottom: 5px;
+}
+
 .cardContent p {
   font-size: 0.9rem;
   color: #777;
@@ -213,7 +251,13 @@
 
 .cardFooter {
   display: flex;
+  align-items: center;
   justify-content: space-between;
+}
+
+.buttonContainer {
+  display: flex;
+  align-items: center;
 }
 
 .editButton {
@@ -236,11 +280,28 @@
   background: none;
   border: none;
   cursor: pointer;
-  padding: 3px;
+  padding: 6px 5px 10px 10px;
   border-radius: 50%; /* makes it a circle */
+  color: #222;
+  font-size: 15px;
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .trashButton:hover {
+  background-color: rgba(255, 0, 0, 0.1);
+}
+
+.addButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%; /* makes it a circle */
+  color: #222;
+  font-size: 20px;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.addButton:hover {
   background-color: rgba(255, 0, 0, 0.1);
 }
