@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import styles from "./page.module.css";
+import InviteCollaborators from "../components/InviteCollaborators";
 import CreateForm from "../create-project/createForm";
 import CreateReqForm from "../create-req/createReqForm";
 import EditProjectForm from "../edit-project/editProjectForm";
@@ -128,6 +129,10 @@ const Page = () => {
     }
   }, [isInboxSidebarOpen]);
 
+  // State for invite modal
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const [inviteProject, setInviteProject] = useState<any | null>(null);
+
   // Fetch projects on component mount
   /*useEffect(() => {
     const fetchProjects = async () => {
@@ -218,6 +223,21 @@ const Page = () => {
 
   return (
     <div className={styles.container}>
+      {showEditForm && editProject && (
+        <EditProjectForm
+          onClose={() => setShowEditForm(false)}
+          initialValues={editProject}
+          onEdit={(updatedProject) => {
+            setProjects((prev) =>
+              prev.map((proj) =>
+                proj.project_ID === updatedProject.project_ID ? { ...proj, ...updatedProject } : proj
+              )
+            );
+            setShowEditForm(false);
+            setEditProject(null);
+          }}
+        />
+      )}
       <aside className={styles.sidebar}>
         <h2>ThinkSync</h2>
         <h3>DASHBOARD</h3>
@@ -301,8 +321,10 @@ const Page = () => {
 
                 setProjects((prev) => [
                   ...prev,
+
                   { project_ID: Date.now(), name: projectName },
                 ]);
+
 
                 setShowForm(false);
                 setShowReqForm(true);
@@ -345,6 +367,7 @@ const Page = () => {
               <div className={styles.cardContent}>
                 <img src="/exampleImg.png" alt="project" />
                 <div className={styles.projectInfo}>
+
                   <h3>{project.title}</h3>
                   <p className={styles.description}>{project.description}</p>
                   <div className={styles.projectDetails}>
@@ -361,6 +384,7 @@ const Page = () => {
                         : "Not Available"}
                     </span>
                   </div>
+
                 </div>
                 <footer className={styles.cardFooter}>
                   <div className={styles.buttonContainer}>
@@ -387,11 +411,17 @@ const Page = () => {
                         <path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19.5 3 21l1.5-4L16.5 3.5z" />
                       </svg>
                     </button>
-
-                    <button className={styles.addButton}>
-                      <FaUserPlus />
-                    </button>
-
+                    <button
+  className={styles.addButton}
+  onClick={(e) => {
+    e.stopPropagation();
+    setInviteProject(project);
+    setInviteModalOpen(true);
+  }}
+  title="Invite Collaborators"
+>
+  <FaUserPlus />
+</button>
                     <button
                       className={styles.trashButton}
                       title="Delete project"
@@ -407,7 +437,20 @@ const Page = () => {
               </div>
             </article>
           ))}
-        </section>
+
+        </div>
+        {inviteModalOpen && inviteProject && (
+  <InviteCollaborators
+    projectId={inviteProject.project_ID}
+    projectTitle={inviteProject.title || ''}
+    projectDescription={inviteProject.description || ''}
+    onClose={() => {
+      setInviteModalOpen(false);
+      setInviteProject(null);
+    }}
+  />
+)}
+
 
         {showEditForm && editProject && (
           <EditProjectForm
@@ -429,6 +472,7 @@ const Page = () => {
             }}
           />
         )}
+
       </main>
     </div>
   );

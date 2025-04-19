@@ -8,13 +8,14 @@ export type EditProjectFormProps = {
   onClose: () => void;
   initialValues: {
     project_ID: string;
-    title: string;
-    description: string;
-    goals: string;
-    research_areas: string;
-    start_date: string;
-    end_date: string;
-    funding_available: boolean;
+    name?: string;
+    title?: string;
+    description?: string;
+    goals?: string;
+    research_areas?: string;
+    start_date?: string;
+    end_date?: string;
+    funding_available?: boolean;
     requirements?: any[];
   };
   onEdit: (updatedProject: any) => void;
@@ -25,13 +26,15 @@ export default function EditProjectForm({
   onEdit,
   initialValues,
 }: EditProjectFormProps) {
-  const [title, setTitle] = useState(initialValues.title);
-  const [description, setDescription] = useState(initialValues.description);
-  const [goals, setGoals] = useState(initialValues.goals);
-  const [research_areas, setResArea] = useState(initialValues.research_areas);
-  const [start_date, setStart] = useState(initialValues.start_date);
-  const [end_date, setEnd] = useState(initialValues.end_date);
-  const [funding_available, setFunding] = useState(initialValues.funding_available);
+  const [title, setTitle] = useState(initialValues.title || initialValues.name || "");
+  const [description, setDescription] = useState(initialValues.description || "");
+  const [goals, setGoals] = useState(initialValues.goals || "");
+  const [research_areas, setResArea] = useState(initialValues.research_areas || "");
+  const [start_date, setStart] = useState(initialValues.start_date || "");
+  const [end_date, setEnd] = useState(initialValues.end_date || "");
+  const [funding_available, setFunding] = useState(
+    initialValues.funding_available !== undefined ? initialValues.funding_available : false
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -40,13 +43,13 @@ export default function EditProjectForm({
 
   // Update state when initialValues change
   useEffect(() => {
-    setTitle(initialValues.title);
-    setDescription(initialValues.description);
-    setGoals(initialValues.goals);
-    setResArea(initialValues.research_areas);
-    setStart(initialValues.start_date);
-    setEnd(initialValues.end_date);
-    setFunding(initialValues.funding_available);
+    setTitle(initialValues.title || initialValues.name || "");
+    setDescription(initialValues.description || "");
+    setGoals(initialValues.goals || "");
+    setResArea(initialValues.research_areas || "");
+    setStart(initialValues.start_date || "");
+    setEnd(initialValues.end_date || "");
+    setFunding(initialValues.funding_available !== undefined ? initialValues.funding_available : false);
     setRequirements(initialValues.requirements || []);
   }, [initialValues]);
 
