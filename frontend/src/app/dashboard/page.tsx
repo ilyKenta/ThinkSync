@@ -110,13 +110,16 @@ const Page = () => {
       const fetchReceivedInvites = async () => {
         setLoading(true);
         try {
-          const res = await fetch("http://localhost:5000/api/collaborations/invitations/received", {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          });
+          const res = await fetch(
+            "http://localhost:5000/api/collaborations/invitations/received",
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            }
+          );
           if (!res.ok) throw new Error("Failed to fetch received invites");
-  
+
           const data = await res.json();
           setReceivedInvites(data.invitations);
         } catch (err) {
@@ -213,7 +216,7 @@ const Page = () => {
     boolean | null
   >(null);
 
-/* if (loading) {
+  /* if (loading) {
     return <div className={styles.container}>Loading projects...</div>;
   }
 
@@ -230,7 +233,9 @@ const Page = () => {
           onEdit={(updatedProject) => {
             setProjects((prev) =>
               prev.map((proj) =>
-                proj.project_ID === updatedProject.project_ID ? { ...proj, ...updatedProject } : proj
+                proj.project_ID === updatedProject.project_ID
+                  ? { ...proj, ...updatedProject }
+                  : proj
               )
             );
             setShowEditForm(false);
@@ -254,14 +259,12 @@ const Page = () => {
             </button>
           </li>
         </ul>
-
       </aside>
 
       <main className={styles.mainContent}>
         <section className={styles.heading}>
           <h2>My Projects</h2>
           <nav className={styles.colabGroup}>
-
             <section className="styles.sidebar">
               <button className={styles.iconButton} onClick={togglerSidebar}>
                 <FaPaperPlane />
@@ -274,7 +277,6 @@ const Page = () => {
                 cancelInvite={cancelInvite}
               />
             </section>
-
 
             <button className={styles.iconButton} onClick={toggleInboxSidebar}>
               <FaEnvelope />
@@ -325,7 +327,6 @@ const Page = () => {
                   { project_ID: Date.now(), name: projectName },
                 ]);
 
-
                 setShowForm(false);
                 setShowReqForm(true);
               }}
@@ -367,7 +368,6 @@ const Page = () => {
               <div className={styles.cardContent}>
                 <img src="/exampleImg.png" alt="project" />
                 <div className={styles.projectInfo}>
-
                   <h3>{project.title}</h3>
                   <p className={styles.description}>{project.description}</p>
                   <div className={styles.projectDetails}>
@@ -384,7 +384,6 @@ const Page = () => {
                         : "Not Available"}
                     </span>
                   </div>
-
                 </div>
                 <footer className={styles.cardFooter}>
                   <div className={styles.buttonContainer}>
@@ -412,16 +411,16 @@ const Page = () => {
                       </svg>
                     </button>
                     <button
-  className={styles.addButton}
-  onClick={(e) => {
-    e.stopPropagation();
-    setInviteProject(project);
-    setInviteModalOpen(true);
-  }}
-  title="Invite Collaborators"
->
-  <FaUserPlus />
-</button>
+                      className={styles.addButton}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setInviteProject(project);
+                        setInviteModalOpen(true);
+                      }}
+                      title="Invite Collaborators"
+                    >
+                      <FaUserPlus />
+                    </button>
                     <button
                       className={styles.trashButton}
                       title="Delete project"
@@ -437,20 +436,18 @@ const Page = () => {
               </div>
             </article>
           ))}
-
-        </div>
+        </section>
         {inviteModalOpen && inviteProject && (
-  <InviteCollaborators
-    projectId={inviteProject.project_ID}
-    projectTitle={inviteProject.title || ''}
-    projectDescription={inviteProject.description || ''}
-    onClose={() => {
-      setInviteModalOpen(false);
-      setInviteProject(null);
-    }}
-  />
-)}
-
+          <InviteCollaborators
+            projectId={inviteProject.project_ID}
+            projectTitle={inviteProject.title || ""}
+            projectDescription={inviteProject.description || ""}
+            onClose={() => {
+              setInviteModalOpen(false);
+              setInviteProject(null);
+            }}
+          />
+        )}
 
         {showEditForm && editProject && (
           <EditProjectForm
@@ -472,13 +469,9 @@ const Page = () => {
             }}
           />
         )}
-
       </main>
     </div>
   );
 };
 
 export default Page;
-
-
-
