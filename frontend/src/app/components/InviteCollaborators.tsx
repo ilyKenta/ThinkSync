@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 type Collaborator = {
   user_ID: string;
@@ -23,7 +23,6 @@ const InviteCollaborators: React.FC<InviteCollaboratorsProps> = ({
   projectDescription,
   onClose,
 }) => {
-  const [open, setOpen] = useState(true);
   const [search, setSearch] = useState("");
   const [searchType, setSearchType] = useState("name");
   const [results, setResults] = useState<Collaborator[]>([]);
@@ -31,7 +30,17 @@ const InviteCollaborators: React.FC<InviteCollaboratorsProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [inviteLoading, setInviteLoading] = useState(false);
-  onClose;
+
+  // Reset state when the component mounts or projectId changes
+  useEffect(() => {
+    setSearch("");
+    setSearchType("name");
+    setResults([]);
+    setSelected([]);
+    setLoading(false);
+    setError(null);
+    setInviteLoading(false);
+  }, [projectId]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,10 +105,10 @@ const InviteCollaborators: React.FC<InviteCollaboratorsProps> = ({
           .map((u) => u.fname + " " + u.sname)
           .join(", ")}\n\nProject: ${projectTitle}\n${projectDescription}`
       );
-      setOpen(false);
       setSelected([]);
       setResults([]);
       setSearch("");
+      onClose();
     } catch (err: any) {
       alert("Error sending invitations: " + (err.message || err));
     } finally {
@@ -108,102 +117,98 @@ const InviteCollaborators: React.FC<InviteCollaboratorsProps> = ({
   };
 
   return (
-    <>
-      {open && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100vw",
-            height: "100vh",
-            background: "rgba(0,0,0,0.3)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 1000,
-          }}
-        >
-          <div
-            style={{
-              background: "#fff",
-              padding: 24,
-              borderRadius: 8,
-              minWidth: 320,
-            }}
-          >
-            <h2>Invite Collaborators</h2>
-            <form onSubmit={handleSearch} style={{ marginBottom: 12 }}>
-              <div style={{ display: "flex", marginBottom: 8 }}>
-                <select
-                  value={searchType}
-                  onChange={(e) => setSearchType(e.target.value)}
-                  style={{ marginRight: 8 }}
-                >
-                  <option value="name">Name</option>
-                  <option value="skill">Skill set</option>
-                  <option value="position">Position</option>
-                </select>
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder={`Search by ${searchType}`}
-                  style={{ flex: 1 }}
-                />
-                <button
-                  type="submit"
-                  disabled={loading}
-                  style={{ marginLeft: 8 }}
-                >
-                  {loading ? "Searching..." : "Search"}
-                </button>
-              </div>
-            </form>
-            {error && (
-              <div style={{ color: "red", marginBottom: 8 }}>{error}</div>
-            )}
-            <div style={{ maxHeight: 200, overflowY: "auto", marginBottom: 8 }}>
-              {results.length === 0 && !loading && <div>No results.</div>}
-              {results.map((u) => (
-                <div
-                  key={u.user_ID}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    marginBottom: 4,
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={selected.includes(u.user_ID)}
-                    onChange={() => handleSelect(u.user_ID)}
-                    style={{ marginRight: 8 }}
-                  />
-                  <span>
-                    <b>
-                      {u.fname} {u.sname}
-                    </b>{" "}
-                    | {u.acc_role} | {u.res_area || ""}{" "}
-                    {u.qualification ? `| ${u.qualification}` : ""}
-                  </span>
-                </div>
-              ))}
-            </div>
-            <button
-              onClick={handleInvite}
-              disabled={selected.length === 0 || inviteLoading}
-              style={{ marginTop: 12 }}
+    <div
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100vw",
+        height: "100vh",
+        background: "rgba(0,0,0,0.3)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 1000,
+      }}
+    >
+      <div
+        style={{
+          background: "#fff",
+          padding: 24,
+          borderRadius: 8,
+          minWidth: 320,
+        }}
+      >
+        <h2>Invite Collaborators</h2>
+        <form onSubmit={handleSearch} style={{ marginBottom: 12 }}>
+          <div style={{ display: "flex", marginBottom: 8 }}>
+            <select
+              value={searchType}
+              onChange={(e) => setSearchType(e.target.value)}
+              style={{ marginRight: 8 }}
             >
-              {inviteLoading ? "Sending..." : "Send Invitation"}
-            </button>
-            <button onClick={onClose} style={{ marginLeft: 8 }}>
-              Cancel
+              <option value="name">Name</option>
+              <option value="skill">Skill set</option>
+              <option value="position">Position</option>
+            </select>
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={`Search by ${searchType}`}
+              style={{ flex: 1 }}
+            />
+            <button
+              type="submit"
+              disabled={loading}
+              style={{ marginLeft: 8 }}
+            >
+              {loading ? "Searching..." : "Search"}
             </button>
           </div>
+        </form>
+        {error && (
+          <div style={{ color: "red", marginBottom: 8 }}>{error}</div>
+        )}
+        <div style={{ maxHeight: 200, overflowY: "auto", marginBottom: 8 }}>
+          {results.length === 0 && !loading && <div>No results.</div>}
+          {results.map((u) => (
+            <div
+              key={u.user_ID}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                marginBottom: 4,
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={selected.includes(u.user_ID)}
+                onChange={() => handleSelect(u.user_ID)}
+                style={{ marginRight: 8 }}
+              />
+              <span>
+                <b>
+                  {u.fname} {u.sname}
+                </b>{" "}
+                | {u.acc_role} | {u.res_area || ""}{" "}
+                {u.qualification ? `| ${u.qualification}` : ""}
+              </span>
+            </div>
+          ))}
         </div>
-      )}
-    </>
+        <button
+          onClick={handleInvite}
+          disabled={selected.length === 0 || inviteLoading}
+          style={{ marginTop: 12 }}
+        >
+          {inviteLoading ? "Sending..." : "Send Invitation"}
+        </button>
+        <button onClick={onClose} style={{ marginLeft: 8 }}>
+          Cancel
+        </button>
+      </div>
+    </div>
   );
 };
 

@@ -23,11 +23,12 @@ const Page = () => {
   const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isInboxSidebarOpen, setIsInboxSidebarOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('my');
 
   const [editProject, setEditProject] = useState<any | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isInboxSidebarOpen, setIsInboxSidebarOpen] = useState(false);
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -73,7 +74,7 @@ const Page = () => {
   const [inviteProject, setInviteProject] = useState<any | null>(null);
 
   const handleCardClick = (projectId: string) => {
-    router.push(`/projectInfo/${projectId}`);
+    //router.push(`/projectInfo/${projectId}`);
   };
 
   const handleDelete = async (projectId: string) => {
@@ -118,6 +119,12 @@ const Page = () => {
   const [currentend_date, setCurrentEnd] = useState("");
   const [currentfunding_available, setCurrentFunding] = useState<boolean | null>(null);
 
+  const handleInviteClick = (e: React.MouseEvent, project: any) => {
+    e.stopPropagation();
+    setInviteProject(project);
+    setInviteModalOpen(true);
+  };
+
   if (loading) {
     return <div className={styles.container}>Loading projects...</div>;
   }
@@ -134,12 +141,26 @@ const Page = () => {
 
         <ul>
           <li>
-            <button type="button" onClick={() => router.push("/dashboard")}>
+            <button 
+              type="button" 
+              onClick={() => {
+                setActiveTab('my');
+                router.push("/dashboard");
+              }}
+              className={activeTab === 'my' ? styles.active : ''}
+            >
               My Projects
             </button>
           </li>
           <li>
-            <button type="button" onClick={() => router.push("/Shared_projects")}>
+            <button 
+              type="button" 
+              onClick={() => {
+                setActiveTab('shared');
+                router.push("/Shared_projects");
+              }}
+              className={activeTab === 'shared' ? styles.active : ''}
+            >
               Shared Projects
             </button>
           </li>
@@ -203,10 +224,10 @@ const Page = () => {
                 setCurrentEnd(setEnd);
                 setCurrentFunding(Funding);
 
-                setProjects((prev) => [
-                  ...prev,
-                  { project_ID: Date.now(), name: projectName },
-                ]);
+                // setProjects((prev) => [
+                //   ...prev,
+                //   { project_ID: Date.now(), name: projectName },
+                // ]);
 
                 setShowForm(false);
                 setShowReqForm(true);
@@ -290,11 +311,7 @@ const Page = () => {
                     </button>
                     <button
                       className={styles.addButton}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setInviteProject(project);
-                        setInviteModalOpen(true);
-                      }}
+                      onClick={(e) => handleInviteClick(e, project)}
                       title="Invite Collaborators"
                     >
                       <FaUserPlus />

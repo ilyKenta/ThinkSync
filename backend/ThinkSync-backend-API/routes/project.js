@@ -297,4 +297,51 @@ router.delete('/delete/:projectId', async (req, res) => {
     }
 });
 
+// Get projects where user is a collaborator
+router.get('/collaborator', async (req, res) => {
+    try {
+        const token = req.headers.authorization?.split(' ')[1];
+        if (!token) {
+            return res.status(401).json({ error: 'Access token is required' });
+        }
+
+        const userId = await getUserIdFromToken(token);
+
+        // Query to get projects where user is a collaborator
+        const query = `
+            SELECT p.*, pc.role as collaborator_role
+            FROM projects p
+            JOIN project_collaborations pc ON p.project_ID = pc.project_ID
+            WHERE pc.user_ID = ?
+            ORDER BY p.created_at DESC
+        `;
+
+        const results = await db.executeQuery(query, [userId]);
+        
+        if (!results || results.length === 0) {
+            return res.status(200).json({ projects: [] });
+        }
+
+        // For each project, get its requirements
+        const projectsWithRequirements = await Promise.all(
+            results.map(async (project) => {
+                const requirementsQuery = `
+                    SELECT * FROM project_requirements
+                    WHERE project_ID = ?
+                `;
+                const requirements = await db.executeQuery(requirementsQuery, [project.project_ID]);
+                return {
+                    ...project,
+                    requirements: requirements || []
+                };
+            })
+        );
+
+        res.status(200).json({ projects: projectsWithRequirements });
+    } catch (error) {
+        console.error('Error fetching collaborator projects:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 module.exports = router;
