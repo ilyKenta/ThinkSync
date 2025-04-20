@@ -31,10 +31,10 @@ describe('Collaboration Routes', () => {
     jest.clearAllMocks();
   });
 
-  describe('GET /search', () => {
+  describe('POST /search', () => {
     it('should return 401 if no token provided', async () => {
       const response = await request(app)
-        .get('/api/collaboration/search')
+        .post('/api/collaboration/search')
         .send({ searchTerm: 'test', searchType: 'name' });
 
       expect(response.status).toBe(401);
@@ -43,7 +43,7 @@ describe('Collaboration Routes', () => {
 
     it('should return 400 if search term or type is missing', async () => {
       const response = await request(app)
-        .get('/api/collaboration/search')
+        .post('/api/collaboration/search')
         .set('Authorization', 'Bearer valid-token')
         .send({ searchType: 'name' });
 
@@ -67,7 +67,7 @@ describe('Collaboration Routes', () => {
       db.executeQuery.mockResolvedValueOnce(mockResults);
 
       const response = await request(app)
-        .get('/api/collaboration/search')
+        .post('/api/collaboration/search')
         .set('Authorization', 'Bearer valid-token')
         .send({ searchTerm: 'John', searchType: 'name' });
 
@@ -95,7 +95,7 @@ describe('Collaboration Routes', () => {
       db.executeQuery.mockResolvedValueOnce(mockResults);
 
       const response = await request(app)
-        .get('/api/collaboration/search')
+        .post('/api/collaboration/search')
         .set('Authorization', 'Bearer valid-token')
         .send({ searchTerm: 'AI', searchType: 'skill' });
 
@@ -123,7 +123,7 @@ describe('Collaboration Routes', () => {
       db.executeQuery.mockResolvedValueOnce(mockResults);
 
       const response = await request(app)
-        .get('/api/collaboration/search')
+        .post('/api/collaboration/search')
         .set('Authorization', 'Bearer valid-token')
         .send({ searchTerm: 'researcher', searchType: 'position' });
 
@@ -137,7 +137,7 @@ describe('Collaboration Routes', () => {
 
     it('should return 400 for invalid search type', async () => {
       const response = await request(app)
-        .get('/api/collaboration/search')
+        .post('/api/collaboration/search')
         .set('Authorization', 'Bearer valid-token')
         .send({ searchTerm: 'test', searchType: 'invalid' });
 
@@ -149,7 +149,7 @@ describe('Collaboration Routes', () => {
       db.executeQuery.mockRejectedValueOnce(new Error('Database error'));
 
       const response = await request(app)
-        .get('/api/collaboration/search')
+        .post('/api/collaboration/search')
         .set('Authorization', 'Bearer valid-token')
         .send({ searchTerm: 'test', searchType: 'name' });
 
@@ -285,12 +285,13 @@ describe('Collaboration Routes', () => {
         {
           invitation_ID: '1',
           project_ID: '1',
-          sender_ID: '2',
-          recipient_ID: mockUserId,
-          status: 'pending',
           project_title: 'Test Project',
           sender_fname: 'John',
-          sender_sname: 'Doe'
+          sender_sname: 'Doe',
+          proposed_role: 'researcher',
+          status: 'pending',
+          current_status: 'pending',
+          sent_at: '2024-03-20T12:00:00Z'
         }
       ];
 
@@ -316,24 +317,13 @@ describe('Collaboration Routes', () => {
     });
   });
 
-  describe('GET /invitations/sent/:projectId', () => {
+  describe('GET /invitations/sent', () => {
     it('should return 401 if no token provided', async () => {
       const response = await request(app)
-        .get('/api/collaboration/invitations/sent/1');
+        .get('/api/collaboration/invitations/sent');
 
       expect(response.status).toBe(401);
       expect(response.body.error).toBe('Access token is required');
-    });
-
-    it('should return 403 if user is not project owner', async () => {
-      db.executeQuery.mockResolvedValueOnce([{ owner_ID: 'different-user' }]);
-
-      const response = await request(app)
-        .get('/api/collaboration/invitations/sent/1')
-        .set('Authorization', 'Bearer valid-token');
-
-      expect(response.status).toBe(403);
-      expect(response.body.error).toBe('Unauthorized to view these invitations');
     });
 
     it('should return sent invitations successfully', async () => {
@@ -341,20 +331,20 @@ describe('Collaboration Routes', () => {
         {
           invitation_ID: '1',
           project_ID: '1',
-          sender_ID: mockUserId,
-          recipient_ID: '2',
-          status: 'pending',
+          project_title: 'Test Project',
           recipient_fname: 'John',
-          recipient_sname: 'Doe'
+          recipient_sname: 'Doe',
+          proposed_role: 'researcher',
+          status: 'pending',
+          current_status: 'pending',
+          sent_at: '2024-03-20T12:00:00Z'
         }
       ];
 
-      db.executeQuery
-        .mockResolvedValueOnce([{ owner_ID: mockUserId }])
-        .mockResolvedValueOnce(mockInvitations);
+      db.executeQuery.mockResolvedValueOnce(mockInvitations);
 
       const response = await request(app)
-        .get('/api/collaboration/invitations/sent/1')
+        .get('/api/collaboration/invitations/sent')
         .set('Authorization', 'Bearer valid-token');
 
       expect(response.status).toBe(200);
@@ -365,7 +355,7 @@ describe('Collaboration Routes', () => {
       db.executeQuery.mockRejectedValueOnce(new Error('Database error'));
 
       const response = await request(app)
-        .get('/api/collaboration/invitations/sent/1')
+        .get('/api/collaboration/invitations/sent')
         .set('Authorization', 'Bearer valid-token');
 
       expect(response.status).toBe(500);

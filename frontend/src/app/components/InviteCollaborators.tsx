@@ -117,7 +117,7 @@ const InviteCollaborators: React.FC<InviteCollaboratorsProps> = ({
   };
 
   return (
-    <div
+    <dialog
       style={{
         position: "fixed",
         top: 0,
@@ -129,9 +129,11 @@ const InviteCollaborators: React.FC<InviteCollaboratorsProps> = ({
         alignItems: "center",
         justifyContent: "center",
         zIndex: 1000,
+        border: "none",
+        padding: 0,
       }}
     >
-      <div
+      <section
         style={{
           background: "#fff",
           padding: 24,
@@ -141,7 +143,7 @@ const InviteCollaborators: React.FC<InviteCollaboratorsProps> = ({
       >
         <h2>Invite Collaborators</h2>
         <form onSubmit={handleSearch} style={{ marginBottom: 12 }}>
-          <div style={{ display: "flex", marginBottom: 8 }}>
+          <section style={{ display: "flex", marginBottom: 8 }}>
             <select
               value={searchType}
               onChange={(e) => setSearchType(e.target.value)}
@@ -165,15 +167,15 @@ const InviteCollaborators: React.FC<InviteCollaboratorsProps> = ({
             >
               {loading ? "Searching..." : "Search"}
             </button>
-          </div>
+          </section>
         </form>
         {error && (
-          <div style={{ color: "red", marginBottom: 8 }}>{error}</div>
+          <p style={{ color: "red", marginBottom: 8 }}>{error}</p>
         )}
-        <div style={{ maxHeight: 200, overflowY: "auto", marginBottom: 8 }}>
-          {results.length === 0 && !loading && <div>No results.</div>}
+        <section style={{ maxHeight: 200, overflowY: "auto", marginBottom: 8 }}>
+          {results.length === 0 && !loading && <p>No results.</p>}
           {results.map((u) => (
-            <div
+            <section
               key={u.user_ID}
               style={{
                 display: "flex",
@@ -187,28 +189,29 @@ const InviteCollaborators: React.FC<InviteCollaboratorsProps> = ({
                 onChange={() => handleSelect(u.user_ID)}
                 style={{ marginRight: 8 }}
               />
-              <span>
-                <b>
+              <p>
+                <strong>
                   {u.fname} {u.sname}
-                </b>{" "}
+                </strong>{" "}
                 | {u.acc_role} | {u.res_area || ""}{" "}
                 {u.qualification ? `| ${u.qualification}` : ""}
-              </span>
-            </div>
+              </p>
+            </section>
           ))}
-        </div>
-        <button
-          onClick={handleInvite}
-          disabled={selected.length === 0 || inviteLoading}
-          style={{ marginTop: 12 }}
-        >
-          {inviteLoading ? "Sending..." : "Send Invitation"}
-        </button>
-        <button onClick={onClose} style={{ marginLeft: 8 }}>
-          Cancel
-        </button>
-      </div>
-    </div>
+        </section>
+        <section style={{ marginTop: 12 }}>
+          <button
+            onClick={handleInvite}
+            disabled={selected.length === 0 || inviteLoading}
+          >
+            {inviteLoading ? "Sending..." : "Send Invitation"}
+          </button>
+          <button onClick={onClose} style={{ marginLeft: 8 }}>
+            Cancel
+          </button>
+        </section>
+      </section>
+    </dialog>
   );
 };
 

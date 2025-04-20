@@ -147,6 +147,7 @@ export default function CreateForm({ onClose, onCreate }: CreateFormProps) {
                   className={styles.radioInput}
                   checked={funding_available === true}
                   onChange={() => handleFundingChange(true)}
+                  required
                 />
                 Yes
               </label>

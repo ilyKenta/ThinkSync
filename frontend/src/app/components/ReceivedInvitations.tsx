@@ -101,15 +101,15 @@ const ReceivedInvitations: React.FC = () => {
         }
     };
 
-    if (loading) return <div>Loading invitations...</div>;
-    if (error) return <div style={{ color: 'red' }}>{error}</div>;
-    if (invitations.length === 0) return <div>No invitations received.</div>;
+    if (loading) return <main>Loading invitations...</main>;
+    if (error) return <main style={{ color: 'red' }}>{error}</main>;
+    if (invitations.length === 0) return <main>No invitations received.</main>;
 
     return (
-        <div className="invitations-container">
-            <div className="invitations-list">
+        <main className="invitations-container">
+            <section className="invitations-list">
                 {invitations.map((invitation) => (
-                    <div
+                    <article
                         key={invitation.invitation_ID}
                         className="invitation-card"
                         style={{
@@ -121,19 +121,19 @@ const ReceivedInvitations: React.FC = () => {
                             boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
                         }}
                     >
-                        <div style={{ 
+                        <section style={{ 
                             display: 'flex', 
                             justifyContent: 'space-between', 
                             alignItems: 'flex-start',
                             marginBottom: '8px'
                         }}>
-                            <div style={{ flex: 1 }}>
+                            <section style={{ flex: 1 }}>
                                 <h4 style={{ margin: '0 0 4px 0', fontSize: '1rem' }}>{invitation.project_title}</h4>
-                                <div style={{ fontSize: '0.9rem', color: '#666' }}>
+                                <p style={{ fontSize: '0.9rem', color: '#666' }}>
                                     From: {invitation.sender_fname} {invitation.sender_sname}
-                                </div>
-                            </div>
-                            <span style={{
+                                </p>
+                            </section>
+                            <p style={{
                                 padding: '3px 6px',
                                 borderRadius: '4px',
                                 backgroundColor: getStatusColor(invitation.current_status),
@@ -142,20 +142,20 @@ const ReceivedInvitations: React.FC = () => {
                                 marginLeft: '8px'
                             }}>
                                 {invitation.current_status.charAt(0).toUpperCase() + invitation.current_status.slice(1)}
-                            </span>
-                        </div>
-                        <div style={{ 
+                            </p>
+                        </section>
+                        <section style={{ 
                             fontSize: '0.8rem', 
                             color: '#888',
                             display: 'flex',
                             justifyContent: 'space-between',
                             alignItems: 'center'
                         }}>
-                            <span>{invitation.proposed_role}</span>
-                            <span>{formatDate(invitation.sent_at)}</span>
-                        </div>
+                            <p>{invitation.proposed_role}</p>
+                            <time>{formatDate(invitation.sent_at)}</time>
+                        </section>
                         {invitation.current_status.toLowerCase() === 'pending' && (
-                            <div style={{ 
+                            <section style={{ 
                                 marginTop: '8px', 
                                 display: 'flex', 
                                 justifyContent: 'flex-end',
@@ -203,11 +203,11 @@ const ReceivedInvitations: React.FC = () => {
                                 >
                                     Decline
                                 </button>
-                            </div>
+                            </section>
                         )}
-                    </div>
+                    </article>
                 ))}
-            </div>
+            </section>
             <style jsx>{`
                 .invitations-container {
                     height: 100%;
@@ -225,7 +225,7 @@ const ReceivedInvitations: React.FC = () => {
                     transform: translateY(-2px);
                 }
             `}</style>
-        </div>
+        </main>
     );
 };
 

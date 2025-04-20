@@ -180,6 +180,7 @@ export default function EditProjectForm({
                   className={styles.radioInput}
                   checked={funding_available === true}
                   onChange={() => setFunding(true)}
+                  required
                 />
                 Yes
               </label>
@@ -192,6 +193,7 @@ export default function EditProjectForm({
                   className={styles.radioInput}
                   checked={funding_available === false}
                   onChange={() => setFunding(false)}
+                  required
                 />
                 No
               </label>

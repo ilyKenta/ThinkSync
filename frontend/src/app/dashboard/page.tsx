@@ -126,16 +126,16 @@ const Page = () => {
   };
 
   if (loading) {
-    return <div className={styles.container}>Loading projects...</div>;
+    return <main className={styles.container}>Loading projects...</main>;
   }
 
   if (error) {
-    return <div className={styles.container}>Error: {error}</div>;
+    return <main className={styles.container}>Error: {error}</main>;
   }
 
   return (
-    <div className={styles.container}>
-      <aside className={styles.sidebar}>
+    <main className={styles.container}>
+      <nav className={styles.sidebar}>
         <h2>ThinkSync</h2>
         <h3>DASHBOARD</h3>
 
@@ -165,10 +165,10 @@ const Page = () => {
             </button>
           </li>
         </ul>
-      </aside>
+      </nav>
 
-      <main className={styles.mainContent}>
-        <section className={styles.heading}>
+      <section className={styles.mainContent}>
+        <header className={styles.heading}>
           <h2>My Projects</h2>
           <nav className={styles.colabGroup}>
             <section className={styles.sidebarSection}>
@@ -195,7 +195,7 @@ const Page = () => {
               <FaUserCircle />
             </button>
           </nav>
-        </section>
+        </header>
 
         <section className={styles.buttonHeader}>
           <button
@@ -223,12 +223,6 @@ const Page = () => {
                 setCurrentStart(setStart);
                 setCurrentEnd(setEnd);
                 setCurrentFunding(Funding);
-
-                // setProjects((prev) => [
-                //   ...prev,
-                //   { project_ID: Date.now(), name: projectName },
-                // ]);
-
                 setShowForm(false);
                 setShowReqForm(true);
               }}
@@ -251,13 +245,13 @@ const Page = () => {
             />
           )}
 
-          <div className={styles.searchContainer}>
+          <section className={styles.searchContainer}>
             <input
               className={styles.searchInput}
               type="text"
               placeholder="Search projects..."
             />
-          </div>
+          </section>
         </section>
 
         <section className={styles.cardContainer}>
@@ -267,25 +261,25 @@ const Page = () => {
               className={styles.card}
               onClick={() => handleCardClick(project.project_ID)}
             >
-              <div className={styles.cardContent}>
+              <section className={styles.cardContent}>
                 <img src="/exampleImg.png" alt="project" />
-                <div className={styles.projectInfo}>
+                <section className={styles.projectInfo}>
                   <h3>{project.title}</h3>
                   <p className={styles.description}>{project.description}</p>
-                  <div className={styles.projectDetails}>
+                  <section className={styles.projectDetails}>
                     <time>
                       Start: {new Date(project.start_date).toLocaleDateString()}
                     </time>
                     <time>
                       End: {new Date(project.end_date).toLocaleDateString()}
                     </time>
-                    <span>
+                    <p>
                       Funding: {project.funding_available ? "Available" : "Not Available"}
-                    </span>
-                  </div>
-                </div>
+                    </p>
+                  </section>
+                </section>
                 <footer className={styles.cardFooter}>
-                  <div className={styles.buttonContainer}>
+                  <section className={styles.buttonContainer}>
                     <button
                       className={styles.editButton}
                       title="Edit project"
@@ -326,9 +320,9 @@ const Page = () => {
                     >
                       🗑️
                     </button>
-                  </div>
+                  </section>
                 </footer>
-              </div>
+              </section>
             </article>
           ))}
         </section>
@@ -364,8 +358,8 @@ const Page = () => {
             }}
           />
         )}
-      </main>
-    </div>
+      </section>
+    </main>
   );
 };
 
