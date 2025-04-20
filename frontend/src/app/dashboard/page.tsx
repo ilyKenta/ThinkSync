@@ -49,7 +49,7 @@ const Page = () => {
         }
 
         const data = await response.json();
-        setProjects(data.projects);
+        setProjects(data.projects || []);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred');
         console.error('Error fetching projects:', err);
