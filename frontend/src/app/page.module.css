@@ -8,6 +8,9 @@
   height: 100vh;
   display: flex;
   flex-direction: column;
+
+  min-height: 100vh;
+  overflow-y: auto;
 }
 
 .header {
@@ -42,6 +45,11 @@
   font-size: large;
   font-weight: var(--font-weight-medium);
 }
+.loginButton:hover {
+  background-color: var(--secondary-color);
+  color: var(--primary-color);
+}
+
 .signupButton {
   background-color: var(--secondary-color);
   color: var(--primary-color);
@@ -51,6 +59,10 @@
   cursor: pointer;
   font-size: large;
   font-weight: var(--font-weight-medium);
+}
+.signupButton:hover {
+  background-color: var(--primary-color);
+  color: var(--secondary-color);
 }
 
 .hero {
@@ -94,8 +106,14 @@
   align-items: center;
   gap: 0.5rem;
   cursor: pointer;
-  max-width: fit-content;
+  max-width: 150px;
   white-space: nowrap;
+}
+
+.cta:hover {
+  border: black;
+  border: 10px;
+  transform: scale(1.05);
 }
 
 .imageBlock {

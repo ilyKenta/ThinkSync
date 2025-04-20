@@ -1,172 +1,307 @@
-.title {
-    color: black;
-    font-weight: var(--font-weight-bold);
-    font-size: 30px;
-    padding: 1.5rem;
-    align-self: center;
-  }
-  .logo {
-    font-weight: bold;
-    font-size: 1.5rem;
-    background: none;
-    border: none;
-  }
-  .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem;
-    border-bottom: 1px solid #000000;
-  }
-  .navButtons {
-    display: flex;
-    gap: 1rem; /* adds spacing between Sign Up and Login */
-  }
-  
-  .loginButton {
-    background-color: var(--primary-color);
-    color: var(--secondary-color);
-    width: var(--navbar-buttons-width);
-    height: var(--navbar-buttons-height);
-    border-radius: var(--button-radius);
-    gap: 1rem;
-    cursor: pointer;
-    font-size: large;
-    font-weight: var(--font-weight-medium);
-  }
-  .signupButton {
-    background-color: var(--secondary-color);
-    color: var(--primary-color);
-    width: var(--navbar-buttons-width);
-    height: var(--navbar-buttons-height);
-    border-radius: var(--button-radius);
-    cursor: pointer;
-    font-size: large;
-    font-weight: var(--font-weight-medium);
-  }
-  .signupBox {
-    max-width: var(--card-width);
-    min-height: var(--card-height);
-    margin: 4rem auto;
-    padding: 2rem;
-    background: var(--box-color);
-    border-radius: 12px;
-    box-shadow: 10px 10px 10px var(--shadows-color);
-    background-color: var(--box-color);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-  }
-  .signupForm {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  
-  .signupForm label {
-    align-self: flex-start;
-    font-weight: var(--font-weight-regular);
-    margin-bottom: 0.2rem;
-    font-size: 15px;
-  }
-  .signupForm input {
-    width: var(--input-fields-width);
-    height: var(--input-fields-height);
-    padding: 1rem;
-    margin-bottom: 1rem;
-    border-radius: var(--input-radius);
-    border: 1px solid #ccc;
-    background-color: var(--box-color);
-  }
+.container {
+  display: flex;
+  min-height: 100vh;
+}
 
-  .signupForm select{
-    width: var(--input-fields-width);
-    height: var(--input-fields-height);
-    padding: 1rem;
-    margin-bottom: 1rem;
-    border-radius: var(--input-radius);
-    border: 1px solid #ccc;
-    background-color: var(--box-color);
-  }
-  .signupForm input:hover {
-    background-color: var(--field-hover-color);
-  }
-  
-  .signupForm button {
-    width: var(--card-buttons-width);
-    height: var(--card-buttons-height);
-    padding: 1rem;
-    background-color: var(--secondary-color);
-    color: white;
-    font-size: 25px;
-    font-weight: var(--font-weight-medium);
-    border: none;
-    border-radius: var(--button-radius);
-    cursor: pointer;
-  }
+.sidebar {
+  width: 280px;
+  background-color: var(--primary-color);
+  padding: 25px;
+  border-right: 1px solid #ddd;
+  box-shadow: 10px 10px 10px var(--shadows-color);
+}
+.sidebar h2 {
+  margin-top: 0px;
+  font-size: 30px;
+  margin-bottom: 0px;
+}
 
-  .dashboardPage {
-    padding: 2rem;
-    align-items: center;
-  }
-  
-  .dashboardContent {
-    max-width: 1000px;
-    margin: 0 auto;
-    padding-top: 2rem;
-  }
-  
-  .section {
-    margin-top: 2rem;
-  }
-  
-  .cardGrid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1.5rem;
-    margin-top: 1rem;
-  }
-  
-  .card {
-    background-color: var(--box-color);
-    padding: 1.5rem;
-    border-radius: var(--button-radius);
-    box-shadow: 0 4px 8px var(--shadows-color);
-  }
-  
-  .progressBarWrapper {
-    background: #ddd;
-    border-radius: 10px;
-    overflow: hidden;
-    margin: 0.5rem 0 1rem 0;
-    height: 12px;
-  }
-  
-  .progressBar {
-    background: var(--primary-color);
-    height: 100%;
-    transition: width 0.4s ease-in-out;
-  }
-  
-  .fundingBar {
-    background: var(--secondary-color);
-    height: 100%;
-    transition: width 0.4s ease-in-out;
-  }
+.sidebar h3 {
+  border-top: 1px solid #000000;
+  padding-top: 10px;
+  font-size: 1rem;
+  margin-top: 3px;
+  margin-bottom: 10px;
+  /*color: #777;*/
+  font-weight: var(--font-weight-semibold);
+}
 
-  .collabList {
-    margin-top: 1rem;
-    font-size: 14px;
-  }
-  
-  .collabList ul {
-    padding-left: 1rem;
-    list-style: disc;
-  }
-  
-  .roleTag {
-    color: var(--primary-color);
-    font-weight: var(--font-weight-medium);
-  }
-  
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+}
+
+.sidebar li button {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.sidebar li:first-child {
+  padding: 10px 10px;
+  /*color: #555;*/
+  cursor: pointer;
+  transition: color 0.3s ease;
+  border-radius: var(--button-radius);
+  background-color: var(--field-hover-color);
+}
+
+.sidebar li:last-child {
+  padding: 10px 10px;
+  /*color: #555;*/
+  cursor: pointer;
+  transition: color 0.3s ease;
+  border-radius: var(--button-radius);
+}
+
+.sidebar li:hover {
+  background-color: var(--field-hover-color);
+}
+
+.searchContainer {
+  position: relative;
+  margin-bottom: 20px;
+  min-width: 3rem;
+  padding-right: 3rem;
+}
+
+.searchInput {
+  width: 300px;
+  padding: 6px 6px 10px 40px;
+  border-radius: var(--button-radius);
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-image: url("/search.png");
+  background-position: 12px 8px;
+  background-size: 18px 18px;
+  background-repeat: no-repeat;
+  font-size: 1.2rem;
+  cursor: pointer;
+  background-color: var(--box-color);
+  cursor: text;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: #000000; /* Example focus color */
+  box-shadow: 0 0 5px var(--shadows-color);
+}
+
+
+
+.heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #000000;
+  margin-bottom: 2rem;
+  padding: 0 20px; /* optional, keeps some space around */
+}
+
+.colabGroup {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  padding: 0px 60px;
+}
+
+.iconButton {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* space between icon and text */
+
+  color: black;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 25px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.iconButton:hover {
+  background-color: var(--field-hover-color);
+}
+
+.buttonHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px; /* spacing between button and tabs */
+}
+
+.createButton {
+  margin-bottom: 20px;
+  background-color: var(--secondary-color);
+  color: var(--primary-color);
+  border: none;
+  padding: 12px 28px;
+  border-radius: var(--button-radius);
+  cursor: pointer;
+  font-size: 1.5rem;
+  transition: background-color 0.3s ease;
+}
+
+.createButton:hover {
+  background-color: #333; /* Darker shade on hover */
+}
+
+.buttonGroup {
+  margin-bottom: 20px;
+}
+
+.buttonGroup button {
+  padding: 10px 15px;
+  border: 1px solid #ccc;
+  border-radius: var(--button-radius);
+  background-color: var(--primary-color);
+  /*color: #333;*/
+  cursor: pointer;
+  font-size: 0.9rem;
+  margin-right: 10px;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.buttonGroup button:hover {
+  background-color: #eee;
+}
+
+.tabGroup {
+  margin-bottom: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+.tabGroup button {
+  padding: 10px 15px;
+  border: none;
+  background: none;
+  /*color: #777;*/
+  cursor: pointer;
+  font-size: 0.95rem;
+  margin-right: 20px;
+  border-bottom: 2px solid transparent;
+  transition: color 0.3s ease, border-bottom-color 0.3s ease;
+}
+
+.tabGroup button:hover,
+.tabGroup button.active {
+  border-bottom-color: #000000; /* Example active/hover color */
+}
+
+.tabGroup button.active {
+  font-weight: var(--font-weight-medium);
+}
+
+.mainContent {
+  flex-grow: 1;
+  padding: 25px;
+  background-color: #f9f9f9; /* Light grey for the main content area */
+}
+
+.cardContainer {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(250px, 1fr)); /* 3 flexible columns */
+  gap: 20px;
+  padding: 1rem;
+}
+
+.card {
+  all: unset; /* reset default button styles */
+  background-color: var(--primary-color);
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 10px;
+  text-align: left;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  display: block;
+  cursor: pointer;
+}
+
+.cardContent {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start; /* Align content to the top */
+}
+
+.cardContent span {
+  margin-top: 1rem;
+  font-size: 1.1rem;
+  font-weight: var(--font-weight-medium);
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.cardContent time {
+  margin-top: 1rem;
+  font-size: 1.1rem;
+  font-weight: var(--font-weight-medium);
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.cardContent p {
+  font-size: 0.9rem;
+  color: #777;
+}
+
+.cardFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.buttonContainer {
+  display: flex;
+  align-items: center;
+}
+
+.editButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%; /* makes it a circle */
+  color: #222;
+  font-size: 20px;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.editButton:hover {
+  background-color: #eee;
+  color: #222;
+}
+
+.trashButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px 5px 10px 10px;
+  border-radius: 50%; /* makes it a circle */
+  color: #222;
+  font-size: 15px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.trashButton:hover {
+  background-color: rgba(255, 0, 0, 0.1);
+}
+
+.addButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%; /* makes it a circle */
+  color: #222;
+  font-size: 20px;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.addButton:hover {
+  background-color: rgba(255, 0, 0, 0.1);
+}
