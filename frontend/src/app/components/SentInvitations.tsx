@@ -22,7 +22,7 @@ const SentInvitations: React.FC = () => {
             const token = localStorage.getItem('jwt');
             if (!token) throw new Error('Not authenticated');
 
-            const response = await fetch('http://localhost:5000/api/collaborations/invitations/sent', {
+            const response = await fetch('https://thinksyncapi.azurewebsites.net/api/collaborations/invitations/sent', {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -51,7 +51,7 @@ const SentInvitations: React.FC = () => {
             const token = localStorage.getItem('jwt');
             if (!token) throw new Error('Not authenticated');
 
-            const response = await fetch(`http://localhost:5000/api/collaborations/invitation/${invitationId}`, {
+            const response = await fetch(`https://thinksyncapi.azurewebsites.net/api/collaborations/invitation/${invitationId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

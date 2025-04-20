@@ -18,8 +18,7 @@ const getUserIdFromToken = async (token) => {
         return graphResponse.data.id;
     } catch (error) {
         throw new Error('Invalid token');
-    }
-    //return '65fc38ee-5415-49f4-96ee-4a1643a69923'; 
+    } 
 };
 
 // Extract token from Authorization header

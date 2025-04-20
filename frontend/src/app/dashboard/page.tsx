@@ -38,7 +38,7 @@ const Page = () => {
           throw new Error('No access token found');
         }
 
-        const response = await fetch('http://localhost:5000/api/projects/owner', {
+        const response = await fetch('https://thinksyncapi.azurewebsites.net/api/projects/owner', {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -85,7 +85,7 @@ const Page = () => {
       }
 
       const res = await fetch(
-        `http://localhost:5000/api/projects/delete/${projectId}`,
+        `https://thinksyncapi.azurewebsites.net/api/projects/delete/${projectId}`,
         {
           method: "DELETE",
           headers: {
