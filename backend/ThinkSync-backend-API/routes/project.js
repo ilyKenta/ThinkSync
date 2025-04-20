@@ -140,10 +140,6 @@ router.get('/owner', async (req, res) => {
             ORDER BY p.created_at DESC
         `, [userId]);
 
-        if (projects.length === 0) {
-            return res.status(404).json({ error: 'No projects found for this owner' });
-        }
-
         // Group requirements by project
         const groupedProjects = projects.reduce((acc, row) => {
             if (!acc[row.project_ID]) {
