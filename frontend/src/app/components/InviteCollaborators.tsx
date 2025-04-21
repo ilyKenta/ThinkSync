@@ -177,6 +177,7 @@ const InviteCollaborators: React.FC<InviteCollaboratorsProps> = ({
           {results.map((u) => (
             <section
               key={u.user_ID}
+              data-testid="user-section"
               style={{
                 display: "flex",
                 alignItems: "center",

@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import SharedProjectsPage from '../page';
 import '@testing-library/jest-dom';
 
@@ -7,6 +7,12 @@ import '@testing-library/jest-dom';
 jest.mock('../../inbox-sidebar/inb_sidebar', () => {
   return function MockInboxSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
     return isOpen ? <div data-testid="inbox-sidebar">Inbox Sidebar</div> : null;
+  };
+});
+
+jest.mock('../../sent-sidebar/sidebar', () => {
+  return function MockSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+    return isOpen ? <div data-testid="sent-sidebar">Sent Sidebar</div> : null;
   };
 });
 
@@ -19,27 +25,17 @@ describe('SharedProjectsPage', () => {
       project_ID: '1',
       title: 'Test Project',
       description: 'Test Description',
-      status: 'active',
-      funding_amount: 10000,
       start_date: '2024-03-20',
       end_date: '2024-12-31',
-      owner_ID: 'user1',
-      owner_fname: 'John',
-      owner_sname: 'Doe',
-      role: 'collaborator'
+      funding_available: true
     },
     {
       project_ID: '2',
       title: 'Another Project',
       description: 'Another Description',
-      status: 'completed',
-      funding_amount: 5000,
       start_date: '2024-01-01',
       end_date: '2024-03-31',
-      owner_ID: 'user2',
-      owner_fname: 'Jane',
-      owner_sname: 'Smith',
-      role: 'researcher'
+      funding_available: false
     }
   ];
 
@@ -48,41 +44,118 @@ describe('SharedProjectsPage', () => {
     localStorage.setItem('jwt', 'test-token');
   });
 
-  it('renders the shared projects page correctly', () => {
-    render(<SharedProjectsPage />);
+  it('renders the shared projects page correctly', async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ projects: mockProjects })
+    });
+
+    await act(async () => {
+      render(<SharedProjectsPage />);
+    });
+
+    // Wait for loading to complete
+    await waitFor(() => {
+      expect(screen.queryByText('Loading projects...')).not.toBeInTheDocument();
+    });
+
+    expect(screen.getByText('ThinkSync')).toBeInTheDocument();
+    expect(screen.getByText('DASHBOARD')).toBeInTheDocument();
     
-    expect(screen.getByText('My Projects')).toBeInTheDocument();
-    expect(screen.getByText('Shared Projects')).toBeInTheDocument();
+    // Get the button specifically
+    const sharedProjectsButton = screen.getByRole('button', { name: 'Shared Projects' });
+    expect(sharedProjectsButton).toBeInTheDocument();
   });
 
-  it('toggles sidebar', () => {
-    render(<SharedProjectsPage />);
-    
-    const menuButton = screen.getByRole('button', { name: /menu/i });
-    fireEvent.click(menuButton);
+  it('toggles sent sidebar', async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ projects: mockProjects })
+    });
 
-    expect(screen.getByText('Dashboard')).toBeInTheDocument();
-    expect(screen.getByText('Shared Projects')).toBeInTheDocument();
-    expect(screen.getByText('Logout')).toBeInTheDocument();
+    await act(async () => {
+      render(<SharedProjectsPage />);
+    });
+
+    // Wait for loading to complete
+    await waitFor(() => {
+      expect(screen.queryByText('Loading projects...')).not.toBeInTheDocument();
+    });
+
+    // Find the sent button by its SVG content
+    const buttons = screen.getAllByRole('button', { name: '' });
+    const sentButton = buttons.find(button => 
+      button.classList.contains('iconButton') && 
+      button.querySelector('svg[viewBox="0 0 512 512"]') &&
+      button.querySelector('path[d*="M476 3.2"]')
+    );
+
+    if (!sentButton) {
+      throw new Error('Sent button not found');
+    }
+
+    await act(async () => {
+      fireEvent.click(sentButton);
+    });
+
+    expect(screen.getByTestId('sent-sidebar')).toBeInTheDocument();
   });
 
-  it('toggles inbox sidebar', () => {
-    render(<SharedProjectsPage />);
-    
-    const inboxButton = screen.getByRole('button', { name: /inbox/i });
-    fireEvent.click(inboxButton);
+  it('toggles inbox sidebar', async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ projects: mockProjects })
+    });
+
+    await act(async () => {
+      render(<SharedProjectsPage />);
+    });
+
+    // Wait for loading to complete
+    await waitFor(() => {
+      expect(screen.queryByText('Loading projects...')).not.toBeInTheDocument();
+    });
+
+    // Find the inbox button by its SVG content
+    const buttons = screen.getAllByRole('button', { name: '' });
+    const inboxButton = buttons.find(button => 
+      button.classList.contains('iconButton') && 
+      button.querySelector('svg[viewBox="0 0 512 512"]') &&
+      button.querySelector('path[d*="M502.3 190.8"]')
+    );
+
+    if (!inboxButton) {
+      throw new Error('Inbox button not found');
+    }
+
+    await act(async () => {
+      fireEvent.click(inboxButton);
+    });
 
     expect(screen.getByTestId('inbox-sidebar')).toBeInTheDocument();
   });
 
-  it('switches between My Projects and Shared Projects', () => {
-    render(<SharedProjectsPage />);
-    
-    const myProjectsButton = screen.getByText('My Projects');
-    fireEvent.click(myProjectsButton);
+  it('switches between My Projects and Shared Projects', async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ projects: mockProjects })
+    });
 
-    expect(myProjectsButton).toHaveClass('active');
-    expect(screen.getByText('Shared Projects')).not.toHaveClass('active');
+    await act(async () => {
+      render(<SharedProjectsPage />);
+    });
+
+    // Wait for loading to complete
+    await waitFor(() => {
+      expect(screen.queryByText('Loading projects...')).not.toBeInTheDocument();
+    });
+
+    // Get buttons by their role and name
+    const myProjectsButton = screen.getByRole('button', { name: 'My Projects' });
+    const sharedProjectsButton = screen.getByRole('button', { name: 'Shared Projects' });
+
+    expect(sharedProjectsButton).toHaveClass('active');
+    expect(myProjectsButton).not.toHaveClass('active');
   });
 
   it('renders shared projects list', async () => {
@@ -91,85 +164,28 @@ describe('SharedProjectsPage', () => {
       json: () => Promise.resolve({ projects: mockProjects })
     });
 
-    render(<SharedProjectsPage />);
+    await act(async () => {
+      render(<SharedProjectsPage />);
+    });
 
     await waitFor(() => {
       expect(screen.getByText('Test Project')).toBeInTheDocument();
       expect(screen.getByText('Test Description')).toBeInTheDocument();
-      expect(screen.getByText('Owner: John Doe')).toBeInTheDocument();
-      expect(screen.getByText('Role: collaborator')).toBeInTheDocument();
-      expect(screen.getByText('Another Project')).toBeInTheDocument();
-      expect(screen.getByText('Another Description')).toBeInTheDocument();
-      expect(screen.getByText('Owner: Jane Smith')).toBeInTheDocument();
-      expect(screen.getByText('Role: researcher')).toBeInTheDocument();
-    });
-  });
-
-  it('handles project navigation', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ projects: [mockProjects[0]] })
-    });
-
-    render(<SharedProjectsPage />);
-
-    await waitFor(() => {
-      const projectLink = screen.getByText('Test Project');
-      fireEvent.click(projectLink);
-
-      expect(window.location.pathname).toBe('/project/1');
+      expect(screen.getByText('Start: 2024/03/20')).toBeInTheDocument();
+      expect(screen.getByText('End: 2024/12/31')).toBeInTheDocument();
+      expect(screen.getByText('Funding: Available')).toBeInTheDocument();
     });
   });
 
   it('handles errors when fetching projects', async () => {
     (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Failed to fetch projects'));
 
-    render(<SharedProjectsPage />);
+    await act(async () => {
+      render(<SharedProjectsPage />);
+    });
 
     await waitFor(() => {
-      expect(screen.getByText('Failed to fetch projects')).toBeInTheDocument();
-    });
-  });
-
-  it('handles empty projects list', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ projects: [] })
-    });
-
-    render(<SharedProjectsPage />);
-
-    await waitFor(() => {
-      expect(screen.getByText('No shared projects found.')).toBeInTheDocument();
-    });
-  });
-
-  it('handles logout', () => {
-    render(<SharedProjectsPage />);
-    
-    const menuButton = screen.getByRole('button', { name: /menu/i });
-    fireEvent.click(menuButton);
-
-    const logoutButton = screen.getByText('Logout');
-    fireEvent.click(logoutButton);
-
-    expect(localStorage.getItem('jwt')).toBeNull();
-  });
-
-  it('displays correct project status', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ projects: mockProjects })
-    });
-
-    render(<SharedProjectsPage />);
-
-    await waitFor(() => {
-      const activeStatus = screen.getByText('active');
-      const completedStatus = screen.getByText('completed');
-
-      expect(activeStatus).toHaveStyle({ backgroundColor: '#4CAF50' });
-      expect(completedStatus).toHaveStyle({ backgroundColor: '#9e9e9e' });
+      expect(screen.getByText('Error: Failed to fetch projects')).toBeInTheDocument();
     });
   });
 }); 

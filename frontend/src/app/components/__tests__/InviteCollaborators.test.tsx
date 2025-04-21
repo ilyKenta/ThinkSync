@@ -15,9 +15,10 @@ describe('InviteCollaborators', () => {
       user_ID: '1',
       fname: 'John',
       sname: 'Doe',
-      skills: ['CS', 'AI'],
-      position: 'researcher',
-      education: 'PhD'
+      department: 'Computer Science',
+      acc_role: 'researcher',
+      res_area: 'AI',
+      qualification: 'PhD'
     }
   ];
 
@@ -44,12 +45,10 @@ describe('InviteCollaborators', () => {
   it('handles search by name', async () => {
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
-      json: () => Promise.resolve({ results: mockUsers })
+      json: () => Promise.resolve({ collaborators: mockUsers })
     });
 
-    await act(async () => {
-      render(<InviteCollaborators {...mockProps} />);
-    });
+    render(<InviteCollaborators {...mockProps} />);
 
     const searchInput = screen.getByPlaceholderText('Search by name');
     const searchButton = screen.getByRole('button', { name: /search/i });
@@ -60,18 +59,31 @@ describe('InviteCollaborators', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText('John Doe')).toBeInTheDocument();
-      expect(screen.getByText('researcher')).toBeInTheDocument();
-      expect(screen.getByText('PhD')).toBeInTheDocument();
+      // Find the user info section
+      const userSection = screen.getByTestId('user-section');
+      expect(userSection).toBeInTheDocument();
+      
+      // Check for the checkbox
+      const checkbox = userSection.querySelector('input[type="checkbox"]');
+      expect(checkbox).toBeInTheDocument();
+      
+      // Check for the user info text
+      const userInfo = userSection.querySelector('p');
+      expect(userInfo).toBeInTheDocument();
+      
+      // Get the text content and normalize whitespace
+      const textContent = userInfo?.textContent?.replace(/\s+/g, ' ').trim();
+      expect(textContent).toContain('John Doe');
+      expect(textContent).toContain('researcher');
+      expect(textContent).toContain('AI');
+      expect(textContent).toContain('PhD');
     });
   });
 
   it('handles search errors', async () => {
     (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Search failed'));
 
-    await act(async () => {
-      render(<InviteCollaborators {...mockProps} />);
-    });
+    render(<InviteCollaborators {...mockProps} />);
 
     const searchInput = screen.getByPlaceholderText('Search by name');
     const searchButton = screen.getByRole('button', { name: /search/i });
@@ -90,16 +102,14 @@ describe('InviteCollaborators', () => {
     (global.fetch as jest.Mock)
       .mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve({ results: mockUsers })
+        json: () => Promise.resolve({ collaborators: mockUsers })
       })
       .mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({ message: 'Invitations sent successfully' })
       });
 
-    await act(async () => {
-      render(<InviteCollaborators {...mockProps} />);
-    });
+    render(<InviteCollaborators {...mockProps} />);
 
     const searchInput = screen.getByPlaceholderText('Search by name');
     const searchButton = screen.getByRole('button', { name: /search/i });
@@ -110,11 +120,8 @@ describe('InviteCollaborators', () => {
     });
 
     await waitFor(() => {
-      const userCard = screen.getByText('John Doe').closest('div');
-      const checkbox = userCard?.querySelector('input[type="checkbox"]');
-      if (checkbox) {
-        fireEvent.click(checkbox);
-      }
+      const checkbox = screen.getByRole('checkbox');
+      fireEvent.click(checkbox);
     });
 
     const sendButton = screen.getByRole('button', { name: /send invitation/i });
@@ -123,7 +130,9 @@ describe('InviteCollaborators', () => {
     });
 
     await waitFor(() => {
-      expect(global.alert).toHaveBeenCalledWith(expect.stringContaining('Invitations sent to: John Doe'));
+      expect(global.alert).toHaveBeenCalledWith(
+        expect.stringContaining('Invitations sent to: John Doe')
+      );
       expect(mockProps.onClose).toHaveBeenCalled();
     });
   });
@@ -132,13 +141,11 @@ describe('InviteCollaborators', () => {
     (global.fetch as jest.Mock)
       .mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve({ results: mockUsers })
+        json: () => Promise.resolve({ collaborators: mockUsers })
       })
       .mockRejectedValueOnce(new Error('Failed to send invitations'));
 
-    await act(async () => {
-      render(<InviteCollaborators {...mockProps} />);
-    });
+    render(<InviteCollaborators {...mockProps} />);
 
     const searchInput = screen.getByPlaceholderText('Search by name');
     const searchButton = screen.getByRole('button', { name: /search/i });
@@ -149,11 +156,8 @@ describe('InviteCollaborators', () => {
     });
 
     await waitFor(() => {
-      const userCard = screen.getByText('John Doe').closest('div');
-      const checkbox = userCard?.querySelector('input[type="checkbox"]');
-      if (checkbox) {
-        fireEvent.click(checkbox);
-      }
+      const checkbox = screen.getByRole('checkbox');
+      fireEvent.click(checkbox);
     });
 
     const sendButton = screen.getByRole('button', { name: /send invitation/i });
@@ -162,7 +166,9 @@ describe('InviteCollaborators', () => {
     });
 
     await waitFor(() => {
-      expect(global.alert).toHaveBeenCalledWith(expect.stringContaining('Error sending invitations'));
+      expect(global.alert).toHaveBeenCalledWith(
+        expect.stringContaining('Error sending invitations')
+      );
     });
   });
 }); 
