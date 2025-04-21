@@ -9,27 +9,33 @@ import { Configuration, PublicClientApplication, AuthenticationResult } from '@a
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [msalInstance, setMsalInstance] = useState<PublicClientApplication | null>(null);
+  const [initializationError, setInitializationError] = useState<Error | null>(null);
   const router = useRouter();
 
   useEffect(() => {
     const initializeMsal = async () => {
-      const msalConfig = {
-        auth: {
-          clientId: process.env.NEXT_PUBLIC_AZURE_CLIENT_ID!,
-          authority: `https://login.microsoftonline.com/${process.env.NEXT_PUBLIC_AZURE_TENANT_ID}`,
-          redirectUri: 'https://purple-field-0bb305703.6.azurestaticapps.net/login',
-          postLogoutRedirectUri: '/',
-          navigateToLoginRequestUrl: true
-        },
-        cache: {
-          cacheLocation: 'sessionStorage',
-          storeAuthStateInCookie: false
-        }
-      };
+      try {
+        const msalConfig = {
+          auth: {
+            clientId: process.env.NEXT_PUBLIC_AZURE_CLIENT_ID!,
+            authority: `https://login.microsoftonline.com/${process.env.NEXT_PUBLIC_AZURE_TENANT_ID}`,
+            redirectUri: 'https://purple-field-0bb305703.6.azurestaticapps.net/login',
+            postLogoutRedirectUri: '/',
+            navigateToLoginRequestUrl: true
+          },
+          cache: {
+            cacheLocation: 'sessionStorage',
+            storeAuthStateInCookie: false
+          }
+        };
 
-      const instance = new PublicClientApplication(msalConfig);
-      await instance.initialize();
-      setMsalInstance(instance);
+        const instance = new PublicClientApplication(msalConfig);
+        await instance.initialize();
+        setMsalInstance(instance);
+      } catch (error) {
+        console.error('MSAL initialization error:', error);
+        setInitializationError(error as Error);
+      }
     };
 
     initializeMsal();
@@ -102,7 +108,7 @@ export default function LoginPage() {
           <button 
             className={styles.loginButton} 
             onClick={handleMicrosoftLogin} 
-            disabled={loading || !msalInstance} 
+            disabled={loading || !msalInstance || !!initializationError} 
             type="button"
             aria-label="Sign in with Microsoft"
           >
