@@ -86,7 +86,7 @@ const InviteCollaborators: React.FC<InviteCollaboratorsProps> = ({
       const token = localStorage.getItem("jwt");
       if (!token) throw new Error("Not authenticated");
       for (const userId of selected) {
-        await fetch("https://thinksyncapi.azurewebsites.net/api/collaborations/invite", {
+        await fetch("http://localhost:5000/api/collaborations/invite", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
