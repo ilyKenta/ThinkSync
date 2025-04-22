@@ -37,8 +37,14 @@ describe('SentInvitations', () => {
     localStorage.setItem('jwt', 'test-token');
   });
 
-  it('renders loading state', () => {
-    render(<SentInvitations />);
+  it('renders loading state', async () => {
+    // Mock fetch to return a promise that doesn't resolve immediately
+    (global.fetch as jest.Mock).mockImplementationOnce(() => new Promise(() => {}));
+
+    await act(async () => {
+      render(<SentInvitations />);
+    });
+
     expect(screen.getByText('Loading sent invitations...')).toBeInTheDocument();
   });
 
