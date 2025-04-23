@@ -29,6 +29,7 @@ export default function LoginPage() {
           }
         };
 
+
         const instance = new PublicClientApplication(msalConfig);
         await instance.initialize();
         setMsalInstance(instance);
@@ -66,7 +67,7 @@ export default function LoginPage() {
 
       const data = await response.json();
       
-      if (data.message === 'User authenticated successfully') {
+      if (data.message === 'User authenticated successfully.') {
         router.push('/dashboard');
       }
       else if(data.message === 'User registered successfully') {
