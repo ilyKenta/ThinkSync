@@ -18,7 +18,7 @@ import InboxSidebar from "../inbox-sidebar/inb_sidebar";
 import useAuth from "../useAuth";
 
 const Page = () => {
-  useAuth();
+  //useAuth();
   const router = useRouter();
   const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
