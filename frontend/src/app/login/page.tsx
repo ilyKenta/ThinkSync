@@ -61,7 +61,10 @@ export default function LoginPage() {
       const accessToken = loginResponse.accessToken;
       localStorage.setItem('jwt', accessToken);
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/microsoft`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://thinksyncapi.azurewebsites.net';
+      console.log('Using API URL:', apiUrl);
+
+      const response = await fetch(`${apiUrl}/api/auth/microsoft`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
