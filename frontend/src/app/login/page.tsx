@@ -64,7 +64,7 @@ export default function LoginPage() {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://thinksyncapi.azurewebsites.net';
       console.log('Using API URL:', apiUrl);
 
-      const response = await fetch(`${apiUrl}/api/auth/microsoft`, {
+      const response = await fetch(`${apiUrl}/api/auth/microsoft`, { 
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -77,7 +77,7 @@ export default function LoginPage() {
       const data = await response.json();
       console.log('API response data:', data);
       
-      if (data.message === 'User authenticated successfully.') {
+      if (data.message === 'User authenticated successfully') {
         router.push('/dashboard');
       }
       else if(data.message === 'User registered successfully') {
