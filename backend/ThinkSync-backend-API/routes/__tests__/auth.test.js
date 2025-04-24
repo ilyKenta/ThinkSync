@@ -94,6 +94,30 @@ describe('Auth Routes', () => {
         };
         expect(authRoutes.isValidUserPayload(invalidPayload)).toBe(false);
       });
+
+      it('should reject payload with invalid res_area type', () => {
+        const invalidPayload = {
+          phone_number: '1234567890',
+          department: 'Test Dept',
+          acc_role: 'Test Role',
+          res_area: 12345, // should be string
+          qualification: 'Test Qual',
+          current_proj: 'Test Project'
+        };
+        expect(authRoutes.isValidUserPayload(invalidPayload, true)).toBe(false);
+      });
+
+      it('should reject payload with invalid current_proj type', () => {
+        const invalidPayload = {
+          phone_number: '1234567890',
+          department: 'Test Dept',
+          acc_role: 'Test Role',
+          res_area: 'Test Area',
+          qualification: 'Test Qual',
+          current_proj: 12345 // should be string
+        };
+        expect(authRoutes.isValidUserPayload(invalidPayload, true)).toBe(false);
+      });
     });
   });
 
@@ -320,7 +344,7 @@ describe('Auth Routes', () => {
           data: { id: 'test-id' }
         });
 
-        // Mock all necessary database calls
+        // Mock database responses
         db.executeQuery
           .mockResolvedValueOnce([{ user_ID: 'test-id' }]) // User exists
           .mockResolvedValueOnce([]) // Not already a reviewer

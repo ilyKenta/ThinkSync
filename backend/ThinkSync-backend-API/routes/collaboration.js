@@ -21,6 +21,12 @@ const getUserIdFromToken = async (token) => {
     }
 };
 
+// Make the function available on the router for testing
+router.getUserIdFromToken = getUserIdFromToken;
+
+// Export the router
+module.exports = router;
+
 // Search for potential collaborators
 router.post('/search', async (req, res) => {
     try {
@@ -281,4 +287,3 @@ router.put('/invitation/:invitationId', async (req, res) => {
     }
 });
 
-module.exports = router;

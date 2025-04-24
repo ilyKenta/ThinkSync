@@ -1,6 +1,6 @@
 const request = require('supertest');
 const express = require('express');
-const collaborationRoutes = require('../collaboration');
+const router = require('../collaboration');
 const db = require('../../db');
 const axios = require('axios');
 
@@ -20,7 +20,7 @@ describe('Collaboration Routes', () => {
   beforeEach(() => {
     app = express();
     app.use(express.json());
-    app.use('/api/collaboration', collaborationRoutes);
+    app.use('/api/collaboration', router);
     jest.clearAllMocks();
     
     // Mock axios.get to return user ID
@@ -31,8 +31,15 @@ describe('Collaboration Routes', () => {
     jest.clearAllMocks();
   });
 
+  describe('getUserIdFromToken', () => {
+    it('should throw error when token is missing', async () => {
+      await expect(router.getUserIdFromToken(null))
+        .rejects.toThrow('Access token is required');
+    });
+  });
+
   describe('POST /search', () => {
-    it('should return 401 if no token provided', async () => {
+    it('should throw error when token is missing', async () => {
       const response = await request(app)
         .post('/api/collaboration/search')
         .send({ searchTerm: 'test', searchType: 'name' });
@@ -373,6 +380,52 @@ describe('Collaboration Routes', () => {
       expect(response.body.error).toBe('Access token is required');
     });
 
+    it('should return 401 if token is invalid', async () => {
+      axios.get.mockRejectedValueOnce(new Error('Invalid token'));
+
+      const response = await request(app)
+        .put('/api/collaboration/invitation/1')
+        .set('Authorization', 'Bearer invalid-token')
+        .send({ status: 'accepted' });
+
+      expect(response.status).toBe(500);
+      expect(response.body.error).toBe('Internal server error');
+    });
+
+    it('should return 403 if user is not the recipient', async () => {
+      db.executeQuery
+        .mockResolvedValueOnce([{
+          invitation_ID: '1',
+          recipient_ID: 'different-user',
+          status: 'pending'
+        }]);
+
+      const response = await request(app)
+        .put('/api/collaboration/invitation/1')
+        .set('Authorization', 'Bearer valid-token')
+        .send({ status: 'accepted' });
+
+      expect(response.status).toBe(403);
+      expect(response.body.error).toBe('Only recipient can accept/decline invitation');
+    });
+
+    it('should return 400 if invitation is not pending', async () => {
+      db.executeQuery
+        .mockResolvedValueOnce([{
+          invitation_ID: '1',
+          recipient_ID: mockUserId,
+          status: 'accepted'
+        }]);
+
+      const response = await request(app)
+        .put('/api/collaboration/invitation/1')
+        .set('Authorization', 'Bearer valid-token')
+        .send({ status: 'accepted' });
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe('Can only update pending invitations');
+    });
+
     it('should return 400 if status is invalid', async () => {
       const response = await request(app)
         .put('/api/collaboration/invitation/1')
@@ -411,16 +464,46 @@ describe('Collaboration Routes', () => {
       expect(response.body.error).toBe('Only sender can cancel invitation');
     });
 
-    it('should update invitation status successfully', async () => {
+    it('should not add user to project_collaborations when invitation is declined', async () => {
+      const mockInvitation = {
+        invitation_ID: '1',
+        project_ID: 'project1',
+        recipient_ID: mockUserId,
+        proposed_role: 'researcher',
+        status: 'pending'
+      };
+
       db.executeQuery
-        .mockResolvedValueOnce([{
-          sender_ID: 'different-user',
-          recipient_ID: mockUserId,
-          status: 'pending',
-          project_ID: '1',
-          proposed_role: 'researcher'
-        }])
-        .mockResolvedValueOnce({ affectedRows: 1 });
+        .mockResolvedValueOnce([mockInvitation]) // Get invitation
+        .mockResolvedValueOnce({ affectedRows: 1 }); // Update invitation status
+
+      const response = await request(app)
+        .put('/api/collaboration/invitation/1')
+        .set('Authorization', 'Bearer valid-token')
+        .send({ status: 'declined' });
+
+      expect(response.status).toBe(200);
+      expect(response.body.message).toBe('Invitation updated successfully');
+      // Verify that the project_collaborations insert was not called
+      expect(db.executeQuery).not.toHaveBeenCalledWith(
+        'INSERT INTO project_collaborations (project_ID, user_ID, role) VALUES (?, ?, ?)',
+        expect.any(Array)
+      );
+    });
+
+    it('should add user to project_collaborations when invitation is accepted', async () => {
+      const mockInvitation = {
+        invitation_ID: '1',
+        project_ID: 'project1',
+        recipient_ID: mockUserId,
+        proposed_role: 'researcher',
+        status: 'pending'
+      };
+
+      db.executeQuery
+        .mockResolvedValueOnce([mockInvitation]) // Get invitation
+        .mockResolvedValueOnce({ affectedRows: 1 }) // Update invitation status
+        .mockResolvedValueOnce({ insertId: 1 }); // Insert into project_collaborations
 
       const response = await request(app)
         .put('/api/collaboration/invitation/1')
@@ -429,6 +512,10 @@ describe('Collaboration Routes', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.message).toBe('Invitation updated successfully');
+      expect(db.executeQuery).toHaveBeenCalledWith(
+        'INSERT INTO project_collaborations (project_ID, user_ID, role) VALUES (?, ?, ?)',
+        [mockInvitation.project_ID, mockInvitation.recipient_ID, mockInvitation.proposed_role]
+      );
     });
 
     it('should handle database errors', async () => {
