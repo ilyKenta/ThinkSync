@@ -154,7 +154,7 @@ describe('LoginPage', () => {
       fireEvent.click(loginButton);
     });
 
-    expect(mockAlert).toHaveBeenCalledWith('Login failed.');
+    expect(mockAlert).toHaveBeenCalledWith('Login failed. Please check the console for details.');
     expect(mockConsoleError).toHaveBeenCalledWith('Login error:', mockError);
     mockAlert.mockRestore();
     mockConsoleError.mockRestore();
