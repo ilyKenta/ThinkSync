@@ -3,57 +3,48 @@ const dotenv = require('dotenv');
 
 dotenv.config();
 
-let connection;
+// Create a connection pool
+const pool = mysql.createPool({
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    port: process.env.DB_PORT,
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0,
+    ssl: {
+        rejectUnauthorized: true
+    }
+});
 
-async function connect() {
-    try {
-        connection = await mysql.createConnection({
-            host: process.env.DB_HOST,
-            user: process.env.DB_USER,
-            password: process.env.DB_PASSWORD,
-            database: process.env.DB_NAME,
-            port: process.env.DB_PORT,
-            ssl: {
-                rejectUnauthorized: true
-            }
-        });
-        console.log('Connected to MySQL database');
-        return connection;
-    } catch (err) {
+// Test the connection
+pool.getConnection()
+    .then(connection => {
+        console.log('Successfully connected to the database');
+        connection.release();
+    })
+    .catch(err => {
         console.error('Database connection failed:', err);
-        throw err;
-    }
-}
-
-async function connectWithRetry(retries = 5, delay = 5000) {
-    try {
-        return await connect();
-    } catch (err) {
-        if (retries === 0) {
-            console.log('Max retries reached. Giving up.');
-            throw err;
-        }
-        console.log(`Retrying in ${delay / 1000} seconds... (${retries} retries left)`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-        return connectWithRetry(retries - 1, delay);
-    }
-}
+    });
 
 async function executeQuery(sql, params = []) {
-    if (!connection) {
-        await connectWithRetry();
-    }
+    let connection;
     try {
+        connection = await pool.getConnection();
         const [results] = await connection.execute(sql, params);
         return results;
     } catch (err) {
         console.error('Query execution failed:', err);
         throw err;
+    } finally {
+        if (connection) {
+            connection.release();
+        }
     }
 }
 
 module.exports = {
-    connect,
-    connectWithRetry,
-    executeQuery // Export connection for testing
+    executeQuery,
+    pool
 };
