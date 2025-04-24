@@ -29,6 +29,7 @@ export default function LoginPage() {
           }
         };
 
+
         const instance = new PublicClientApplication(msalConfig);
         await instance.initialize();
         setMsalInstance(instance);
@@ -47,15 +48,23 @@ export default function LoginPage() {
 
   const handleMicrosoftLogin = async (e: React.MouseEvent) => {
     e.preventDefault();
-    if (!msalInstance) return;
+    if (!msalInstance) {
+      console.error('MSAL instance not initialized');
+      return;
+    }
     
     setLoading(true);
     try {
       const loginResponse: AuthenticationResult = await msalInstance.loginPopup(loginRequest);
+      console.log('Login response:', loginResponse);
+      
       const accessToken = loginResponse.accessToken;
       localStorage.setItem('jwt', accessToken);
 
-      const response = await fetch('https://thinksyncapi.azurewebsites.net/api/auth/microsoft', {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://thinksyncapi.azurewebsites.net';
+      console.log('Using API URL:', apiUrl);
+
+      const response = await fetch(`${apiUrl}/api/auth/microsoft`, { 
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -64,7 +73,9 @@ export default function LoginPage() {
         body: JSON.stringify({ token: accessToken }),
       });
 
+      console.log('API response status:', response.status);
       const data = await response.json();
+      console.log('API response data:', data);
       
       if (data.message === 'User authenticated successfully') {
         router.push('/dashboard');
@@ -74,11 +85,12 @@ export default function LoginPage() {
         router.push('/role');
       }
       else {
-        alert('Error: ' + data.error);
+        console.error('Authentication error:', data);
+        alert('Error: ' + (data.error || 'Authentication failed'));
       }
     } catch (error) {
       console.error('Login error:', error);
-      alert('Login failed.');
+      alert('Login failed. Please check the console for details.');
     } finally {
       setLoading(false);
     }
