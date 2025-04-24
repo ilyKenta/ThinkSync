@@ -1,0 +1,52 @@
+name: Run Unit Tests
+
+on:
+  push:
+    branches:
+      - predeploy
+  pull_request:
+    branches:
+      - predeploy
+
+jobs:
+  test-frontend:
+    runs-on: ubuntu-latest
+    name: Frontend Tests
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '18.x'
+
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: npm install
+
+      - name: Run frontend tests
+        working-directory: ./frontend
+        run: npm run test:coverage
+        continue-on-error: true
+
+  test-backend:
+    runs-on: ubuntu-latest
+    name: Backend Tests
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '22.x'
+
+      - name: Install backend dependencies
+        working-directory: ./backend/ThinkSync-backend-API
+        run: npm install
+
+      - name: Run backend tests
+        working-directory: ./backend/ThinkSync-backend-API
+        run: npm test
+        continue-on-error: true 
