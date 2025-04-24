@@ -202,12 +202,18 @@ describe('LoginPage', () => {
     };
     PublicClientApplication.mockImplementation(() => mockMsalInstance);
 
+    // Mock console.error to suppress the error message
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
     await act(async () => {
       render(<LoginPage />);
     });
 
     const loginButton = screen.getByRole('button', { name: /sign in with microsoft/i });
     expect(loginButton).toBeDisabled();
+
+    // Restore console.error
+    consoleErrorSpy.mockRestore();
   });
 
   it('navigates to home page when logo is clicked', async () => {

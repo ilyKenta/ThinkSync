@@ -48,7 +48,7 @@ describe('InviteCollaborators', () => {
       json: () => Promise.resolve({ collaborators: mockUsers })
     });
 
-    render(<InviteCollaborators {...mockProps} />);
+      render(<InviteCollaborators {...mockProps} />);
 
     const searchInput = screen.getByPlaceholderText('Search by name');
     const searchButton = screen.getByRole('button', { name: /search/i });
@@ -83,7 +83,7 @@ describe('InviteCollaborators', () => {
   it('handles search errors', async () => {
     (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Search failed'));
 
-    render(<InviteCollaborators {...mockProps} />);
+      render(<InviteCollaborators {...mockProps} />);
 
     const searchInput = screen.getByPlaceholderText('Search by name');
     const searchButton = screen.getByRole('button', { name: /search/i });
@@ -109,7 +109,7 @@ describe('InviteCollaborators', () => {
         json: () => Promise.resolve({ message: 'Invitations sent successfully' })
       });
 
-    render(<InviteCollaborators {...mockProps} />);
+      render(<InviteCollaborators {...mockProps} />);
 
     const searchInput = screen.getByPlaceholderText('Search by name');
     const searchButton = screen.getByRole('button', { name: /search/i });
@@ -121,7 +121,7 @@ describe('InviteCollaborators', () => {
 
     await waitFor(() => {
       const checkbox = screen.getByRole('checkbox');
-      fireEvent.click(checkbox);
+        fireEvent.click(checkbox);
     });
 
     const sendButton = screen.getByRole('button', { name: /send invitation/i });
@@ -145,7 +145,7 @@ describe('InviteCollaborators', () => {
       })
       .mockRejectedValueOnce(new Error('Failed to send invitations'));
 
-    render(<InviteCollaborators {...mockProps} />);
+      render(<InviteCollaborators {...mockProps} />);
 
     const searchInput = screen.getByPlaceholderText('Search by name');
     const searchButton = screen.getByRole('button', { name: /search/i });
@@ -157,7 +157,7 @@ describe('InviteCollaborators', () => {
 
     await waitFor(() => {
       const checkbox = screen.getByRole('checkbox');
-      fireEvent.click(checkbox);
+        fireEvent.click(checkbox);
     });
 
     const sendButton = screen.getByRole('button', { name: /send invitation/i });

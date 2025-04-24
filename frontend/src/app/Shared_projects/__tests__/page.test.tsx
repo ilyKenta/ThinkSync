@@ -185,6 +185,9 @@ describe('SharedProjectsPage', () => {
   });
 
   it('handles errors when fetching projects', async () => {
+    // Mock console.error to suppress the error message
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
     (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Failed to fetch projects'));
 
     await act(async () => {
@@ -194,5 +197,8 @@ describe('SharedProjectsPage', () => {
     await waitFor(() => {
       expect(screen.getByText('Error: Failed to fetch projects')).toBeInTheDocument();
     });
+
+    // Restore console.error
+    consoleErrorSpy.mockRestore();
   });
 }); 
