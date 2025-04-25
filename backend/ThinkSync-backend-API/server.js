@@ -37,8 +37,26 @@ app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 
 // Health check endpoint
-app.get('/health', (req, res) => {
-    res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
+app.get('/health', async (req, res) => {
+    try {
+        const dbHealth = await db.checkDatabaseHealth();
+        const healthStatus = {
+            status: 'OK',
+            timestamp: new Date().toISOString(),
+            database: dbHealth ? 'healthy' : 'unhealthy'
+        };
+
+        // Return 503 if database is unhealthy, 200 if everything is OK
+        res.status(dbHealth ? 200 : 503).json(healthStatus);
+    } catch (error) {
+        console.error('Health check failed:', error);
+        res.status(503).json({
+            status: 'ERROR',
+            timestamp: new Date().toISOString(),
+            database: 'unhealthy',
+            error: 'Health check failed'
+        });
+    }
 });
 
 app.use('/api/auth', authRoutes);
