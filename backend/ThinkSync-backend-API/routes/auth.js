@@ -53,7 +53,21 @@ router.post('/microsoft', async (req, res) => {
             return res.status(201).json({ message: 'User registered successfully'});
         }
         else {
-            return res.status(200).json({ message: 'User authenticated successfully'});
+            // Get user's role when logging in
+            const roleQuery = `
+                SELECT r.role_name 
+                FROM roles r
+                JOIN user_roles ur ON r.role_ID = ur.role_ID
+                WHERE ur.user_ID = ?
+            `;
+            const roleResults = await db.executeQuery(roleQuery, [id]);
+            
+            const response = {
+                message: 'User authenticated successfully',
+                role: roleResults.length > 0 ? roleResults[0].role_name : null
+            };
+            
+            return res.status(200).json(response);
         }
     } catch (error) {
         console.error('Error in /microsoft route:', error);
