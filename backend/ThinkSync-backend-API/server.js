@@ -4,6 +4,7 @@ const authRoutes = require("./routes/auth");
 const projRoutes = require("./routes/project");
 const collabRoutes = require("./routes/collaboration");
 const adminRoutes = require("./routes/admin");
+const reviewerRoutes = require("./routes/reviewer");
 const db = require("./db");
 const cors = require("cors");
 const helmet = require("helmet");
@@ -64,6 +65,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/projects', projRoutes);
 app.use('/api/collaborations', collabRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/reviewer', reviewerRoutes);
 
 // Use environment variable for port
 const PORT = process.env.PORT || 5000;

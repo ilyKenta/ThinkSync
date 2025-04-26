@@ -154,6 +154,7 @@ router.get('/owner', async (req, res) => {
                     end_date: row.end_date,
                     funding_available: row.funding_available,
                     created_at: row.created_at,
+                    review_status: row.review_status,
                     requirements: []
                 };
             }

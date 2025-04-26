@@ -84,7 +84,7 @@ router.get('/users', isAdmin, async (req, res) => {
             GROUP BY u.user_ID, u.fname, u.sname, u.phone_number, u.department, u.acc_role
         `;
         const users = await db.executeQuery(usersQuery);
-        return res.status(200).json(users);
+        return res.status(200).json({users: users});
     } catch (error) {
         console.error('Error fetching users:', error);
         return res.status(500).json({ error: 'Server error' });
@@ -205,7 +205,7 @@ router.get('/reviewers/search', isAdmin, async (req, res) => {
             WHERE r.res_area LIKE CONCAT('%', ?, '%')
         `;
         const reviewers = await db.executeQuery(reviewersQuery, [research_area]);
-        return res.status(200).json(reviewers);
+        return res.status(200).json({reviewers: reviewers});
     } catch (error) {
         console.error('Error searching reviewers:', error);
         return res.status(500).json({ error: 'Server error' });

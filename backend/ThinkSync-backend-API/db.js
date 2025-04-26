@@ -4,7 +4,7 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 // Create a connection pool with retry logic
-const createPoolWithRetry = async (maxRetries = 5, delay = 5000) => {
+const createPoolWithRetry = async (maxRetries = 5, delay = 1000) => {
     let retries = 0;
     while (retries < maxRetries) {
         try {
@@ -58,8 +58,8 @@ async function executeQuery(sql, params = []) {
     let connection;
     try {
         connection = await pool.getConnection();
-        const [results] = await connection.execute(sql, params);
-        return results;
+        const results = await connection.execute(sql, params);
+        return results[0];
     } catch (err) {
         console.error('Query execution failed:', err);
         
@@ -70,8 +70,8 @@ async function executeQuery(sql, params = []) {
                 pool = await createPoolWithRetry();
                 // Retry the query once after reconnection
                 connection = await pool.getConnection();
-                const [results] = await connection.execute(sql, params);
-                return results;
+                const results = await connection.execute(sql, params);
+                return results[0];
             } catch (retryErr) {
                 throw new Error('Failed to reconnect to database');
             }
