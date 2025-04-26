@@ -32,7 +32,7 @@ const AdminDashboard = () => {
           />
           <FaUserCircle size={32} style={{ color: "#222" }} />
         </header>
-        <section style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'flex-start', marginTop: 0 }}>
+        <section style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'flex-start', gap: 20, marginTop: 0 }}>
           <button
             style={{
               background: "#000",
@@ -50,6 +50,24 @@ const AdminDashboard = () => {
             onClick={() => window.location.href = '/manage-users'}
           >
             Manage Users
+          </button>
+          <button
+            style={{
+              background: "#000",
+              color: "#fff",
+              border: "none",
+              borderRadius: 8,
+              padding: "12px 32px",
+              fontSize: 20,
+              fontWeight: 600,
+              cursor: "pointer",
+              marginTop: 0,
+              marginLeft: 0,
+              boxShadow: "0 2px 10px rgba(0,0,0,0.06)"
+            }}
+            onClick={() => window.location.href = '/submitted-proposals'}
+          >
+            Submitted Proposals
           </button>
         </section>
         {/* Main content area can be expanded here later */}

@@ -6,17 +6,12 @@ import styles from "../dashboard/page.module.css";
 interface User {
   id: string;
   name: string;
-  email: string;
   role: string;
 }
+//these are just mock data but we will connect to backend after
+// API data will be loaded into users state
 
-const mockUsers: User[] = [
-  { id: "1", name: "Alice Smith", email: "alice@example.com", role: "researcher" },
-  { id: "2", name: "Bob Jones", email: "bob@example.com", role: "reviewer" },
-  { id: "3", name: "Carol White", email: "carol@example.com", role: "researcher" },
-];
-
-const roles = ["researcher", "reviewer", "admin"];
+const roles = ["researcher", "reviewer"];
 
 const ManageUsersPage = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -24,8 +19,29 @@ const ManageUsersPage = () => {
   const [editRole, setEditRole] = useState<string>("");
 
   useEffect(() => {
-    // Replace this with actual API call
-    setUsers(mockUsers);
+    const fetchUsers = async () => {
+      try {
+        const token = localStorage.getItem('jwt');
+        const res = await fetch('/admin/users', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const data = await res.json();
+        if (res.ok && data.users) {
+          setUsers(data.users.map((u: any) => ({
+            id: u.user_ID.toString(),
+            name: `${u.fname} ${u.sname}`,
+            role: u.roles || u.acc_role || '',
+          })));
+        } else {
+          setUsers([]);
+        }
+      } catch (err) {
+        setUsers([]);
+      }
+    };
+    fetchUsers();
   }, []);
 
   const handleEdit = (user: User) => {
@@ -33,9 +49,27 @@ const ManageUsersPage = () => {
     setEditRole(user.role);
   };
 
-  const handleSave = (user: User) => {
-    setUsers(users.map(u => u.id === user.id ? { ...u, role: editRole } : u));
-    setEditingId(null);
+  const handleSave = async (user: User) => {
+    try {
+      const token = localStorage.getItem('jwt');
+      const res = await fetch(`/admin/users/${user.id}/role`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ newRole: editRole }),
+      });
+      if (res.ok) {
+        setUsers(users.map(u => u.id === user.id ? { ...u, role: editRole } : u));
+        setEditingId(null);
+      } else {
+        // Optionally handle error
+        alert('Failed to update role');
+      }
+    } catch (err) {
+      alert('Error updating user role');
+    }
   };
 
   return (
@@ -50,7 +84,6 @@ const ManageUsersPage = () => {
           <thead>
             <tr style={{ background: "#f5f5f5" }}>
               <th style={{ textAlign: "left", padding: 12 }}>Name</th>
-              <th style={{ textAlign: "left", padding: 12 }}>Email</th>
               <th style={{ textAlign: "left", padding: 12 }}>Role</th>
               <th style={{ textAlign: "left", padding: 12 }}></th>
             </tr>
@@ -59,7 +92,6 @@ const ManageUsersPage = () => {
             {users.map(user => (
               <tr key={user.id}>
                 <td style={{ padding: 12 }}>{user.name}</td>
-                <td style={{ padding: 12 }}>{user.email}</td>
                 <td style={{ padding: 12 }}>
                   {editingId === user.id ? (
                     <select value={editRole} onChange={e => setEditRole(e.target.value)}>
