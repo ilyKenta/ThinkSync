@@ -1,41 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
-const axios = require('axios');
-
-// Get user ID from Entra token
-const getUserIdFromToken = async (token) => {
-    // if (!token) {
-    //     throw new Error('Access token is required');
-    // }
-
-    // try {
-    //     const graphResponse = await axios.get("https://graph.microsoft.com/v1.0/me", {
-    //         headers: {
-    //             Authorization: `Bearer ${token}`
-    //         }
-    //     });
-    //     return graphResponse.data.id;
-    // } catch (error) {
-    //     throw new Error('Invalid token');
-    // }
-    return '65fc38ee-5415-49f4-96ee-4a1643a69923';
-};
-
-// Extract token from Authorization header
-const extractToken = (req) => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-        throw new Error('Access token is required');
-    }
-
-    const [bearer, token] = authHeader.split(' ');
-    if (bearer !== 'Bearer' || !token) {
-        throw new Error('Invalid authorization format');
-    }
-
-    return token;
-};
+const { getUserIdFromToken, extractToken } = require('../utils/auth');
 
 // Middleware to check if user is admin
 const isAdmin = async (req, res, next) => {

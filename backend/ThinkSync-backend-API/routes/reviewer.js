@@ -1,35 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
-const axios = require('axios');
-
-// Helper function to get user ID from Microsoft Entra token
-async function getUserIdFromToken(token) {
-        // if (!token) {
-    //     throw new Error('Access token is required');
-    // }
-
-    // try {
-    //     const graphResponse = await axios.get("https://graph.microsoft.com/v1.0/me", {
-    //         headers: {
-    //             Authorization: `Bearer ${token}`
-    //         }
-    //     });
-    //     return graphResponse.data.id;
-    // } catch (error) {
-    //     throw new Error('Invalid token');
-    // }
-    return '65fc38ee-5415-49f4-96ee-4a1643a69923';
-}
-
-// Helper function to extract token from Authorization header
-function extractToken(req) {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        throw new Error('No token provided');
-    }
-    return authHeader.split(' ')[1];
-}
+const { getUserIdFromToken, extractToken } = require('../utils/auth');
 
 // Middleware to verify reviewer role
 const isReviewer = async (req, res, next) => {

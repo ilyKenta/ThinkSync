@@ -1,32 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
-const axios = require('axios');
-
-// Get user ID from Entra token
-const getUserIdFromToken = async (token) => {
-    // if (!token) {
-    //     throw new Error('Access token is required');
-    // }
-
-    // try {
-    //     const graphResponse = await axios.get("https://graph.microsoft.com/v1.0/me", {
-    //         headers: {
-    //             Authorization: `Bearer ${token}`
-    //         }
-    //     });
-    //     return graphResponse.data.id;
-    // } catch (error) {
-    //     throw new Error('Invalid token');
-    // }
-    return '65fc38ee-5415-49f4-96ee-4a1643a69923';
-};
-
-// Make the function available on the router for testing
-router.getUserIdFromToken = getUserIdFromToken;
-
-// Export the router
-module.exports = router;
+const { getUserIdFromToken, extractToken } = require('../utils/auth');
 
 // Search for potential collaborators
 router.post('/search', async (req, res) => {
@@ -287,4 +262,7 @@ router.put('/invitation/:invitationId', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
+
+// Export the router
+module.exports = router;
 
