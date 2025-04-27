@@ -43,7 +43,7 @@ export default function LoginPage() {
   }, []);
 
   const loginRequest = {
-    scopes: ['User.Read'],
+    scopes: ['api://0929980d-f253-4a7a-9c14-b09d7586807f/acess_as_user'],
   };
 
   const handleMicrosoftLogin = async (e: React.MouseEvent) => {

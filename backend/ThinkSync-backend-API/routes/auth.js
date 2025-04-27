@@ -1,22 +1,9 @@
 const express = require('express');
-const jwt = require('jsonwebtoken');
 const db = require('../db');
 const router = express.Router();
-const axios = require("axios");
+const { getUserIdFromToken, validateToken} = require('../utils/auth');
 
-async function fetchUserIdFromGraph(token) {
-    try {
-        const graphResponse = await axios.get("https://graph.microsoft.com/v1.0/me", {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        });
-        const userInfo = graphResponse.data;
-        return userInfo.id;
-    } catch (error) {
-        throw new Error('Failed to fetch user ID from Microsoft Graph');
-    }
-}
+
 
 router.post('/microsoft', async (req, res) => {
     const { token } = req.body;
@@ -26,30 +13,25 @@ router.post('/microsoft', async (req, res) => {
     }
 
     try {
-        const graphResponse = await axios.get("https://graph.microsoft.com/v1.0/me", {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-        });
+        const graphResponse = await validateToken(token);
 
-        const userInfo = graphResponse.data;
-        const { givenName, surname, id, mail } = userInfo;
+        const { given_name, family_name, oid, upn } = graphResponse;
 
-        if (!id || !givenName || !surname || !mail) {
+        if (!oid || !given_name || !family_name || !upn) {
             return res.status(400).json({ error: 'Incomplete user data from Microsoft' });
         }
 
         const validDomainPattern = /@[a-zA-Z0-9._%+-]+\.wits\.ac\.za$/i;
-        if (!validDomainPattern.test(mail)) {
+        if (!validDomainPattern.test(upn)) {
             return res.status(400).json({ error: 'Please sign up using a University of Witwatersrand email domain' });
         }
 
         const userQuery = 'SELECT * FROM users WHERE user_ID = ?';
-        const results = await db.executeQuery(userQuery, [id]);
+        const results = await db.executeQuery(userQuery, [oid]);
 
         if (results.length === 0) {
             const insertQuery = 'INSERT INTO users (user_ID, fname, sname) VALUES (?, ?, ?)';
-            await db.executeQuery(insertQuery, [id, givenName, surname]);
+            await db.executeQuery(insertQuery, [oid, given_name, family_name]);
             return res.status(201).json({ message: 'User registered successfully'});
         }
         else {
@@ -60,7 +42,7 @@ router.post('/microsoft', async (req, res) => {
                 JOIN user_roles ur ON r.role_ID = ur.role_ID
                 WHERE ur.user_ID = ?
             `;
-            const roleResults = await db.executeQuery(roleQuery, [id]);
+            const roleResults = await db.executeQuery(roleQuery, [oid]);
             
             const response = {
                 message: 'User authenticated successfully',
@@ -103,7 +85,7 @@ router.post('/reviewer', async (req, res) => {
     }
 
     try {
-        const user_ID = await fetchUserIdFromGraph(token);
+        const user_ID = await getUserIdFromToken(token);
         const role_name = 'reviewer';
 
         const userQuery = 'SELECT * FROM users WHERE user_ID = ?';
@@ -154,7 +136,7 @@ router.post('/researcher', async (req, res) => {
     }
 
     try {
-        const user_ID = await fetchUserIdFromGraph(token);
+        const user_ID = await getUserIdFromToken(token);
         const role_name = 'researcher';
 
         const userQuery = 'SELECT * FROM users WHERE user_ID = ?';
@@ -205,7 +187,7 @@ router.post('/admin', async (req, res) => {
     }
 
     try {
-        const user_ID = await fetchUserIdFromGraph(token);
+        const user_ID = await getUserIdFromToken(token);
         const role_name = 'admin';
 
         const userQuery = 'SELECT * FROM users WHERE user_ID = ?';
@@ -247,5 +229,4 @@ router.post('/admin', async (req, res) => {
 });
 
 module.exports = router;
-module.exports.fetchUserIdFromGraph = fetchUserIdFromGraph;
 module.exports.isValidUserPayload = isValidUserPayload;
