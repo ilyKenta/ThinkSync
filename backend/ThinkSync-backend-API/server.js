@@ -15,11 +15,26 @@ app.use(express.json());
 app.use(helmet());
 
 // Configure CORS
-app.use(cors({
-    origin: '*',
+const corsOptions = {
+    origin: [
+        'http://localhost:3000',
+        'https://purple-field-0bb305703.6.azurestaticapps.net',
+        'https://thinksync.vercel.app',
+        '*'
+    ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-}));
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    exposedHeaders: ['Content-Range', 'X-Content-Range'],
+    credentials: true,
+    preflightContinue: false,
+    optionsSuccessStatus: 204
+};
+
+// Apply CORS middleware
+app.use(cors(corsOptions));
+
+// Handle preflight requests
+app.options('*', cors(corsOptions));
 
 // Health check endpoint
 app.get('/health', async (req, res) => {

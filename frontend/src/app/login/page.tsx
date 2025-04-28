@@ -19,7 +19,7 @@ export default function LoginPage() {
           auth: {
             clientId: process.env.NEXT_PUBLIC_AZURE_CLIENT_ID!,
             authority: `https://login.microsoftonline.com/${process.env.NEXT_PUBLIC_AZURE_TENANT_ID}`,
-            redirectUri: 'https://purple-field-0bb305703.6.azurestaticapps.net/login',
+            redirectUri: 'http://localhost:3000/login',
             postLogoutRedirectUri: '/',
             navigateToLoginRequestUrl: true
           },
@@ -61,10 +61,7 @@ export default function LoginPage() {
       const accessToken = loginResponse.accessToken;
       localStorage.setItem('jwt', accessToken);
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://thinksyncapi.azurewebsites.net';
-      console.log('Using API URL:', apiUrl);
-
-      const response = await fetch(`${apiUrl}/api/auth/microsoft`, { 
+      const response = await fetch('http://localhost:5000/api/auth/microsoft', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

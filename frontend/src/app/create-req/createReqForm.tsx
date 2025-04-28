@@ -89,7 +89,7 @@ export default function CreateReqForm({
     // NEED TO RUN ON CREATE
 
     try {
-      const res = await fetch("https://thinksyncapi.azurewebsites.net/api/projects/create", {
+      const res = await fetch("http://localhost:5000/api/projects/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
