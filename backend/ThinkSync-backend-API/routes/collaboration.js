@@ -7,11 +7,8 @@ const { getUserIdFromToken, extractToken } = require('../utils/auth');
 router.post('/search', async (req, res) => {
     try {
         const { searchTerm, searchType } = req.body;
-        const token = req.headers.authorization?.split(' ')[1];
-        
-        if (!token) {
-            return res.status(401).json({ error: 'Access token is required' });
-        }
+        const token = extractToken(req);
+        const userId = await getUserIdFromToken(token);
 
         if (!searchTerm || !searchType) {
             return res.status(400).json({ error: 'Search term and type are required' });
@@ -56,6 +53,12 @@ router.post('/search', async (req, res) => {
         res.status(200).json({ collaborators: results });
     } catch (error) {
         console.error('Error searching collaborators:', error);
+        if (error.message === 'Access token is required' || 
+            error.message === 'Invalid token format' || 
+            error.message === 'Token invalid' ||
+            error.message === 'Token has expired') {
+            return res.status(401).json({ error: error.message });
+        }
         res.status(500).json({ error: 'Internal server error' });
     }
 });
@@ -64,12 +67,8 @@ router.post('/search', async (req, res) => {
 router.post('/invite', async (req, res) => {
     try {
         const { project_ID, recipient_ID, proposed_role } = req.body;
-        const token = req.headers.authorization?.split(' ')[1];
-        
-        if (!token) {
-            return res.status(401).json({ error: 'Access token is required' });
-        }
 
+        const token = extractToken(req);
         const sender_ID = await getUserIdFromToken(token);
 
         // Validate inputs
@@ -111,6 +110,12 @@ router.post('/invite', async (req, res) => {
         res.status(201).json({ message: 'Invitation sent successfully' });
     } catch (error) {
         console.error('Error sending invitation:', error);
+        if (error.message === 'Access token is required' || 
+            error.message === 'Invalid token format' || 
+            error.message === 'Token invalid' ||
+            error.message === 'Token has expired') {
+            return res.status(401).json({ error: error.message });
+        }
         res.status(500).json({ error: 'Internal server error' });
     }
 });
@@ -118,12 +123,7 @@ router.post('/invite', async (req, res) => {
 // Get invitations received by user
 router.get('/invitations/received', async (req, res) => {
     try {
-        const token = req.headers.authorization?.split(' ')[1];
-        
-        if (!token) {
-            return res.status(401).json({ error: 'Access token is required' });
-        }
-
+        const token = extractToken(req);
         const userId = await getUserIdFromToken(token);
 
         const query = `
@@ -155,6 +155,12 @@ router.get('/invitations/received', async (req, res) => {
         res.status(200).json({ invitations });
     } catch (error) {
         console.error('Error fetching received invitations:', error);
+        if (error.message === 'Access token is required' || 
+            error.message === 'Invalid token format' || 
+            error.message === 'Token invalid' ||
+            error.message === 'Token has expired') {
+            return res.status(401).json({ error: error.message });
+        }
         res.status(500).json({ error: 'Internal server error' });
     }
 });
@@ -162,12 +168,7 @@ router.get('/invitations/received', async (req, res) => {
 // Get invitations sent by project owner
 router.get('/invitations/sent', async (req, res) => {
     try {
-        const token = req.headers.authorization?.split(' ')[1];
-        
-        if (!token) {
-            return res.status(401).json({ error: 'Access token is required' });
-        }
-
+        const token = extractToken(req);
         const userId = await getUserIdFromToken(token);
 
         const query = `
@@ -200,6 +201,12 @@ router.get('/invitations/sent', async (req, res) => {
         res.status(200).json({ invitations });
     } catch (error) {
         console.error('Error fetching sent invitations:', error);
+        if (error.message === 'Access token is required' || 
+            error.message === 'Invalid token format' || 
+            error.message === 'Token invalid' ||
+            error.message === 'Token has expired') {
+            return res.status(401).json({ error: error.message });
+        }
         res.status(500).json({ error: 'Internal server error' });
     }
 });
@@ -209,12 +216,7 @@ router.put('/invitation/:invitationId', async (req, res) => {
     try {
         const { invitationId } = req.params;
         const { status } = req.body;
-        const token = req.headers.authorization?.split(' ')[1];
-        
-        if (!token) {
-            return res.status(401).json({ error: 'Access token is required' });
-        }
-
+        const token = extractToken(req);
         const userId = await getUserIdFromToken(token);
 
         if (!['accepted', 'declined', 'cancelled'].includes(status)) {
@@ -259,6 +261,12 @@ router.put('/invitation/:invitationId', async (req, res) => {
         res.status(200).json({ message: 'Invitation updated successfully' });
     } catch (error) {
         console.error('Error updating invitation:', error);
+        if (error.message === 'Access token is required' || 
+            error.message === 'Invalid token format' || 
+            error.message === 'Token invalid' ||
+            error.message === 'Token has expired') {
+            return res.status(401).json({ error: error.message });
+        }
         res.status(500).json({ error: 'Internal server error' });
     }
 });

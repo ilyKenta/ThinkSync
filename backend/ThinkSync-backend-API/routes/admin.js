@@ -24,8 +24,9 @@ const isAdmin = async (req, res, next) => {
     } catch (error) {
         console.error('Error in admin middleware:', error);
         if (error.message === 'Access token is required' || 
-            error.message === 'Invalid authorization format' || 
-            error.message === 'Invalid token') {
+            error.message === 'Invalid token format' || 
+            error.message === 'Token invalid' ||
+            error.message === 'Token has expired') {
             return res.status(401).json({ error: error.message });
         }
         return res.status(500).json({ error: 'Server error' });
@@ -86,25 +87,25 @@ router.put('/users/:userId/role', isAdmin, async (req, res) => {
             JOIN user_roles ur ON r.role_ID = ur.role_ID
             WHERE ur.user_ID = ?
         `;
-        const currentRoles = await db.executeQuery(currentRoleQuery, [userId]);
+        //const currentRoles = await db.executeQuery(currentRoleQuery, [userId]);
 
         // Remove all current roles
         const removeRolesQuery = 'DELETE FROM user_roles WHERE user_ID = ?';
         await db.executeQuery(removeRolesQuery, [userId]);
 
         // If user was a researcher, delete their projects
-        if (currentRoles.some(role => role.role_name === 'researcher')) {
-            const deleteProjectsQuery = 'DELETE FROM projects WHERE owner_ID = ?';
-            await db.executeQuery(deleteProjectsQuery, [userId]);
-        }
+        // if (currentRoles.some(role => role.role_name === 'researcher')) {
+        //     const deleteProjectsQuery = 'DELETE FROM projects WHERE owner_ID = ?';
+        //     await db.executeQuery(deleteProjectsQuery, [userId]);
+        // }
 
         // If user was a reviewer, delete their reviews and assignments
-        if (currentRoles.some(role => role.role_name === 'reviewer')) {
-            const deleteReviewsQuery = 'DELETE FROM reviews WHERE reviewer_ID = ?';
-            const deleteAssignmentsQuery = 'DELETE FROM review_assignments WHERE reviewer_ID = ?';
-            await db.executeQuery(deleteReviewsQuery, [userId]);
-            await db.executeQuery(deleteAssignmentsQuery, [userId]);
-        }
+        // if (currentRoles.some(role => role.role_name === 'reviewer')) {
+        //     const deleteReviewsQuery = 'DELETE FROM reviews WHERE reviewer_ID = ?';
+        //     const deleteAssignmentsQuery = 'DELETE FROM review_assignments WHERE reviewer_ID = ?';
+        //     await db.executeQuery(deleteReviewsQuery, [userId]);
+        //     await db.executeQuery(deleteAssignmentsQuery, [userId]);
+        // }
 
         // Add new role
         const addRoleQuery = `

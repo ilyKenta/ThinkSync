@@ -20,6 +20,12 @@ const isReviewer = async (req, res, next) => {
         next();
     } catch (error) {
         console.error('Authentication error:', error);
+        if (error.message === 'Access token is required' || 
+            error.message === 'Invalid token format' || 
+            error.message === 'Token invalid' ||
+            error.message === 'Token has expired') {
+            return res.status(401).json({ error: error.message });
+        }
         res.status(401).json({ error: 'Authentication failed' });
     }
 };

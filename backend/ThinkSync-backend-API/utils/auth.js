@@ -44,7 +44,7 @@ async function validateToken(token) {
         ];
 
         if (!validAudiences.includes(verifiedToken.aud)) {
-            throw new Error(`Token audience invalid. expected one of: ${validAudiences.join(', ')}`);
+            throw new Error(`Token invalid`);
         }
 
         // Check token expiration
@@ -83,7 +83,7 @@ async function getUserIdFromToken(token) {
 function extractToken(req) {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        throw new Error('No token provided');
+        throw new Error('Access token is required');
     }
     return authHeader.split(' ')[1];
 }

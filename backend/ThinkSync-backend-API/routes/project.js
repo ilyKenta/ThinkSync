@@ -84,8 +84,9 @@ router.post('/create', async (req, res) => {
     } catch (error) {
         console.error('Error creating project:', error);
         if (error.message === 'Access token is required' || 
-            error.message === 'Invalid authorization format' || 
-            error.message === 'Invalid token') {
+            error.message === 'Invalid token format' || 
+            error.message === 'Token invalid' ||
+            error.message === 'Token has expired') {
             return res.status(401).json({ error: error.message });
         }
         res.status(500).json({ error: 'Internal server error' });
@@ -140,8 +141,9 @@ router.get('/owner', async (req, res) => {
     } catch (error) {
         console.error('Error fetching projects:', error);
         if (error.message === 'Access token is required' || 
-            error.message === 'Invalid authorization format' || 
-            error.message === 'Invalid token') {
+            error.message === 'Invalid token format' || 
+            error.message === 'Token invalid' ||
+            error.message === 'Token has expired') {
             return res.status(401).json({ error: error.message });
         }
         res.status(500).json({ error: 'Internal server error' });
@@ -210,8 +212,9 @@ router.put('/update/:projectId', async (req, res) => {
     } catch (error) {
         console.error('Error updating project:', error);
         if (error.message === 'Access token is required' || 
-            error.message === 'Invalid authorization format' || 
-            error.message === 'Invalid token') {
+            error.message === 'Invalid token format' || 
+            error.message === 'Token invalid' ||
+            error.message === 'Token has expired') {
             return res.status(401).json({ error: error.message });
         }
         res.status(500).json({ error: 'Internal server error' });
@@ -252,8 +255,9 @@ router.delete('/delete/:projectId', async (req, res) => {
     } catch (error) {
         console.error('Error deleting project:', error);
         if (error.message === 'Access token is required' || 
-            error.message === 'Invalid authorization format' || 
-            error.message === 'Invalid token') {
+            error.message === 'Invalid token format' || 
+            error.message === 'Token invalid' ||
+            error.message === 'Token has expired') {
             return res.status(401).json({ error: error.message });
         }
         res.status(500).json({ error: 'Internal server error' });
@@ -263,11 +267,7 @@ router.delete('/delete/:projectId', async (req, res) => {
 // Get projects where user is a collaborator
 router.get('/collaborator', async (req, res) => {
     try {
-        const token = req.headers.authorization?.split(' ')[1];
-        if (!token) {
-            return res.status(401).json({ error: 'Access token is required' });
-        }
-
+        const token = extractToken(req);
         const userId = await getUserIdFromToken(token);
 
         // Query to get projects where user is a collaborator
@@ -303,6 +303,12 @@ router.get('/collaborator', async (req, res) => {
         res.status(200).json({ projects: projectsWithRequirements });
     } catch (error) {
         console.error('Error fetching collaborator projects:', error);
+        if (error.message === 'Access token is required' || 
+            error.message === 'Invalid token format' || 
+            error.message === 'Token invalid' ||
+            error.message === 'Token has expired') {
+            return res.status(401).json({ error: error.message });
+        }
         res.status(500).json({ error: 'Internal server error' });
     }
 });
