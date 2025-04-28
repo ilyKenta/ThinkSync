@@ -60,7 +60,7 @@ const Page = () => {
   };
 
   const handleCardClick = (projectId: string) => {
-    //router.push(`/projectInfo/${projectId}`);
+    router.push(`/prop-info?projectId=${projectId}`);
   };
 
   if (loading) {
