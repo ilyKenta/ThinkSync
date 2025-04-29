@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import styles from "../dashboard/page.module.css";
+import AssignReviewers from "../components/AssignReviewers";
 
 interface Proposal {
   id: string;
@@ -37,36 +38,44 @@ const mockProposals: Proposal[] = [
 ];
 
 const SubmittedProposalsPage = () => {
-  const [proposals, setProposals] = useState<Proposal[]>([]);
+  const [proposals, setProposals] = useState<Proposal[]>(mockProposals);
   const [selected, setSelected] = useState<Proposal | null>(null);
+  //assigning projects (Arika)
+  const [assignModalOpen, setAssignModalOpen] = useState(false);
+  const [assignProject, setAssignProject] = useState<any | null>(null);
+  const handleAssignClick = (e: React.MouseEvent, proposal: any) => {
+    e.stopPropagation();
+    setAssignProject(proposal);
+    setAssignModalOpen(true);
+  };
 
-  useEffect(() => {
-    const fetchProposals = async () => {
-      try {
-        const token = localStorage.getItem('jwt');
-        const res = await fetch('/admin/projects/pending', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        const data = await res.json();
-        if (res.ok && data.projects) {
-          setProposals(data.projects.map((p: any) => ({
-            id: p.project_ID.toString(),
-            title: p.project_title,
-            researcher: `${p.researcher_fname} ${p.researcher_sname}`,
-            researchAreas: p.research_areas || [],
-            summary: p.summary || '',
-          })));
-        } else {
-          setProposals([]);
-        }
-      } catch (err) {
-        setProposals([]);
-      }
-    };
-    fetchProposals();
-  }, []);
+  // useEffect(() => {
+  //   const fetchProposals = async () => {
+  //     try {
+  //       const token = localStorage.getItem('jwt');
+  //       const res = await fetch('/admin/projects/pending', {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //       });
+  //       const data = await res.json();
+  //       if (res.ok && data.projects) {
+  //         setProposals(data.projects.map((p: any) => ({
+  //           id: p.project_ID.toString(),
+  //           title: p.project_title,
+  //           researcher: `${p.researcher_fname} ${p.researcher_sname}`,
+  //           researchAreas: p.research_areas || [],
+  //           summary: p.summary || '',
+  //         })));
+  //       } else {
+  //         setProposals([]);
+  //       }
+  //     } catch (err) {
+  //       setProposals([]);
+  //     }
+  //   };
+  //   fetchProposals();
+  // }, []);
 
   return (
     <main className={styles.container}>
@@ -78,24 +87,67 @@ const SubmittedProposalsPage = () => {
         <h1 style={{ marginBottom: 32 }}>Submitted Proposals</h1>
         {/* Proposals List */}
         <div style={{ display: "flex", gap: 32 }}>
-          <table style={{ width: "55%", borderCollapse: "collapse", background: "#fff", borderRadius: 8, boxShadow: "0 2px 10px rgba(0,0,0,0.06)" }}>
+          <table
+            style={{
+              width: "55%",
+              borderCollapse: "collapse",
+              background: "#fff",
+              borderRadius: 8,
+              boxShadow: "0 2px 10px rgba(0,0,0,0.06)",
+            }}
+          >
             <thead>
               <tr style={{ background: "#f5f5f5" }}>
                 <th style={{ textAlign: "left", padding: 12 }}>Title</th>
                 <th style={{ textAlign: "left", padding: 12 }}>Researcher</th>
-                <th style={{ textAlign: "left", padding: 12 }}>Research Areas</th>
+                <th style={{ textAlign: "left", padding: 12 }}>
+                  Research Areas
+                </th>
                 <th style={{ textAlign: "left", padding: 12 }}></th>
               </tr>
             </thead>
             <tbody>
-              {proposals.map(proposal => (
-                <tr key={proposal.id} style={{ background: selected?.id === proposal.id ? "#e6f0fa" : undefined }}>
+              {proposals.map((proposal) => (
+                <tr
+                  key={proposal.id}
+                  style={{
+                    background:
+                      selected?.id === proposal.id ? "#e6f0fa" : undefined,
+                  }}
+                >
                   <td style={{ padding: 12 }}>{proposal.title}</td>
                   <td style={{ padding: 12 }}>{proposal.researcher}</td>
-                  <td style={{ padding: 12 }}>{proposal.researchAreas.join(", ")}</td>
                   <td style={{ padding: 12 }}>
-                    <button style={{ background: '#222', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 16px' }} onClick={() => setSelected(proposal)}>
+                    {proposal.researchAreas.join(", ")}
+                  </td>
+                  <td style={{ padding: 12 }}>
+                    <button
+                      style={{
+                        background: "#222",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: 6,
+                        padding: "6px 16px",
+                      }}
+                      onClick={() => setSelected(proposal)}
+                    >
                       View
+                    </button>
+                  </td>
+                  {/* Assign reviewer button */}
+                  <td style={{ padding: 12 }}>
+                    <button
+                      style={{
+                        background: "#222",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: 6,
+                        padding: "6px 16px",
+                      }}
+                      onClick={(e) => handleAssignClick(e, proposal)}
+                      title="Assign reviewer"
+                    >
+                      Assign
                     </button>
                   </td>
                 </tr>
@@ -104,16 +156,41 @@ const SubmittedProposalsPage = () => {
           </table>
           {/* Proposal Details */}
           {selected && (
-            <section style={{ flex: 1, background: '#f8fafd', borderRadius: 8, boxShadow: '0 2px 10px rgba(0,0,0,0.06)', padding: 24, minWidth: 320 }}>
+            <section
+              style={{
+                flex: 1,
+                background: "#f8fafd",
+                borderRadius: 8,
+                boxShadow: "0 2px 10px rgba(0,0,0,0.06)",
+                padding: 24,
+                minWidth: 320,
+              }}
+            >
               <h2>{selected.title}</h2>
-              <p><strong>Researcher:</strong> {selected.researcher}</p>
-              <p><strong>Research Areas:</strong> {selected.researchAreas.join(', ')}</p>
-              <p><strong>Summary:</strong> {selected.summary}</p>
+              <p>
+                <strong>Researcher:</strong> {selected.researcher}
+              </p>
+              <p>
+                <strong>Research Areas:</strong>{" "}
+                {selected.researchAreas.join(", ")}
+              </p>
+              <p>
+                <strong>Summary:</strong> {selected.summary}
+              </p>
               {/* Add more details as needed */}
             </section>
           )}
         </div>
       </section>
+      {assignModalOpen && assignProject && (
+        <AssignReviewers
+          projectId={assignProject.project_ID}
+          onClose={() => {
+            setAssignModalOpen(false);
+            setAssignProject(null);
+          }}
+        />
+      )}
     </main>
   );
 };

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import "./InviteCollaborators.css";
 
 type Collaborator = {
   user_ID: string;
@@ -31,7 +32,6 @@ const InviteCollaborators: React.FC<InviteCollaboratorsProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [inviteLoading, setInviteLoading] = useState(false);
 
-  // Reset state when the component mounts or projectId changes
   useEffect(() => {
     setSearch("");
     setSearchType("name");
@@ -103,7 +103,8 @@ const InviteCollaborators: React.FC<InviteCollaboratorsProps> = ({
         `Invitations sent to: ${results
           .filter((u) => selected.includes(u.user_ID))
           .map((u) => u.fname + " " + u.sname)
-          .join(", ")}\n\nProject: ${projectTitle}\n${projectDescription}`
+          .join(", ")}
+\n\nProject: ${projectTitle}\n${projectDescription}`
       );
       setSelected([]);
       setResults([]);
@@ -117,37 +118,15 @@ const InviteCollaborators: React.FC<InviteCollaboratorsProps> = ({
   };
 
   return (
-    <dialog
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        width: "100vw",
-        height: "100vh",
-        background: "rgba(0,0,0,0.3)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 1000,
-        border: "none",
-        padding: 0,
-      }}
-    >
-      <section
-        style={{
-          background: "#fff",
-          padding: 24,
-          borderRadius: 8,
-          minWidth: 320,
-        }}
-      >
-        <h2>Invite Collaborators</h2>
-        <form onSubmit={handleSearch} style={{ marginBottom: 12 }}>
-          <section style={{ display: "flex", marginBottom: 8 }}>
+    <dialog className="modal-overlay">
+      <section className="invite-collaborators-container">
+        <h2 className="invite-title">Invite Collaborators</h2>
+        <form onSubmit={handleSearch} className="invite-search-form">
+          <section className="invite-search-fields">
             <select
               value={searchType}
               onChange={(e) => setSearchType(e.target.value)}
-              style={{ marginRight: 8 }}
+              className="invite-search-select"
             >
               <option value="name">Name</option>
               <option value="skill">Skill set</option>
@@ -158,39 +137,29 @@ const InviteCollaborators: React.FC<InviteCollaboratorsProps> = ({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={`Search by ${searchType}`}
-              style={{ flex: 1 }}
+              className="invite-search-input"
             />
             <button
               type="submit"
               disabled={loading}
-              style={{ marginLeft: 8 }}
+              className="invite-search-button"
             >
               {loading ? "Searching..." : "Search"}
             </button>
           </section>
         </form>
-        {error && (
-          <p style={{ color: "red", marginBottom: 8 }}>{error}</p>
-        )}
-        <section style={{ maxHeight: 200, overflowY: "auto", marginBottom: 8 }}>
+        {error && <p className="invite-error-text">{error}</p>}
+        <section className="invite-results-list">
           {results.length === 0 && !loading && <p>No results.</p>}
           {results.map((u) => (
-            <section
-              key={u.user_ID}
-              data-testid="user-section"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                marginBottom: 4,
-              }}
-            >
+            <section key={u.user_ID} className="invite-user-entry">
               <input
                 type="checkbox"
                 checked={selected.includes(u.user_ID)}
                 onChange={() => handleSelect(u.user_ID)}
-                style={{ marginRight: 8 }}
+                className="invite-user-checkbox"
               />
-              <p>
+              <p className="invite-user-text">
                 <strong>
                   {u.fname} {u.sname}
                 </strong>{" "}
@@ -200,14 +169,15 @@ const InviteCollaborators: React.FC<InviteCollaboratorsProps> = ({
             </section>
           ))}
         </section>
-        <section style={{ marginTop: 12 }}>
+        <section className="invite-actions">
           <button
             onClick={handleInvite}
             disabled={selected.length === 0 || inviteLoading}
+            className="invite-submit-button"
           >
             {inviteLoading ? "Sending..." : "Send Invitation"}
           </button>
-          <button onClick={onClose} style={{ marginLeft: 8 }}>
+          <button onClick={onClose} className="invite-cancel-button">
             Cancel
           </button>
         </section>
