@@ -37,8 +37,8 @@ router.get('/', authenticateUser, async (req, res) => {
                 m.is_read,
                 m.project_ID,
                 p.title as project_title,
-                sender.name as sender_name,
-                receiver.name as receiver_name,
+                sender.sname as sender_name,
+                receiver.sname as receiver_name,
                 GROUP_CONCAT(
                     JSON_OBJECT(
                         'attachment_ID', ma.attachment_ID,
@@ -130,9 +130,17 @@ router.post('/', authenticateUser, upload.array('attachments', 5), async (req, r
                 const blobName = `${messageId}/${Date.now()}-${file.originalname}`;
                 const blockBlobClient = containerClient.getBlockBlobClient(blobName);
                 
+                // Upload with metadata
                 await blockBlobClient.uploadData(file.buffer, {
                     blobHTTPHeaders: {
-                        blobContentType: file.mimetype
+                        blobContentType: file.mimetype,
+                        blobContentDisposition: `attachment; filename="${encodeURIComponent(file.originalname)}"`,
+                    },
+                    metadata: {
+                        originalName: file.originalname,
+                        mimeType: file.mimetype,
+                        size: file.size.toString(),
+                        uploadDate: new Date().toISOString()
                     }
                 });
 
@@ -203,23 +211,42 @@ router.get('/attachments/:attachmentId', authenticateUser, async (req, res) => {
             return res.status(404).json({ error: 'Attachment not found or access denied' });
         }
 
-        const { storage_container, blob_name, file_name } = attachment;
+        const { storage_container, blob_name, file_name } = attachment[0]; // Get first result from array
 
-        // Get the blob client
-        const containerClient = blobServiceClient.getContainerClient(storage_container);
-        const blockBlobClient = containerClient.getBlockBlobClient(blob_name);
+        if (!blob_name) {
+            return res.status(404).json({ error: 'Attachment blob name not found' });
+        }
 
-        // Get blob properties to set correct headers
-        const properties = await blockBlobClient.getProperties();
-        
-        // Set response headers
-        res.setHeader('Content-Type', properties.contentType || 'application/octet-stream');
-        res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(file_name)}"`);
-        res.setHeader('Content-Length', properties.contentLength);
+        try {
+            // Get the blob client
+            const containerClient = blobServiceClient.getContainerClient(storage_container || process.env.AZURE_STORAGE_CONTAINER_NAME);
+            const blockBlobClient = containerClient.getBlockBlobClient(blob_name);
 
-        // Stream the blob to the response
-        const downloadResponse = await blockBlobClient.download();
-        downloadResponse.readableStreamBody.pipe(res);
+            // Get blob properties and metadata
+            const properties = await blockBlobClient.getProperties();
+            
+            // Use the original filename from the database
+            const originalFileName = file_name;
+            
+            // Set response headers with proper metadata and CORS
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+            res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+            res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition, X-File-Name, Content-Type');
+            
+            // Set content headers
+            res.setHeader('Content-Type', properties.contentType || 'application/octet-stream');
+            res.setHeader('X-File-Name', originalFileName);
+            res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(originalFileName)}`);
+            res.setHeader('Content-Length', properties.contentLength);
+
+            // Stream the blob to the response
+            const downloadResponse = await blockBlobClient.download();
+            downloadResponse.readableStreamBody.pipe(res);
+        } catch (error) {
+            console.error('Error accessing blob:', error);
+            res.status(500).json({ error: 'Failed to access attachment file' });
+        }
 
     } catch (error) {
         console.error('Error downloading attachment:', error);

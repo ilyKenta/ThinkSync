@@ -21,8 +21,8 @@ app.use(helmet());
 const corsOptions = {
     origin: [
         'http://localhost:3000',
+        'http://127.0.0.1:5500',
         'https://purple-field-0bb305703.6.azurestaticapps.net',
-        'https://thinksync.vercel.app',
         '*'
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
