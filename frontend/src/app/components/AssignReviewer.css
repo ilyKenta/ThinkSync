@@ -1,0 +1,102 @@
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.assign-reviewer-container {
+  background: white;
+  border-radius: 10px;
+  padding: 24px;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin-bottom: 16px;
+}
+
+.search-form {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.search-input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.search-button {
+  padding: 8px 12px;
+  background-color: var(--field-hover-color);
+  color: black;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.search-button:disabled {
+  background-color: #686869;
+  cursor: not-allowed;
+}
+
+.error-message {
+  color: red;
+  margin-bottom: 8px;
+}
+
+.results-list {
+  max-height: 200px;
+  overflow-y: auto;
+  margin-bottom: 16px;
+}
+
+.no-results {
+  color: #666;
+}
+
+.reviewer-option {
+  display: flex;
+  align-items: center;
+  padding: 6px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.cancel-button,
+.assign-button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.cancel-button {
+  background-color: #e5e7eb;
+}
+
+.assign-button {
+  background-color: #000000;
+  color: white;
+}
+
+.assign-button:disabled {
+  background-color: #000000;
+  cursor: not-allowed;
+}
