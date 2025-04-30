@@ -8,74 +8,72 @@ interface Proposal {
   id: string;
   title: string;
   researcher: string;
-  researchAreas: string[];
+  researchAreas: string;
   summary: string;
+  project_ID: string;
 }
 
-// Mock data for proposals
-const mockProposals: Proposal[] = [
-  {
-    id: "1",
-    title: "AI for Healthcare",
-    researcher: "Alice Smith",
-    researchAreas: ["AI", "Healthcare"],
-    summary: "Exploring AI solutions for patient diagnostics and treatment.",
-  },
-  {
-    id: "2",
-    title: "Sustainable Energy Storage",
-    researcher: "Bob Jones",
-    researchAreas: ["Energy", "Sustainability"],
-    summary: "Developing new battery technologies for renewable energy.",
-  },
-  {
-    id: "3",
-    title: "Quantum Computing Algorithms",
-    researcher: "Carol White",
-    researchAreas: ["Quantum Computing", "Algorithms"],
-    summary: "Designing efficient algorithms for quantum processors.",
-  },
-];
-
 const SubmittedProposalsPage = () => {
-  const [proposals, setProposals] = useState<Proposal[]>(mockProposals);
+  const [proposals, setProposals] = useState<Proposal[]>([]);
   const [selected, setSelected] = useState<Proposal | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   //assigning projects (Arika)
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [assignProject, setAssignProject] = useState<any | null>(null);
+
+  useEffect(() => {
+    const fetchProposals = async () => {
+      try {
+        const token = localStorage.getItem('jwt');
+        if (!token) {
+          throw new Error('No access token found');
+        }
+
+        const response = await fetch('http://localhost:5000/api/admin/projects/pending', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch proposals');
+        }
+
+        const data = await response.json();
+        console.log(data);
+        setProposals(data.projects.map((project: any) => ({
+          id: project.project_ID,
+          title: project.title,
+          researcher: `${project.researcher_fname} ${project.researcher_sname}`,
+          researchAreas: project.research_areas || "No research areas specified",
+          summary: project.description || '',
+          project_ID: project.project_ID
+        })));
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An error occurred');
+        console.error('Error fetching proposals:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProposals();
+  }, []);
+
   const handleAssignClick = (e: React.MouseEvent, proposal: any) => {
     e.stopPropagation();
     setAssignProject(proposal);
     setAssignModalOpen(true);
   };
 
-  // useEffect(() => {
-  //   const fetchProposals = async () => {
-  //     try {
-  //       const token = localStorage.getItem('jwt');
-  //       const res = await fetch('/admin/projects/pending', {
-  //         headers: {
-  //           Authorization: `Bearer ${token}`,
-  //         },
-  //       });
-  //       const data = await res.json();
-  //       if (res.ok && data.projects) {
-  //         setProposals(data.projects.map((p: any) => ({
-  //           id: p.project_ID.toString(),
-  //           title: p.project_title,
-  //           researcher: `${p.researcher_fname} ${p.researcher_sname}`,
-  //           researchAreas: p.research_areas || [],
-  //           summary: p.summary || '',
-  //         })));
-  //       } else {
-  //         setProposals([]);
-  //       }
-  //     } catch (err) {
-  //       setProposals([]);
-  //     }
-  //   };
-  //   fetchProposals();
-  // }, []);
+  if (loading) {
+    return <main className={styles.container}>Loading proposals...</main>;
+  }
+
+  if (error) {
+    return <main className={styles.container}>Error: {error}</main>;
+  }
 
   return (
     <main className={styles.container}>
@@ -86,7 +84,7 @@ const SubmittedProposalsPage = () => {
       <section style={{ flex: 1, padding: "40px 60px" }}>
         <h1 style={{ marginBottom: 32 }}>Submitted Proposals</h1>
         {/* Proposals List */}
-        <div style={{ display: "flex", gap: 32 }}>
+        <section style={{ display: "flex", gap: 32 }}>
           <table
             style={{
               width: "55%",
@@ -118,7 +116,7 @@ const SubmittedProposalsPage = () => {
                   <td style={{ padding: 12 }}>{proposal.title}</td>
                   <td style={{ padding: 12 }}>{proposal.researcher}</td>
                   <td style={{ padding: 12 }}>
-                    {proposal.researchAreas.join(", ")}
+                    {proposal.researchAreas}
                   </td>
                   <td style={{ padding: 12 }}>
                     <button
@@ -172,7 +170,7 @@ const SubmittedProposalsPage = () => {
               </p>
               <p>
                 <strong>Research Areas:</strong>{" "}
-                {selected.researchAreas.join(", ")}
+                {selected.researchAreas}
               </p>
               <p>
                 <strong>Summary:</strong> {selected.summary}
@@ -180,7 +178,7 @@ const SubmittedProposalsPage = () => {
               {/* Add more details as needed */}
             </section>
           )}
-        </div>
+        </section>
       </section>
       {assignModalOpen && assignProject && (
         <AssignReviewers

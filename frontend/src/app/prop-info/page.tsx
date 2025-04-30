@@ -8,74 +8,54 @@ const PropInfoPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const projectId = searchParams.get('projectId');
+  const projectDataParam = searchParams.get('projectData');
   const [activeTab, setActiveTab] = useState('shared');  
   const [proposal, setProposal] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentStatus, setCurrentStatus] = useState<string>('PENDING');
 
   const [feedback, setFeedback] = useState('');
-  const [outcome, setOutcome] = useState('APPROVE');
+  const [outcome, setOutcome] = useState('approved');
 
-  //un comment below
-  /*
   useEffect(() => {
-    const fetchProposal = async () => {
-      try {
-        const token = localStorage.getItem('jwt');
-        if (!token) {
-          throw new Error('No access token found');
-        }
-
-        const response = await fetch(`http://localhost:5000/api/reviewer/proposal/${projectId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
+    const fetchInitialData = async () => {
+      if (projectDataParam) {
+        try {
+          const decodedData = decodeURIComponent(projectDataParam);
+          const projectData = JSON.parse(decodedData);
+          setProposal(projectData);
+          
+          // Fetch the current review status
+          const token = localStorage.getItem('jwt');
+          if (!token) {
+            throw new Error('No access token found');
           }
-        });
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch proposal details');
+          const response = await fetch(`http://localhost:5000/api/reviewer/proposals/${projectId}/review`, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            setCurrentStatus(data.review?.outcome || 'PENDING');
+          }
+        } catch (err) {
+          setError('Failed to load project data');
+          console.error('Error loading data:', err);
+        } finally {
+          setLoading(false);
         }
-
-        const data = await response.json();
-        setProposal(data.proposal); // <- Expect { proposal: {...} }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
-        console.error('Error fetching proposal details:', err);
-      } finally {
+      } else {
+        setError('No project data available');
         setLoading(false);
       }
     };
 
-    if (projectId) {
-      fetchProposal();
-    }
-  }, [projectId]);
-  */
-
-  useEffect(() => {
-    if (projectId) {
-      const dummyProposal = {
-        title: "AI for Healthcare",
-        description: "A project focused on diagnosing diseases using machine learning models.",
-        goals: "Achieve 95% accuracy in detecting diabetic retinopathy.",
-        start_date: new Date().toISOString(),
-        end_date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 180).toISOString(), // 6 months later
-        funding_available: true,
-        researcher_fname: "Alice",
-        researcher_sname: "Johnson",
-        skill_required: "Machine Learning",
-        experience_level: "Intermediate",
-        requirement_role: "Data Scientist",
-        technical_requirements: "TensorFlow, Python, Pandas",
-        status: "PENDING"
-      };
-
-      setTimeout(() => {
-        setProposal(dummyProposal);
-        setLoading(false);
-      }, 500);
-    }
-  }, [projectId]);
+    fetchInitialData();
+  }, [projectId, projectDataParam]);
 
   const handleSubmit = async () => {
     try {
@@ -85,7 +65,7 @@ const PropInfoPage = () => {
         return;
       }
 
-      const res = await fetch(`http://localhost:5000/api/reviewer/proposal/${projectId}/evaluate`, {
+      const res = await fetch(`http://localhost:5000/api/reviewer/proposals/${projectId}/review`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -103,9 +83,9 @@ const PropInfoPage = () => {
       }
 
       alert('Evaluation submitted successfully!');
-      setProposal({ ...proposal, status: outcome }); // Optimistic update
+      setCurrentStatus(outcome);
       setFeedback('');
-      setOutcome('APPROVE');
+      setOutcome('approved');
     } catch (err: any) {
       alert(`Error: ${err.message}`);
     }
@@ -198,65 +178,66 @@ const PropInfoPage = () => {
                 <h4>Requirement</h4>
                 <p>Skill Required: {proposal.skill_required || 'Not specified'}</p>
                 <p>Experience Level: {proposal.experience_level || 'Not specified'}</p>
-                <p>Role: {proposal.requirement_role || 'Not specified'}</p>
                 <p>Technical Requirements: {proposal.technical_requirements || 'Not specified'}</p>
               </section>
 
               <section className={styles.projectDetails}>
                 <h4>Current Status</h4>
-                <p>{proposal.status || 'PENDING'}</p>
+                <p>{currentStatus}</p>
               </section>
             </section>
           </section>
         </section>
 
-        {/* === Evaluation Section === */}
-        <section className={styles.card}>
-          <h3>Evaluate Proposal</h3>
+        {/* Only show evaluation section if status is PENDING */}
+        {currentStatus === 'PENDING' && (
+          <section className={styles.card}>
+            <h3>Evaluate Proposal</h3>
 
-          <textarea
-            placeholder="Enter your feedback..."
-            style={{
-              width: '100%',
-              minHeight: '100px',
-              marginBottom: '10px',
-              padding: '8px',
-              fontSize: '1rem',
-            }}
-            value={feedback}
-            onChange={(e) => setFeedback(e.target.value)}
-          />
-
-          <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-            <select
-              value={outcome}
-              onChange={(e) => setOutcome(e.target.value)}
+            <textarea
+              placeholder="Enter your feedback..."
               style={{
+                width: '100%',
+                minHeight: '100px',
+                marginBottom: '10px',
                 padding: '8px',
                 fontSize: '1rem',
-                flex: 1,
               }}
-            >
-              <option value="APPROVE">Approve</option>
-              <option value="REVISE">Revise</option>
-              <option value="REJECT">Reject</option>
-            </select>
+              value={feedback}
+              onChange={(e) => setFeedback(e.target.value)}
+            />
 
-            <button
-              onClick={handleSubmit}
-              style={{
-                padding: '8px 16px',
-                backgroundColor: '#0070f3',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '4px',
-                fontWeight: 'bold',
-              }}
-            >
-              Submit Evaluation
-            </button>
-          </div>
-        </section>
+            <section style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+              <select
+                value={outcome}
+                onChange={(e) => setOutcome(e.target.value)}
+                style={{
+                  padding: '8px',
+                  fontSize: '1rem',
+                  flex: 1,
+                }}
+              >
+                <option value="approved">Approve</option>
+                <option value="revise">Revise</option>
+                <option value="rejected">Reject</option>
+              </select>
+
+              <button
+                onClick={handleSubmit}
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: '#0070f3',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '4px',
+                  fontWeight: 'bold',
+                }}
+              >
+                Submit Evaluation
+              </button>
+            </section>
+          </section>
+        )}
       </section>
     </main>
   );

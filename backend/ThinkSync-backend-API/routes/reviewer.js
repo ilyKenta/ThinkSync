@@ -40,6 +40,8 @@ router.get('/proposals', isReviewer, async (req, res) => {
                 p.description,
                 p.goals,
                 p.start_date,
+                p.end_date,
+                p.funding_available,
                 pr.skill_required,
                 pr.experience_level,
                 pr.role AS requirement_role,
@@ -66,13 +68,13 @@ router.get('/proposals', isReviewer, async (req, res) => {
 // POST: Submit a review for a proposal
 router.post('/proposals/:projectId/review', isReviewer, async (req, res) => {
     const { projectId } = req.params;
-    const { comments, recommendation } = req.body;
+    const { feedback, outcome } = req.body;
     // Validate input
-    if (!comments || !recommendation) {
+    if (!feedback || !outcome) {
         return res.status(400).json({ error: 'Missing required fields' });
     }
-    if (!['approved', 'rejected', 'revised'].includes(recommendation)) {
-        return res.status(400).json({ error: 'Invalid recommendation' });
+    if (!['approved', 'rejected', 'revise'].includes(outcome)) {
+        return res.status(400).json({ error: 'Invalid outcome' });
     }
     try {
         // Check if the reviewer is assigned to this project
@@ -87,12 +89,38 @@ router.post('/proposals/:projectId/review', isReviewer, async (req, res) => {
         await db.executeQuery(
             `INSERT INTO reviews (project_ID, reviewer_ID, feedback, outcome, reviewed_at)
              VALUES (?, ?, ?, ?, NOW())`,
-            [projectId, req.userId, comments, recommendation]
+            [projectId, req.userId, feedback, outcome]
         );
         res.json({ message: 'Review submitted successfully' });
     } catch (error) {
         console.error('Error submitting review:', error);
         res.status(500).json({ error: 'Failed to submit review' });
+    }
+});
+
+// GET: Get review status for a specific project
+router.get('/proposals/:projectId/review', isReviewer, async (req, res) => {
+    const { projectId } = req.params;
+    try {
+        const review = await db.executeQuery(
+            `SELECT 
+                r.outcome
+            FROM reviews r
+            JOIN users u ON r.reviewer_ID = u.user_ID
+            WHERE r.project_ID = ?
+            ORDER BY r.reviewed_at DESC
+            LIMIT 1`,
+            [projectId]
+        );
+
+        if (review.length === 0) {
+            return res.json({ review: null });
+        }
+
+        res.json({ review: review[0] });
+    } catch (error) {
+        console.error('Error fetching review:', error);
+        res.status(500).json({ error: 'Failed to fetch review' });
     }
 });
 

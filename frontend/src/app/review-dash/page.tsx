@@ -22,7 +22,7 @@ const Page = () => {
 
   //un comment actual api call bellow
 
-  /*useEffect(() => {
+  useEffect(() => {
     const fetchProposals = async () => {
       try {
         const token = localStorage.getItem('jwt');
@@ -51,31 +51,31 @@ const Page = () => {
     };
   
     fetchProposals();
-  }, []);*/
-
-  useEffect(() => {
-    // Simulate API delay with dummy data
-    const dummyProposals = [
-      {
-        project_ID: "123",
-        title: "AI for Healthcare",
-        description: "Improving diagnostics with machine learning.",
-        start_date: new Date().toISOString(),
-        Assigned_at: new Date().toISOString(),
-      },
-      {
-        project_ID: "456",
-        title: "Sustainable Agriculture",
-        description: "Using IoT for precision farming.",
-        start_date: new Date().toISOString(),
-        Assigned_at: new Date().toISOString(),
-      },
-    ];
-    setTimeout(() => {
-      setProp(dummyProposals);
-      setLoading(false);
-    }, 500); // simulate delay
   }, []);
+
+  // useEffect(() => {
+  //   // Simulate API delay with dummy data
+  //   const dummyProposals = [
+  //     {
+  //       project_ID: "123",
+  //       title: "AI for Healthcare",
+  //       description: "Improving diagnostics with machine learning.",
+  //       start_date: new Date().toISOString(),
+  //       Assigned_at: new Date().toISOString(),
+  //     },
+  //     {
+  //       project_ID: "456",
+  //       title: "Sustainable Agriculture",
+  //       description: "Using IoT for precision farming.",
+  //       start_date: new Date().toISOString(),
+  //       Assigned_at: new Date().toISOString(),
+  //     },
+  //   ];
+  //   setTimeout(() => {
+  //     setProp(dummyProposals);
+  //     setLoading(false);
+  //   }, 500); // simulate delay
+  // }, []);
 
   const togglerSidebar = () => {
     setIsSidebarOpen((prev) => !prev);
@@ -86,7 +86,13 @@ const Page = () => {
   };
 
   const handleCardClick = (projectId: string) => {
-    router.push(`/prop-info?projectId=${projectId}`);
+    // Find the selected project from the proposals array
+    const selectedProject = proposal.find(p => p.project_ID === projectId);
+    if (selectedProject) {
+      // Convert the project data to a URL-safe string
+      const projectData = encodeURIComponent(JSON.stringify(selectedProject));
+      router.push(`/prop-info?projectId=${projectId}&projectData=${projectData}`);
+    }
   };
 
   if (loading) {

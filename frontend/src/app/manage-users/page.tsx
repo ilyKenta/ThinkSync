@@ -11,7 +11,7 @@ interface User {
 //these are just mock data but we will connect to backend after
 // API data will be loaded into users state
 
-const roles = ["researcher", "reviewer"];
+const roles = ["researcher", "reviewer", "admin"];
 
 const ManageUsersPage = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -22,7 +22,7 @@ const ManageUsersPage = () => {
     const fetchUsers = async () => {
       try {
         const token = localStorage.getItem('jwt');
-        const res = await fetch('/admin/users', {
+        const res = await fetch('http://localhost:5000/api/admin/users', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -52,7 +52,7 @@ const ManageUsersPage = () => {
   const handleSave = async (user: User) => {
     try {
       const token = localStorage.getItem('jwt');
-      const res = await fetch(`/admin/users/${user.id}/role`, {
+      const res = await fetch(`http://localhost:5000/api/admin/users/${user.id}/role`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

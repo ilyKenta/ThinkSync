@@ -44,16 +44,12 @@ const AssignReviewer: React.FC<AssignReviewerProps> = ({
       const token = localStorage.getItem("jwt");
       if (!token) throw new Error("Not authenticated");
 
-      const res = await fetch("http://localhost:5000/api/reviewers/search", {
-        method: "POST",
+      const res = await fetch(`http://localhost:5000/api/admin/reviewers/search?research_area=${encodeURIComponent(search)}`, {
+        method: "GET",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          searchTerm: search,
-          searchType: "qualification",
-        }),
+        }
       });
 
       if (!res.ok) {
@@ -62,6 +58,7 @@ const AssignReviewer: React.FC<AssignReviewerProps> = ({
       }
 
       const data = await res.json();
+      console.log(data);
       setResults(data.reviewers || []);
     } catch (err: any) {
       setError(err.message || "Search error");
@@ -78,15 +75,14 @@ const AssignReviewer: React.FC<AssignReviewerProps> = ({
       const token = localStorage.getItem("jwt");
       if (!token) throw new Error("Not authenticated");
 
-      const res = await fetch("http://localhost:5000/api/reviewers/assign", {
+      const res = await fetch(`http://localhost:5000/api/admin/projects/${projectId}/assign-reviewer`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          project_ID: projectId,
-          reviewer_ID: selectedReviewer,
+          reviewerId: selectedReviewer
         }),
       });
 
@@ -106,16 +102,19 @@ const AssignReviewer: React.FC<AssignReviewerProps> = ({
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="assign-reviewer-container">
-        <h2 className="title">Assign Reviewer </h2>
+    <section className="modal-overlay">
+      <article className="assign-reviewer-container">
+        <header>
+          <h2 className="title">Assign Reviewer</h2>
+        </header>
+
         <form onSubmit={handleSearch} className="search-form">
           <input
             type="text"
             className="search-input"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by qualification"
+            placeholder="Search by research area"
           />
           <button type="submit" disabled={loading} className="search-button">
             {loading ? "Searching..." : "Search"}
@@ -124,7 +123,7 @@ const AssignReviewer: React.FC<AssignReviewerProps> = ({
 
         {error && <p className="error-message">{error}</p>}
 
-        <div className="results-list">
+        <section className="results-list">
           {results.length === 0 && !loading && (
             <p className="no-results">No results.</p>
           )}
@@ -136,17 +135,17 @@ const AssignReviewer: React.FC<AssignReviewerProps> = ({
                 checked={selectedReviewer === r.user_ID}
                 onChange={() => setSelectedReviewer(r.user_ID)}
               />
-              <span>
+              <p>
                 <strong>
                   {r.fname} {r.sname}
                 </strong>{" "}
                 | {r.acc_role} {r.qualification ? `| ${r.qualification}` : ""}
-              </span>
+              </p>
             </label>
           ))}
-        </div>
+        </section>
 
-        <div className="action-buttons">
+        <footer className="action-buttons">
           <button onClick={onClose} className="cancel-button">
             Cancel
           </button>
@@ -157,9 +156,9 @@ const AssignReviewer: React.FC<AssignReviewerProps> = ({
           >
             {assigning ? "Assigning..." : "Assign Reviewer"}
           </button>
-        </div>
-      </div>
-    </div>
+        </footer>
+      </article>
+    </section>
   );
 };
 

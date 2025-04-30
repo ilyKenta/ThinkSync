@@ -70,11 +70,19 @@ export default function LoginPage() {
         body: JSON.stringify({ token: accessToken }),
       });
 
+      console.log('API response:', response);
+
       console.log('API response status:', response.status);
       const data = await response.json();
       console.log('API response data:', data);
       
-      if (data.message === 'User authenticated successfully') {
+      if (data.role === 'reviewer') {
+        router.push('/review-dash');
+      }
+      else if (data.role === 'admin') {
+        router.push('/admin-dashboard');
+      }
+      else if (data.role === 'researcher') {
         router.push('/dashboard');
       }
       else if(data.message === 'User registered successfully') {

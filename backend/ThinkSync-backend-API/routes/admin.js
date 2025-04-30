@@ -164,15 +164,26 @@ router.get('/reviewers/search', isAdmin, async (req, res) => {
                 u.user_ID,
                 u.fname,
                 u.sname,
-                r.res_area,
-                r.qualification,
-                r.current_proj
+                u.department,
+                u.acc_role,
+                r.qualification
             FROM users u
             JOIN reviewer r ON u.user_ID = r.user_ID
             WHERE r.res_area LIKE CONCAT('%', ?, '%')
         `;
         const reviewers = await db.executeQuery(reviewersQuery, [research_area]);
-        return res.status(200).json({reviewers: reviewers});
+        
+        // Map the results to match the expected format
+        const formattedReviewers = reviewers.map(reviewer => ({
+            user_ID: reviewer.user_ID,
+            fname: reviewer.fname,
+            sname: reviewer.sname,
+            department: reviewer.department,
+            acc_role: reviewer.acc_role,
+            qualification: reviewer.qualification || null
+        }));
+
+        return res.status(200).json({ reviewers: formattedReviewers });
     } catch (error) {
         console.error('Error searching reviewers:', error);
         return res.status(500).json({ error: 'Server error' });
