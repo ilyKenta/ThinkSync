@@ -34,13 +34,13 @@ export default function Home() {
       </header>
       <section className={styles.hero}>
         <article className={styles.textBlock}>
-          <h2>Connect,Collaborate, Manage Resources with Ease</h2>
+          <h2>Connect, Collaborate, Manage Resources with Ease</h2>
           <p>
             A web platform designed to help university researchers find
             partners, share resources, and track project progress
           </p>
           <button className={styles.cta} onClick={handleRedirect}>
-            Get started
+            Get started →
           </button>
         </article>
         <figure className={styles.imageBlock}>
