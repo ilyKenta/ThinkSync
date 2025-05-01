@@ -164,6 +164,18 @@ const Page = () => {
               Shared Projects
             </button>
           </li>
+          <li>
+            <button 
+              type="button" 
+              onClick={() => {
+                setActiveTab('messager');
+                router.push("/messager");
+              }}
+              className={activeTab === 'messager' ? styles.active : ''}
+            >
+              Messager
+            </button>
+          </li>
         </ul>
       </nav>
 

@@ -1,23 +1,23 @@
 .container {
   display: flex;
-  min-height: 100vh;
+  min-height: 100vh; /* Ensure the container takes at least the full viewport height */
 }
 
 .sidebar {
-  width: 280px;
+  width: 280px; /* Slightly wider sidebar */
   background-color: var(--primary-color);
-  padding: 25px;
-  border-right: 1px solid #ddd;
-  box-shadow: 10px 10px 10px var(--shadows-color);
+  padding: 25px; /* Add a bit more padding */
+  border-right: 1px solid #ddd; /* Lighter border */
+  box-shadow: 10px 10px 10px var(--shadows-color)
 }
 .sidebar h2 {
   margin-top: 0px;
   font-size: 30px;
-  margin-bottom: 0px;
+  margin-bottom: 0px; 
 }
 
 .sidebar h3 {
-  border-top: 1px solid #000000;
+  border-top:1px solid #000000 ;
   padding-top: 10px;
   font-size: 1rem;
   margin-top: 3px;
@@ -31,6 +31,7 @@
   padding: 0;
 }
 
+
 .sidebar li button {
   background: none;
   border: none;
@@ -39,9 +40,14 @@
   font: inherit;
   color: inherit;
   cursor: pointer;
+  width: 100%;
+  text-align: left;
+  padding: 10px;
+  border-radius: var(--button-radius);
+  transition: background-color 0.3s ease;
 }
 
-.sidebar li:first-child {
+.sidebar li:nth-child(1) {
   padding: 10px 10px;
   /*color: #555;*/
   cursor: pointer;
@@ -50,7 +56,7 @@
   background-color: var(--field-hover-color);
 }
 
-.sidebar li:last-child {
+.sidebar li  {
   padding: 10px 10px;
   /*color: #555;*/
   cursor: pointer;
@@ -58,8 +64,13 @@
   border-radius: var(--button-radius);
 }
 
-.sidebar li:hover {
+.sidebar li button:hover {
   background-color: var(--field-hover-color);
+}
+
+.sidebar li button.active {
+  background-color: var(--field-hover-color);
+  font-weight: var(--font-weight-medium);
 }
 
 .searchContainer {
@@ -70,13 +81,12 @@
 }
 
 .searchInput {
-  width: 300px;
-  padding: 6px 6px 10px 40px;
-  border-radius: var(--button-radius);
+  width: 300px; 
+  padding: 6px 6px 10px 40px; 
   box-sizing: border-box;
   border: 1px solid #ccc;
-  border-radius: 8px;
-  background-image: url("/search.png");
+  border-radius: var(--button-radius);
+  background-image: url("/search.png"); 
   background-position: 12px 8px;
   background-size: 18px 18px;
   background-repeat: no-repeat;
@@ -88,51 +98,26 @@
 
 .searchInput:focus {
   outline: none;
-  border-color: #000000; /* Example focus color */
+  border-color: #000000;
   box-shadow: 0 0 5px var(--shadows-color);
 }
 
-
-
-.heading {
+.heading{
   display: flex;
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid #000000;
   margin-bottom: 2rem;
-  padding: 0 20px; /* optional, keeps some space around */
+  padding: 0 20px;
 }
 
-.colabGroup {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-  padding: 0px 60px;
-}
+.buttonHeader{
 
-.iconButton {
   display: flex;
   align-items: center;
-  gap: 8px; /* space between icon and text */
-
-  color: black;
-  border: none;
-  border-radius: 8px;
-  padding: 10px 16px;
-  font-size: 25px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.iconButton:hover {
-  background-color: var(--field-hover-color);
-}
-
-.buttonHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 20px; /* spacing between button and tabs */
+  
 }
 
 .createButton {
@@ -140,10 +125,10 @@
   background-color: var(--secondary-color);
   color: var(--primary-color);
   border: none;
-  padding: 12px 28px;
+  padding: 12px 20px;
   border-radius: var(--button-radius);
   cursor: pointer;
-  font-size: 1.5rem;
+  font-size: 1rem;
   transition: background-color 0.3s ease;
 }
 
@@ -190,12 +175,14 @@
 
 .tabGroup button:hover,
 .tabGroup button.active {
-  border-bottom-color: #000000; /* Example active/hover color */
+  
+  border-bottom-color: #007bff; /* Example active/hover color */
 }
 
 .tabGroup button.active {
   font-weight: var(--font-weight-medium);
 }
+
 
 .mainContent {
   flex-grow: 1;
@@ -205,13 +192,13 @@
 
 .cardContainer {
   display: grid;
-  grid-template-columns: repeat(3, minmax(250px, 1fr)); /* 3 flexible columns */
+  grid-template-columns: repeat(3, minmax(250px, 1fr));
   gap: 20px;
   padding: 1rem;
 }
 
 .card {
-  all: unset; /* reset default button styles */
+  all: unset;
   background-color: var(--primary-color);
   border: 1px solid #ddd;
   border-radius: 8px;
@@ -220,33 +207,97 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
   display: block;
   cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
 }
 
 .cardContent {
   display: flex;
   flex-direction: column;
-  justify-content: flex-start; /* Align content to the top */
+  justify-content: flex-start;
+  height: 100%;
 }
 
-.cardContent span {
-  margin-top: 1rem;
-  font-size: 1.1rem;
+.cardContent img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+.projectInfo {
+  padding: 10px;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.projectInfo h3 {
+  margin: 0 0 10px 0;
+  font-size: 1.2rem;
   font-weight: var(--font-weight-medium);
   color: #333;
-  margin-bottom: 5px;
 }
 
-.cardContent time {
-  margin-top: 1rem;
-  font-size: 1.1rem;
-  font-weight: var(--font-weight-medium);
-  color: #333;
-  margin-bottom: 5px;
-}
-
-.cardContent p {
+.description {
+  color: #666;
   font-size: 0.9rem;
-  color: #777;
+  margin-bottom: 15px;
+  line-height: 1.4;
+  flex-grow: 1;
+}
+
+.projectDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: #555;
+  margin-top: auto;
+}
+
+.projectDetails time {
+  display: block;
+  color: #666;
+}
+
+.projectDetails span {
+  display: block;
+  margin-top: 5px;
+  color: #666;
+}
+
+.sidebarSection {
+  position: relative;
+}
+
+.colabGroup {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  padding: 0px 60px;
+}
+
+.iconButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: black;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 25px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.iconButton:hover {
+  background-color: var(--field-hover-color);
 }
 
 .cardFooter {
