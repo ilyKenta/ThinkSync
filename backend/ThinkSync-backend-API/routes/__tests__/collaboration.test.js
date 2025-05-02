@@ -2,15 +2,16 @@ const request = require('supertest');
 const express = require('express');
 const router = require('../collaboration');
 const db = require('../../db');
-const axios = require('axios');
+const { getUserIdFromToken, extractToken } = require('../../utils/auth');
 
 // Mock modules
 jest.mock('../../db', () => ({
   executeQuery: jest.fn()
 }));
 
-jest.mock('axios', () => ({
-  get: jest.fn()
+jest.mock('../../utils/auth', () => ({
+  getUserIdFromToken: jest.fn(),
+  extractToken: jest.fn()
 }));
 
 describe('Collaboration Routes', () => {
@@ -23,23 +24,20 @@ describe('Collaboration Routes', () => {
     app.use('/api/collaboration', router);
     jest.clearAllMocks();
     
-    // Mock axios.get to return user ID
-    axios.get.mockResolvedValue({ data: { id: mockUserId } });
+    // Mock token extraction and user ID retrieval
+    extractToken.mockReturnValue('valid-token');
+    getUserIdFromToken.mockResolvedValue(mockUserId);
   });
 
   afterEach(() => {
     jest.clearAllMocks();
   });
 
-  describe('getUserIdFromToken', () => {
-    it('should throw error when token is missing', async () => {
-      await expect(router.getUserIdFromToken(null))
-        .rejects.toThrow('Access token is required');
-    });
-  });
-
   describe('POST /search', () => {
     it('should throw error when token is missing', async () => {
+      extractToken.mockReturnValue(null);
+      getUserIdFromToken.mockRejectedValueOnce(new Error('Access token is required'));
+
       const response = await request(app)
         .post('/api/collaboration/search')
         .send({ searchTerm: 'test', searchType: 'name' });
@@ -51,7 +49,6 @@ describe('Collaboration Routes', () => {
     it('should return 400 if search term or type is missing', async () => {
       const response = await request(app)
         .post('/api/collaboration/search')
-        .set('Authorization', 'Bearer valid-token')
         .send({ searchType: 'name' });
 
       expect(response.status).toBe(400);
@@ -75,7 +72,6 @@ describe('Collaboration Routes', () => {
 
       const response = await request(app)
         .post('/api/collaboration/search')
-        .set('Authorization', 'Bearer valid-token')
         .send({ searchTerm: 'John', searchType: 'name' });
 
       expect(response.status).toBe(200);
@@ -103,7 +99,6 @@ describe('Collaboration Routes', () => {
 
       const response = await request(app)
         .post('/api/collaboration/search')
-        .set('Authorization', 'Bearer valid-token')
         .send({ searchTerm: 'AI', searchType: 'skill' });
 
       expect(response.status).toBe(200);
@@ -131,7 +126,6 @@ describe('Collaboration Routes', () => {
 
       const response = await request(app)
         .post('/api/collaboration/search')
-        .set('Authorization', 'Bearer valid-token')
         .send({ searchTerm: 'researcher', searchType: 'position' });
 
       expect(response.status).toBe(200);
@@ -145,7 +139,6 @@ describe('Collaboration Routes', () => {
     it('should return 400 for invalid search type', async () => {
       const response = await request(app)
         .post('/api/collaboration/search')
-        .set('Authorization', 'Bearer valid-token')
         .send({ searchTerm: 'test', searchType: 'invalid' });
 
       expect(response.status).toBe(400);
@@ -157,7 +150,6 @@ describe('Collaboration Routes', () => {
 
       const response = await request(app)
         .post('/api/collaboration/search')
-        .set('Authorization', 'Bearer valid-token')
         .send({ searchTerm: 'test', searchType: 'name' });
 
       expect(response.status).toBe(500);
@@ -167,6 +159,9 @@ describe('Collaboration Routes', () => {
 
   describe('POST /invite', () => {
     it('should return 401 if no token provided', async () => {
+      extractToken.mockReturnValue(null);
+      getUserIdFromToken.mockRejectedValueOnce(new Error('Access token is required'));
+
       const response = await request(app)
         .post('/api/collaboration/invite')
         .send({
@@ -182,7 +177,6 @@ describe('Collaboration Routes', () => {
     it('should return 400 if required fields are missing', async () => {
       const response = await request(app)
         .post('/api/collaboration/invite')
-        .set('Authorization', 'Bearer valid-token')
         .send({
           project_ID: '1',
           recipient_ID: '2'
@@ -197,7 +191,6 @@ describe('Collaboration Routes', () => {
 
       const response = await request(app)
         .post('/api/collaboration/invite')
-        .set('Authorization', 'Bearer valid-token')
         .send({
           project_ID: '1',
           recipient_ID: '2',
@@ -213,7 +206,6 @@ describe('Collaboration Routes', () => {
 
       const response = await request(app)
         .post('/api/collaboration/invite')
-        .set('Authorization', 'Bearer valid-token')
         .send({
           project_ID: '1',
           recipient_ID: '2',
@@ -231,7 +223,6 @@ describe('Collaboration Routes', () => {
 
       const response = await request(app)
         .post('/api/collaboration/invite')
-        .set('Authorization', 'Bearer valid-token')
         .send({
           project_ID: '1',
           recipient_ID: '2',
@@ -250,7 +241,6 @@ describe('Collaboration Routes', () => {
 
       const response = await request(app)
         .post('/api/collaboration/invite')
-        .set('Authorization', 'Bearer valid-token')
         .send({
           project_ID: '1',
           recipient_ID: '2',
@@ -266,7 +256,6 @@ describe('Collaboration Routes', () => {
 
       const response = await request(app)
         .post('/api/collaboration/invite')
-        .set('Authorization', 'Bearer valid-token')
         .send({
           project_ID: '1',
           recipient_ID: '2',
@@ -280,6 +269,9 @@ describe('Collaboration Routes', () => {
 
   describe('GET /invitations/received', () => {
     it('should return 401 if no token provided', async () => {
+      extractToken.mockReturnValue(null);
+      getUserIdFromToken.mockRejectedValueOnce(new Error('Access token is required'));
+
       const response = await request(app)
         .get('/api/collaboration/invitations/received');
 
@@ -305,8 +297,7 @@ describe('Collaboration Routes', () => {
       db.executeQuery.mockResolvedValueOnce(mockInvitations);
 
       const response = await request(app)
-        .get('/api/collaboration/invitations/received')
-        .set('Authorization', 'Bearer valid-token');
+        .get('/api/collaboration/invitations/received');
 
       expect(response.status).toBe(200);
       expect(response.body.invitations).toEqual(mockInvitations);
@@ -316,8 +307,7 @@ describe('Collaboration Routes', () => {
       db.executeQuery.mockRejectedValueOnce(new Error('Database error'));
 
       const response = await request(app)
-        .get('/api/collaboration/invitations/received')
-        .set('Authorization', 'Bearer valid-token');
+        .get('/api/collaboration/invitations/received');
 
       expect(response.status).toBe(500);
       expect(response.body.error).toBe('Internal server error');
@@ -326,6 +316,9 @@ describe('Collaboration Routes', () => {
 
   describe('GET /invitations/sent', () => {
     it('should return 401 if no token provided', async () => {
+      extractToken.mockReturnValue(null);
+      getUserIdFromToken.mockRejectedValueOnce(new Error('Access token is required'));
+
       const response = await request(app)
         .get('/api/collaboration/invitations/sent');
 
@@ -351,8 +344,7 @@ describe('Collaboration Routes', () => {
       db.executeQuery.mockResolvedValueOnce(mockInvitations);
 
       const response = await request(app)
-        .get('/api/collaboration/invitations/sent')
-        .set('Authorization', 'Bearer valid-token');
+        .get('/api/collaboration/invitations/sent');
 
       expect(response.status).toBe(200);
       expect(response.body.invitations).toEqual(mockInvitations);
@@ -362,8 +354,7 @@ describe('Collaboration Routes', () => {
       db.executeQuery.mockRejectedValueOnce(new Error('Database error'));
 
       const response = await request(app)
-        .get('/api/collaboration/invitations/sent')
-        .set('Authorization', 'Bearer valid-token');
+        .get('/api/collaboration/invitations/sent');
 
       expect(response.status).toBe(500);
       expect(response.body.error).toBe('Internal server error');
@@ -372,6 +363,9 @@ describe('Collaboration Routes', () => {
 
   describe('PUT /invitation/:invitationId', () => {
     it('should return 401 if no token provided', async () => {
+      extractToken.mockReturnValue(null);
+      getUserIdFromToken.mockRejectedValueOnce(new Error('Access token is required'));
+
       const response = await request(app)
         .put('/api/collaboration/invitation/1')
         .send({ status: 'accepted' });
@@ -381,15 +375,14 @@ describe('Collaboration Routes', () => {
     });
 
     it('should return 401 if token is invalid', async () => {
-      axios.get.mockRejectedValueOnce(new Error('Invalid token'));
+      getUserIdFromToken.mockRejectedValueOnce(new Error('Token invalid'));
 
       const response = await request(app)
         .put('/api/collaboration/invitation/1')
-        .set('Authorization', 'Bearer invalid-token')
         .send({ status: 'accepted' });
 
-      expect(response.status).toBe(500);
-      expect(response.body.error).toBe('Internal server error');
+      expect(response.status).toBe(401);
+      expect(response.body.error).toBe('Token invalid');
     });
 
     it('should return 403 if user is not the recipient', async () => {
@@ -402,7 +395,6 @@ describe('Collaboration Routes', () => {
 
       const response = await request(app)
         .put('/api/collaboration/invitation/1')
-        .set('Authorization', 'Bearer valid-token')
         .send({ status: 'accepted' });
 
       expect(response.status).toBe(403);
@@ -419,7 +411,6 @@ describe('Collaboration Routes', () => {
 
       const response = await request(app)
         .put('/api/collaboration/invitation/1')
-        .set('Authorization', 'Bearer valid-token')
         .send({ status: 'accepted' });
 
       expect(response.status).toBe(400);
@@ -429,7 +420,6 @@ describe('Collaboration Routes', () => {
     it('should return 400 if status is invalid', async () => {
       const response = await request(app)
         .put('/api/collaboration/invitation/1')
-        .set('Authorization', 'Bearer valid-token')
         .send({ status: 'invalid' });
 
       expect(response.status).toBe(400);
@@ -441,7 +431,6 @@ describe('Collaboration Routes', () => {
 
       const response = await request(app)
         .put('/api/collaboration/invitation/1')
-        .set('Authorization', 'Bearer valid-token')
         .send({ status: 'accepted' });
 
       expect(response.status).toBe(404);
@@ -457,7 +446,6 @@ describe('Collaboration Routes', () => {
 
       const response = await request(app)
         .put('/api/collaboration/invitation/1')
-        .set('Authorization', 'Bearer valid-token')
         .send({ status: 'cancelled' });
 
       expect(response.status).toBe(403);
@@ -479,7 +467,6 @@ describe('Collaboration Routes', () => {
 
       const response = await request(app)
         .put('/api/collaboration/invitation/1')
-        .set('Authorization', 'Bearer valid-token')
         .send({ status: 'declined' });
 
       expect(response.status).toBe(200);
@@ -507,7 +494,6 @@ describe('Collaboration Routes', () => {
 
       const response = await request(app)
         .put('/api/collaboration/invitation/1')
-        .set('Authorization', 'Bearer valid-token')
         .send({ status: 'accepted' });
 
       expect(response.status).toBe(200);
@@ -523,7 +509,6 @@ describe('Collaboration Routes', () => {
 
       const response = await request(app)
         .put('/api/collaboration/invitation/1')
-        .set('Authorization', 'Bearer valid-token')
         .send({ status: 'accepted' });
 
       expect(response.status).toBe(500);

@@ -1,13 +1,17 @@
 const request = require('supertest');
 const express = require('express');
 const projectRoutes = require('../project');
-const axios = require('axios');
 const db = require('../../db');
+const { getUserIdFromToken, extractToken } = require('../../utils/auth');
 
-// Mock environment variables and modules
-jest.mock('axios');
+// Mock modules
 jest.mock('../../db', () => ({
   executeQuery: jest.fn()
+}));
+
+jest.mock('../../utils/auth', () => ({
+  getUserIdFromToken: jest.fn(),
+  extractToken: jest.fn()
 }));
 
 describe('Project Routes', () => {
@@ -25,12 +29,9 @@ describe('Project Routes', () => {
     console.error = jest.fn();
     console.log = jest.fn();
 
-    // Mock axios for token validation
-    axios.get.mockResolvedValue({
-      data: {
-        id: mockUserId
-      }
-    });
+    // Mock token extraction and user ID retrieval
+    extractToken.mockReturnValue(mockToken);
+    getUserIdFromToken.mockResolvedValue(mockUserId);
 
     // Reset all mocks
     jest.clearAllMocks();
@@ -42,6 +43,9 @@ describe('Project Routes', () => {
 
   describe('Token Validation', () => {
     it('should handle missing token', async () => {
+      extractToken.mockReturnValue(null);
+      getUserIdFromToken.mockRejectedValueOnce(new Error('Access token is required'));
+
       const response = await request(app)
         .post('/api/project/create')
         .send({});
@@ -52,26 +56,29 @@ describe('Project Routes', () => {
     });
 
     it('should handle invalid token format', async () => {
+      extractToken.mockReturnValue(null);
+      getUserIdFromToken.mockRejectedValueOnce(new Error('Access token is required'));
+
       const response = await request(app)
         .post('/api/project/create')
         .set('Authorization', 'InvalidFormat')
         .send({});
 
       expect(response.status).toBe(401);
-      expect(response.body.error).toBe('Invalid authorization format');
+      expect(response.body.error).toBe('Access token is required');
       expect(console.error).toHaveBeenCalledWith('Error creating project:', expect.any(Error));
     });
 
     it('should handle invalid token from Microsoft Graph', async () => {
-      axios.get.mockRejectedValueOnce(new Error('Invalid token'));
+      getUserIdFromToken.mockRejectedValueOnce(new Error('Token invalid'));
 
       const response = await request(app)
         .post('/api/project/create')
-        .set('Authorization', 'Bearer invalid-token')
+        .set('Authorization', `Bearer ${mockToken}`)
         .send({});
 
       expect(response.status).toBe(401);
-      expect(response.body.error).toBe('Invalid token');
+      expect(response.body.error).toBe('Token invalid');
       expect(console.error).toHaveBeenCalledWith('Error creating project:', expect.any(Error));
     });
   });
@@ -99,7 +106,7 @@ describe('Project Routes', () => {
 
     it('should create a project successfully', async () => {
       db.executeQuery
-        .mockResolvedValueOnce([{ insertId: 1 }]) // Project insert
+        .mockResolvedValueOnce({ insertId: 1 }) // Project insert
         .mockResolvedValueOnce([]); // Requirements insert
 
       const response = await request(app)
@@ -133,7 +140,7 @@ describe('Project Routes', () => {
 
     it('should handle database error during requirements creation', async () => {
       db.executeQuery
-        .mockResolvedValueOnce([{ insertId: 1 }]) // Project insert
+        .mockResolvedValueOnce({ insertId: 1 }) // Project insert
         .mockRejectedValueOnce(new Error('Database error')); // Requirements insert
 
       const response = await request(app)

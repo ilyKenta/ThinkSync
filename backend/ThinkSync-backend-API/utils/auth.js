@@ -67,17 +67,16 @@ async function validateToken(token) {
 
 // Helper function to get user ID from Microsoft Entra token
 async function getUserIdFromToken(token) {
-    // try {
-    //     // First validate the token
-    //     const validatedToken = await validateToken(token);
+    try {
+        // First validate the token
+        const validatedToken = await validateToken(token);
         
-    //     // Return the user's object ID (oid)
-    //     return validatedToken.oid;
-    // } catch (error) {
-    //     console.error('Error getting user ID from token:', error.message);
-    //     throw error;
-    // }
-    return '65fc38ee-5415-49f4-96ee-4a1643a69923';
+        // Return the user's object ID (oid)
+        return validatedToken.oid;
+    } catch (error) {
+        console.error('Error getting user ID from token:', error.message);
+        throw error;
+    }
 }
 
 // Helper function to extract token from Authorization header

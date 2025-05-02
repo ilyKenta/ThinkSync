@@ -42,7 +42,7 @@ describe('SentInvitations', () => {
     (global.fetch as jest.Mock).mockImplementationOnce(() => new Promise(() => {}));
 
     await act(async () => {
-      render(<SentInvitations />);
+    render(<SentInvitations />);
     });
 
     expect(screen.getByText('Loading sent invitations...')).toBeInTheDocument();
