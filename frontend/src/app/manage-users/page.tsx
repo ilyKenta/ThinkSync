@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import styles from "../dashboard/page.module.css";
+import { useRouter } from "next/navigation";
 
 interface User {
   id: string;
@@ -14,9 +15,12 @@ interface User {
 const roles = ["researcher", "reviewer", "admin"];
 
 const ManageUsersPage = () => {
+    const router = useRouter();
+    const [activeTab, setActiveTab] = useState("shared");
   const [users, setUsers] = useState<User[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editRole, setEditRole] = useState<string>("");
+  
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -74,9 +78,50 @@ const ManageUsersPage = () => {
 
   return (
     <main className={styles.container}>
+      {/* Sidebar */}
       <aside className={styles.sidebar}>
         <h2 style={{ margin: 0 }}>ThinkSync</h2>
-        <h3>Manage Users</h3>
+        <h3>Dashboard</h3>
+        <ul>
+          <li>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab("my");
+                  router.push("/manage-users");
+                }}
+                className={activeTab === "my" ? styles.active : ""}
+              >
+                Manage Users
+              </button>
+          </li>
+
+          <li>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab("my");
+                  router.push("/submitted-proposals");
+                }}
+                className={activeTab === "my" ? styles.active : ""}
+              >
+                Submitted Proposals
+              </button>
+          </li>
+
+          <li>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab("my");
+                router.push("/messager/AdminMessage");
+              }}
+              className={activeTab === "my" ? styles.active : ""}
+            >
+              Messager
+            </button>
+          </li>
+        </ul>
       </aside>
       <section style={{ flex: 1, padding: "40px 60px" }}>
         <h1 style={{ marginBottom: 32 }}>User Management</h1>

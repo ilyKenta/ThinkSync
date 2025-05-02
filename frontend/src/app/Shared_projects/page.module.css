@@ -41,14 +41,14 @@
     color: inherit;
     cursor: pointer;
     width: 100%;
+    padding: 10px 10px;
     text-align: left;
-    padding: 10px;
     border-radius: var(--button-radius);
     transition: background-color 0.3s ease;
   }
   
   .sidebar li:nth-child(2) {
-    padding: 10px 10px;
+
     /*color: #555;*/
     cursor: pointer;
     transition: color 0.3s ease;
@@ -57,21 +57,22 @@
   }
   
   .sidebar li  {
-    padding: 10px 10px;
+
     /*color: #555;*/
     cursor: pointer;
     transition: color 0.3s ease;
     border-radius: var(--button-radius);
+    background-color: var(--primary-color);
   }
   
   .sidebar li button:hover {
     background-color: var(--field-hover-color);
   }
   
-  .sidebar li button.active {
+  /* .sidebar li button.active {
     background-color: var(--field-hover-color);
     font-weight: var(--font-weight-medium);
-  }
+  } */
   
   .searchContainer {
     position: relative;

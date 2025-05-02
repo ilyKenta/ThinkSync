@@ -1,14 +1,80 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import styles from "../dashboard/page.module.css";
-import { FaUserCircle } from "react-icons/fa";
-// For navigation
 import { useRouter } from "next/navigation";
 
-const AdminDashboard = () => {
-  const router = useRouter();
+interface User {
+  id: string;
+  name: string;
+  role: string;
+}
+//these are just mock data but we will connect to backend after
+// API data will be loaded into users state
+
+const roles = ["researcher", "reviewer", "admin"];
+
+const ManageUsersPage = () => {
+    const router = useRouter();
+  const [users, setUsers] = useState<User[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editRole, setEditRole] = useState<string>("");
   const [activeTab, setActiveTab] = useState("shared");
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const token = localStorage.getItem('jwt');
+        const res = await fetch('http://localhost:5000/api/admin/users', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const data = await res.json();
+        if (res.ok && data.users) {
+          setUsers(data.users.map((u: any) => ({
+            id: u.user_ID.toString(),
+            name: `${u.fname} ${u.sname}`,
+            role: u.roles || u.acc_role || '',
+          })));
+        } else {
+          setUsers([]);
+        }
+      } catch (err) {
+        setUsers([]);
+      }
+    };
+    fetchUsers();
+  }, []);
+
+  const handleEdit = (user: User) => {
+    setEditingId(user.id);
+    setEditRole(user.role);
+  };
+
+  const handleSave = async (user: User) => {
+    try {
+      const token = localStorage.getItem('jwt');
+      const res = await fetch(`http://localhost:5000/api/admin/users/${user.id}/role`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ newRole: editRole }),
+      });
+      if (res.ok) {
+        setUsers(users.map(u => u.id === user.id ? { ...u, role: editRole } : u));
+        setEditingId(null);
+      } else {
+        // Optionally handle error
+        alert('Failed to update role');
+      }
+    } catch (err) {
+      alert('Error updating user role');
+    }
+  };
+
   return (
     <main className={styles.container}>
       {/* Sidebar */}
@@ -16,6 +82,32 @@ const AdminDashboard = () => {
         <h2 style={{ margin: 0 }}>ThinkSync</h2>
         <h3>Dashboard</h3>
         <ul>
+          <li>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab("my");
+                  router.push("/manage-users");
+                }}
+                className={activeTab === "my" ? styles.active : ""}
+              >
+                Manage Users
+              </button>
+          </li>
+
+          <li>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab("my");
+                  router.push("/submitted-proposals");
+                }}
+                className={activeTab === "my" ? styles.active : ""}
+              >
+                Submitted Proposals
+              </button>
+          </li>
+
           <li>
             <button
               type="button"
@@ -30,83 +122,45 @@ const AdminDashboard = () => {
           </li>
         </ul>
       </aside>
-
-      {/* Main Content */}
       <section style={{ flex: 1, padding: "40px 60px" }}>
-        <header
-          style={{
-            display: "flex",
-            justifyContent: "flex-end",
-            alignItems: "center",
-            gap: 16,
-            marginBottom: 32,
-          }}
-        >
-          <input
-            type="text"
-            placeholder="Search..."
-            style={{
-              padding: "8px 16px",
-              borderRadius: 8,
-              border: "1px solid #ccc",
-              fontSize: 16,
-              marginRight: 20,
-              width: 240,
-              background: "#f9f9f9",
-            }}
-          />
-          <FaUserCircle size={32} style={{ color: "#222" }} />
-        </header>
-        <section
-          style={{
-            display: "flex",
-            justifyContent: "flex-start",
-            alignItems: "flex-start",
-            gap: 20,
-            marginTop: 0,
-          }}
-        >
-          <button
-            style={{
-              background: "#000",
-              color: "#fff",
-              border: "none",
-              borderRadius: 8,
-              padding: "12px 32px",
-              fontSize: 20,
-              fontWeight: 600,
-              cursor: "pointer",
-              marginTop: 0,
-              marginLeft: 0,
-              boxShadow: "0 2px 10px rgba(0,0,0,0.06)",
-            }}
-            onClick={() => (window.location.href = "/manage-users")}
-          >
-            Manage Users
-          </button>
-          <button
-            style={{
-              background: "#000",
-              color: "#fff",
-              border: "none",
-              borderRadius: 8,
-              padding: "12px 32px",
-              fontSize: 20,
-              fontWeight: 600,
-              cursor: "pointer",
-              marginTop: 0,
-              marginLeft: 0,
-              boxShadow: "0 2px 10px rgba(0,0,0,0.06)",
-            }}
-            onClick={() => (window.location.href = "/submitted-proposals")}
-          >
-            Submitted Proposals
-          </button>
-        </section>
-        {/* Main content area can be expanded here later */}
+        <h1 style={{ marginBottom: 32 }}>User Management</h1>
+        <table style={{ width: "100%", borderCollapse: "collapse", background: "#fff", borderRadius: 8, boxShadow: "0 2px 10px rgba(0,0,0,0.06)" }}>
+          <thead>
+            <tr style={{ background: "#f5f5f5" }}>
+              <th style={{ textAlign: "left", padding: 12 }}>Name</th>
+              <th style={{ textAlign: "left", padding: 12 }}>Role</th>
+              <th style={{ textAlign: "left", padding: 12 }}></th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.map(user => (
+              <tr key={user.id}>
+                <td style={{ padding: 12 }}>{user.name}</td>
+                <td style={{ padding: 12 }}>
+                  {editingId === user.id ? (
+                    <select value={editRole} onChange={e => setEditRole(e.target.value)}>
+                      {roles.map(role => (
+                        <option key={role} value={role}>{role}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    user.role
+                  )}
+                </td>
+                <td style={{ padding: 12 }}>
+                  {editingId === user.id ? (
+                    <button style={{ background: '#222', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 16px', marginRight: 8 }} onClick={() => handleSave(user)}>Save</button>
+                  ) : (
+                    <button style={{ background: '#eee', color: '#222', border: 'none', borderRadius: 6, padding: '6px 16px' }} onClick={() => handleEdit(user)}>Edit</button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </section>
     </main>
   );
 };
 
-export default AdminDashboard;
+export default ManageUsersPage;

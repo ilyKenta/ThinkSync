@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useRef } from "react";
-import styles from "../page.module.css";
+import styles from "./page.module.css";
 import { useRouter } from "next/navigation";
 
 interface Attachment {

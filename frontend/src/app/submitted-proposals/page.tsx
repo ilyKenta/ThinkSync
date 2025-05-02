@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import styles from "../dashboard/page.module.css";
+import styles from "../Shared_projects/page.module.css";
 import AssignReviewers from "../components/AssignReviewers";
+import { useRouter } from "next/navigation";
 
 interface Proposal {
   id: string;
@@ -14,6 +15,8 @@ interface Proposal {
 }
 
 const SubmittedProposalsPage = () => {
+    const router = useRouter();
+      const [activeTab, setActiveTab] = useState("shared");
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [selected, setSelected] = useState<Proposal | null>(null);
   const [loading, setLoading] = useState(true);
@@ -77,9 +80,50 @@ const SubmittedProposalsPage = () => {
 
   return (
     <main className={styles.container}>
+      {/* Sidebar */}
       <aside className={styles.sidebar}>
         <h2 style={{ margin: 0 }}>ThinkSync</h2>
-        <h3>Submitted Proposals</h3>
+        <h3>Dashboard</h3>
+        <ul>
+          <li>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab("my");
+                  router.push("/manage-users");
+                }}
+                className={activeTab === "my" ? styles.active : ""}
+              >
+                Manage Users
+              </button>
+          </li>
+
+          <li>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab("my");
+                  router.push("/submitted-proposals");
+                }}
+                className={activeTab === "my" ? styles.active : ""}
+              >
+                Submitted Proposals
+              </button>
+          </li>
+
+          <li>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab("my");
+                router.push("/messager/AdminMessage");
+              }}
+              className={activeTab === "my" ? styles.active : ""}
+            >
+              Messager
+            </button>
+          </li>
+        </ul>
       </aside>
       <section style={{ flex: 1, padding: "40px 60px" }}>
         <h1 style={{ marginBottom: 32 }}>Submitted Proposals</h1>

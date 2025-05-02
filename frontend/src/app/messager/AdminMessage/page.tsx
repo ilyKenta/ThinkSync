@@ -180,6 +180,32 @@ const Page = () => {
 
         <ul>
           <li>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab("my");
+                    router.push("/manage-users");
+                  }}
+                  className={activeTab === "my" ? styles.active : ""}
+                >
+                  Manage Users
+                </button>
+            </li>
+
+            <li>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab("my");
+                    router.push("/submitted-proposals");
+                  }}
+                  className={activeTab === "my" ? styles.active : ""}
+                >
+                  Submitted Proposals
+                </button>
+            </li>
+
+          <li>
             <button
               type="button"
               onClick={() => {

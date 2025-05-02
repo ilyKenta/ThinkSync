@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import styles from "../Shared_projects/page.module.css";
+import styles from "./page.module.css";
 import { useRouter } from "next/navigation";
 import { FaPaperPlane, FaEnvelope, FaUserCircle } from "react-icons/fa";
 import Sidebar from "../sent-sidebar/sidebar";
@@ -153,7 +153,7 @@ const Page = () => {
       <section className={styles.mainContent}>
         <header className={styles.heading}>
           <h2>Assigned Proposals</h2>
-          <nav className={styles.colabGroup}>
+          {/* <nav className={styles.colabGroup}>
             <section className={styles.sidebarSection}>
               <button className={styles.iconButton} onClick={togglerSidebar}>
                 <FaPaperPlane />
@@ -177,7 +177,7 @@ const Page = () => {
             <button className={styles.iconButton}>
               <FaUserCircle />
             </button>
-          </nav>
+          </nav> */}
         </header>
 
         <section className={styles.buttonHeader}>
