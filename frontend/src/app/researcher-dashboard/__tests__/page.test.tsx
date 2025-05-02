@@ -21,6 +21,10 @@ Object.defineProperty(window, 'localStorage', { value: localStorageMock });
 // Mock fetch
 global.fetch = jest.fn();
 
+// Mock console.error and console.log
+const originalConsoleError = console.error;
+const originalConsoleLog = console.log;
+
 describe('ResearcherDashboard', () => {
   const mockRouter = {
     push: jest.fn(),
@@ -31,15 +35,28 @@ describe('ResearcherDashboard', () => {
     localStorageMock.getItem.mockClear();
     (global.fetch as jest.Mock).mockClear();
     mockRouter.push.mockClear();
+    
+    // Mock console methods
+    console.error = jest.fn();
+    console.log = jest.fn();
   });
 
-  it('redirects to login when user is not a researcher', () => {
+  afterEach(() => {
+    // Restore console methods
+    console.error = originalConsoleError;
+    console.log = originalConsoleLog;
+  });
+
+  it('redirects to login when user is not a researcher', async () => {
     localStorageMock.getItem.mockImplementation((key) => {
       if (key === 'role') return JSON.stringify([{ role_name: 'user' }]);
       return null;
     });
 
-    render(<ResearcherDashboard />);
+    await act(async () => {
+      render(<ResearcherDashboard />);
+    });
+    
     expect(mockRouter.push).toHaveBeenCalledWith('/login');
   });
 
@@ -53,7 +70,9 @@ describe('ResearcherDashboard', () => {
     // Mock fetch to return a pending promise to ensure loading state
     (global.fetch as jest.Mock).mockImplementation(() => new Promise(() => {}));
 
-    render(<ResearcherDashboard />);
+    await act(async () => {
+      render(<ResearcherDashboard />);
+    });
     
     // Wait for the loading state to appear
     await waitFor(() => {
@@ -89,7 +108,9 @@ describe('ResearcherDashboard', () => {
       json: () => Promise.resolve({ projects: mockProjects }),
     });
 
-    render(<ResearcherDashboard />);
+    await act(async () => {
+      render(<ResearcherDashboard />);
+    });
 
     await waitFor(() => {
       expect(screen.getByText('Test Project')).toBeInTheDocument();
@@ -135,7 +156,9 @@ describe('ResearcherDashboard', () => {
     // Mock window.confirm
     window.confirm = jest.fn(() => true);
 
-    render(<ResearcherDashboard />);
+    await act(async () => {
+      render(<ResearcherDashboard />);
+    });
 
     // Wait for project to be loaded
     await waitFor(() => {
@@ -144,7 +167,9 @@ describe('ResearcherDashboard', () => {
 
     // Click delete button
     const deleteButton = screen.getByTitle('Delete project');
-    fireEvent.click(deleteButton);
+    await act(async () => {
+      fireEvent.click(deleteButton);
+    });
 
     // Verify confirmation dialog
     expect(window.confirm).toHaveBeenCalled();
@@ -152,7 +177,12 @@ describe('ResearcherDashboard', () => {
     // Verify delete request was made
     expect(global.fetch).toHaveBeenCalledWith(
       'https://thinksyncapi.azurewebsites.net/api/projects/delete/1',
-      expect.any(Object)
+      {
+        method: 'DELETE',
+        headers: {
+          Authorization: 'Bearer mock-token'
+        }
+      }
     );
 
     // Verify project is removed from UI
@@ -173,10 +203,14 @@ describe('ResearcherDashboard', () => {
       json: () => Promise.resolve({ projects: [] }),
     });
 
-    render(<ResearcherDashboard />);
+    await act(async () => {
+      render(<ResearcherDashboard />);
+    });
 
     const createButton = screen.getByText('+ Create');
-    fireEvent.click(createButton);
+    await act(async () => {
+      fireEvent.click(createButton);
+    });
 
     await waitFor(() => {
       expect(screen.getByText('Project Information')).toBeInTheDocument();
@@ -198,10 +232,14 @@ describe('ResearcherDashboard', () => {
       json: () => Promise.resolve({ projects: [] }),
     });
 
-    render(<ResearcherDashboard />);
+    await act(async () => {
+      render(<ResearcherDashboard />);
+    });
 
     const sidebarButton = screen.getByTestId('sidebar-toggle');
-    fireEvent.click(sidebarButton);
+    await act(async () => {
+      fireEvent.click(sidebarButton);
+    });
 
     await waitFor(() => {
       const sidebar = screen.getByText('Sent Invitations').closest('.sidebar');
@@ -232,7 +270,9 @@ describe('ResearcherDashboard', () => {
       json: () => Promise.resolve({ projects: mockProjects }),
     });
 
-    render(<ResearcherDashboard />);
+    await act(async () => {
+      render(<ResearcherDashboard />);
+    });
 
     // Wait for project to be loaded
     await waitFor(() => {
@@ -241,7 +281,9 @@ describe('ResearcherDashboard', () => {
 
     // Click edit button
     const editButton = screen.getByTestId('edit-project-button');
-    fireEvent.click(editButton);
+    await act(async () => {
+      fireEvent.click(editButton);
+    });
 
     // Verify edit form is shown
     await waitFor(() => {
@@ -253,7 +295,9 @@ describe('ResearcherDashboard', () => {
 
     // Close the form
     const closeButton = screen.getByText('X');
-    fireEvent.click(closeButton);
+    await act(async () => {
+      fireEvent.click(closeButton);
+    });
 
     // Verify form is closed
     await waitFor(() => {
@@ -284,7 +328,9 @@ describe('ResearcherDashboard', () => {
       json: () => Promise.resolve({ projects: mockProjects }),
     });
 
-    render(<ResearcherDashboard />);
+    await act(async () => {
+      render(<ResearcherDashboard />);
+    });
 
     // Wait for project to be loaded
     await waitFor(() => {
@@ -293,7 +339,9 @@ describe('ResearcherDashboard', () => {
 
     // Click invite button
     const inviteButton = screen.getByTitle('Invite Collaborators');
-    fireEvent.click(inviteButton);
+    await act(async () => {
+      fireEvent.click(inviteButton);
+    });
 
     // Verify invite modal is shown
     await waitFor(() => {
@@ -306,7 +354,9 @@ describe('ResearcherDashboard', () => {
 
     // Close the modal
     const closeButton = screen.getByText('Cancel');
-    fireEvent.click(closeButton);
+    await act(async () => {
+      fireEvent.click(closeButton);
+    });
 
     // Verify modal is closed
     await waitFor(() => {
@@ -323,7 +373,9 @@ describe('ResearcherDashboard', () => {
 
     (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Failed to fetch'));
 
-    render(<ResearcherDashboard />);
+    await act(async () => {
+      render(<ResearcherDashboard />);
+    });
 
     await waitFor(() => {
       expect(screen.getByText('Error: Failed to fetch')).toBeInTheDocument();
@@ -342,10 +394,14 @@ describe('ResearcherDashboard', () => {
       json: () => Promise.resolve({ projects: [] }),
     });
 
-    render(<ResearcherDashboard />);
+    await act(async () => {
+      render(<ResearcherDashboard />);
+    });
 
     const sharedTab = screen.getByText('Shared Projects');
-    fireEvent.click(sharedTab);
+    await act(async () => {
+      fireEvent.click(sharedTab);
+    });
 
     expect(mockRouter.push).toHaveBeenCalledWith('/Shared_projects');
   });
@@ -362,11 +418,15 @@ describe('ResearcherDashboard', () => {
       json: () => Promise.resolve({ projects: [] }),
     });
 
-    render(<ResearcherDashboard />);
+    await act(async () => {
+      render(<ResearcherDashboard />);
+    });
 
     // Click create button
     const createButton = screen.getByText('+ Create');
-    fireEvent.click(createButton);
+    await act(async () => {
+      fireEvent.click(createButton);
+    });
 
     // Verify create form is shown
     await waitFor(() => {
@@ -386,17 +446,21 @@ describe('ResearcherDashboard', () => {
     const funding = true;
 
     // Fill in the form fields
-    fireEvent.change(screen.getByLabelText('Project name'), { target: { value: projectName } });
-    fireEvent.change(screen.getByLabelText('Project Description'), { target: { value: projectDesc } });
-    fireEvent.change(screen.getByLabelText('Goals'), { target: { value: goals } });
-    fireEvent.change(screen.getByLabelText('Research Area'), { target: { value: researchArea } });
-    fireEvent.change(screen.getByLabelText('Start Date'), { target: { value: startDate } });
-    fireEvent.change(screen.getByLabelText('End Date'), { target: { value: endDate } });
-    fireEvent.click(screen.getByLabelText('Yes'));
+    await act(async () => {
+      fireEvent.change(screen.getByLabelText('Project name'), { target: { value: projectName } });
+      fireEvent.change(screen.getByLabelText('Project Description'), { target: { value: projectDesc } });
+      fireEvent.change(screen.getByLabelText('Goals'), { target: { value: goals } });
+      fireEvent.change(screen.getByLabelText('Research Area'), { target: { value: researchArea } });
+      fireEvent.change(screen.getByLabelText('Start Date'), { target: { value: startDate } });
+      fireEvent.change(screen.getByLabelText('End Date'), { target: { value: endDate } });
+      fireEvent.click(screen.getByLabelText('Yes'));
+    });
 
     // Submit the form
     const nextButton = screen.getByText('Next →');
-    fireEvent.click(nextButton);
+    await act(async () => {
+      fireEvent.click(nextButton);
+    });
 
     // Verify the form is closed and requirements form is shown
     await waitFor(() => {
@@ -417,14 +481,19 @@ describe('ResearcherDashboard', () => {
       json: () => Promise.resolve({ projects: [] }),
     });
 
-    render(<ResearcherDashboard />);
+    await act(async () => {
+      render(<ResearcherDashboard />);
+    });
 
     // Get all icon buttons and select the second one (inbox button)
     const iconButtons = screen.getAllByRole('button').filter(button => 
       button.classList.contains('iconButton')
     );
     const inboxButton = iconButtons[1]; // Second button is the inbox button
-    fireEvent.click(inboxButton);
+    
+    await act(async () => {
+      fireEvent.click(inboxButton);
+    });
 
     // Verify inbox sidebar is open
     await waitFor(() => {
@@ -433,7 +502,9 @@ describe('ResearcherDashboard', () => {
     });
 
     // Toggle again
-    fireEvent.click(inboxButton);
+    await act(async () => {
+      fireEvent.click(inboxButton);
+    });
 
     // Verify inbox sidebar is closed
     await waitFor(() => {
@@ -441,51 +512,6 @@ describe('ResearcherDashboard', () => {
       expect(inboxSidebar).not.toHaveClass('open');
     });
   });
-
-//   it('handles project card click navigation', async () => {
-//     const mockRouter = {
-//       push: jest.fn()
-//     };
-//     jest.spyOn(require('next/navigation'), 'useRouter').mockReturnValue(mockRouter);
-
-//     localStorageMock.getItem.mockImplementation((key) => {
-//       if (key === 'role') return JSON.stringify([{ role_name: 'researcher' }]);
-//       if (key === 'jwt') return 'mock-token';
-//       return null;
-//     });
-
-//     const mockProjects = [
-//       {
-//         project_ID: '1',
-//         title: 'Test Project',
-//         description: 'Test Description',
-//         start_date: '2024-01-01',
-//         end_date: '2024-12-31',
-//         funding_available: true
-//       }
-//     ];
-
-//     (global.fetch as jest.Mock).mockImplementation((url) => {
-//       if (url.includes('projects/owner')) {
-//         return Promise.resolve({
-//           ok: true,
-//           json: () => Promise.resolve({ projects: mockProjects })
-//         });
-//       }
-//       return Promise.reject(new Error('Not found'));
-//     });
-
-//     render(<ResearcherDashboard />);
-
-//     await waitFor(() => {
-//       expect(screen.getByText('Test Project')).toBeInTheDocument();
-//     });
-
-//     const projectCard = screen.getByRole('article');
-//     fireEvent.click(projectCard);
-
-//     expect(mockRouter.push).toHaveBeenCalledWith('/projectInfo/1');
-//   });
 
   it('handles search functionality with no results', async () => {
     localStorageMock.getItem.mockImplementation((key) => {
@@ -508,14 +534,18 @@ describe('ResearcherDashboard', () => {
       json: () => Promise.resolve({ projects: mockProjects }),
     });
 
-    render(<ResearcherDashboard />);
+    await act(async () => {
+      render(<ResearcherDashboard />);
+    });
 
     await waitFor(() => {
       expect(screen.getByText('Test Project')).toBeInTheDocument();
     });
 
     const searchInput = screen.getByPlaceholderText('Search projects...');
-    fireEvent.change(searchInput, { target: { value: 'Non-existent Project' } });
+    await act(async () => {
+      fireEvent.change(searchInput, { target: { value: 'Non-existent Project' } });
+    });
 
     await waitFor(() => {
       expect(screen.queryByText('Test Project')).not.toBeInTheDocument();
@@ -559,7 +589,9 @@ describe('ResearcherDashboard', () => {
       return Promise.reject(new Error('Not found'));
     });
 
-    render(<ResearcherDashboard />);
+    await act(async () => {
+      render(<ResearcherDashboard />);
+    });
 
     // Wait for projects to be loaded
     await waitFor(() => {
@@ -569,7 +601,9 @@ describe('ResearcherDashboard', () => {
 
     // Get the search input and simulate typing
     const searchInput = screen.getByPlaceholderText('Search projects...');
-    fireEvent.change(searchInput, { target: { value: 'Test' } });
+    await act(async () => {
+      fireEvent.change(searchInput, { target: { value: 'Test' } });
+    });
 
     // Wait for the filtered results
     await waitFor(() => {
@@ -584,7 +618,9 @@ describe('ResearcherDashboard', () => {
     });
 
     // Test clearing the search
-    fireEvent.change(searchInput, { target: { value: '' } });
+    await act(async () => {
+      fireEvent.change(searchInput, { target: { value: '' } });
+    });
 
     // Wait for all projects to be shown again
     await waitFor(() => {
