@@ -45,9 +45,20 @@ jobs:
       with:
         node-version: '22.x'
 
-    - name: Install backend dependencies
+    - name: Create deployment package
       working-directory: ./backend/ThinkSync-backend-API
-      run: npm install
+      run: |
+        # Create a temporary directory for deployment
+        mkdir -p deploy
+        # Copy only necessary files
+        cp -r src/ deploy/
+        cp package.json deploy/
+        cp package-lock.json deploy/
+        cp .env deploy/
+        # Install only production dependencies
+        cd deploy
+        npm ci --only=production
+        cd ..
 
     - name: Deploy to Azure Web App
       uses: azure/webapps-deploy@v2
@@ -55,4 +66,4 @@ jobs:
         app-name: 'thinksyncapi'
         slot-name: 'production'
         publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-        package: './backend/ThinkSync-backend-API'
+        package: './backend/ThinkSync-backend-API/deploy'
