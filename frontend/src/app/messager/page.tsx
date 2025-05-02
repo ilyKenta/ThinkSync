@@ -27,17 +27,19 @@ const Page = () => {
   const router = useRouter();
   const [messages, setMessages] = useState<Message[]>([]);
   const [selectedUser, setSelectedUser] = useState<number | null>(null);
-  const [groupedCounts, setGroupedCounts] = useState<Record<number, number>>({});
-  const [activeTab, setActiveTab] = useState('my');
+  const [groupedCounts, setGroupedCounts] = useState<Record<number, number>>(
+    {}
+  );
+  const [activeTab, setActiveTab] = useState("my");
   const [newMessage, setNewMessage] = useState({
     receiver_ID: "",
     subject: "",
     body: "",
-    project_ID: ""
+    project_ID: "",
   });
   const [attachments, setAttachments] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
-//////////Un comment back end call and delte / comment out test data under this /////////////
+  //////////Un comment back end call and delte / comment out test data under this /////////////
   /*useEffect(() => {
     const fetchMessages = async () => {
       const token = localStorage.getItem("jwt");
@@ -117,14 +119,14 @@ const Page = () => {
         sender_name: "You",
         project_title: "ThinkSync",
         attachments: [],
-      }
+      },
     ];
-  
+
     const counts: Record<number, number> = {};
     mockData.forEach((msg: Message) => {
       counts[msg.sender_ID] = (counts[msg.sender_ID] || 0) + 1;
     });
-  
+
     setGroupedCounts(counts);
     setMessages(mockData);
   }, []);
@@ -178,37 +180,37 @@ const Page = () => {
 
         <ul>
           <li>
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={() => {
-                setActiveTab('my');
+                setActiveTab("my");
                 router.push("/dashboard");
               }}
-              className={activeTab === 'my' ? styles.active : ''}
+              className={activeTab === "my" ? styles.active : ""}
             >
               My Projects
             </button>
           </li>
           <li>
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={() => {
-                setActiveTab('shared');
+                setActiveTab("shared");
                 router.push("/Shared_projects");
               }}
-              className={activeTab === 'shared' ? styles.active : ''}
+              className={activeTab === "shared" ? styles.active : ""}
             >
               Shared Projects
             </button>
           </li>
           <li>
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={() => {
-                setActiveTab('messager');
+                setActiveTab("messager");
                 router.push("/messager");
               }}
-              className={activeTab === 'messager' ? styles.active : ''}
+              className={activeTab === "messager" ? styles.active : ""}
             >
               Messager
             </button>
@@ -219,12 +221,9 @@ const Page = () => {
       <section className={styles.mainContent}>
         <header className={styles.heading}>
           <h2>My Messages</h2>
-
         </header>
 
         <section className={styles.buttonHeader}>
-          
-
           <section className={styles.searchContainer}>
             <input
               className={styles.searchInput}
@@ -234,83 +233,96 @@ const Page = () => {
           </section>
         </section>
 
-
-{/*message section  */}
+        {/*message section  */}
         <section className={styles.messagingContainer}>
-        <aside className={styles.userList}>
+          <aside className={styles.userList}>
             <h2 className={styles.inboxTitle}>Inbox</h2>
             <ul className={styles.previewList}>
-            {Object.entries(groupedCounts).map(([sender_ID]) => {
-                const msg = messages.find(m => m.sender_ID === Number(sender_ID));
+              {Object.entries(groupedCounts).map(([sender_ID]) => {
+                const msg = messages.find(
+                  (m) => m.sender_ID === Number(sender_ID)
+                );
                 if (!msg) return null;
 
                 return (
-                <li
+                  <li
                     key={sender_ID}
                     className={styles.previewItem}
                     onClick={() => setSelectedUser(Number(sender_ID))}
-                >
+                  >
                     <section className={styles.previewContent}>
-                    <strong className={styles.previewName}>{msg.sender_name}</strong>
-                    <p className={styles.previewText}>{msg.body.slice(0, 30)}...</p>
+                      <strong className={styles.previewName}>
+                        {msg.sender_name}
+                      </strong>
+                      <p className={styles.previewText}>
+                        {msg.body.slice(0, 30)}...
+                      </p>
                     </section>
-                </li>
+                  </li>
                 );
-            })}
+              })}
             </ul>
-        </aside>
+          </aside>
 
-        {selectedUser && (
+          {selectedUser && (
             <section className={styles.chatWindow}>
-            <header className={styles.chatHeader}>
-                <h3>Chat with {messages.find(m => m.sender_ID === selectedUser)?.sender_name}</h3>
-            </header>
+              <header className={styles.chatHeader}>
+                <h3>
+                  Chat with{" "}
+                  {
+                    messages.find((m) => m.sender_ID === selectedUser)
+                      ?.sender_name
+                  }
+                </h3>
+              </header>
 
-            <ul className={styles.chatMessages}>
+              <ul className={styles.chatMessages}>
                 {messages
-                .filter(
-                    msg =>
-                    msg.sender_ID === selectedUser ||
-                    msg.receiver_ID === selectedUser
-                )
-                .map(msg => (
+                  .filter(
+                    (msg) =>
+                      msg.sender_ID === selectedUser ||
+                      msg.receiver_ID === selectedUser
+                  )
+                  .map((msg) => (
                     <li key={msg.message_ID} className={styles.chatBubble}>
-                    <article>
+                      <article>
                         <p>{msg.body}</p>
-                        <time>{new Date(msg.sent_at).toLocaleTimeString()}</time>
-                    </article>
+                        <time>
+                          {new Date(msg.sent_at).toLocaleTimeString()}
+                        </time>
+                      </article>
                     </li>
-                ))}
-            </ul>
+                  ))}
+              </ul>
 
-            <form className={styles.messageForm} onSubmit={sendMessage}>
+              <form className={styles.messageForm} onSubmit={sendMessage}>
                 <textarea
-                placeholder="Type a message..."
-                value={newMessage.body}
-                onChange={e =>
+                  placeholder="Type a message..."
+                  value={newMessage.body}
+                  onChange={(e) =>
                     setNewMessage({
-                        
-                    ...newMessage,
-                    body: e.target.value,
-                    receiver_ID: String(selectedUser), 
+                      ...newMessage,
+                      body: e.target.value,
+                      receiver_ID: String(selectedUser),
                     })
-                }
-                required
+                  }
+                  required
                 />
                 <input
-                type="file"
-                multiple
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                accept="*"
+                  className={styles.files}
+                  type="file"
+                  multiple
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  accept="*"
                 />
                 <button type="submit">Send</button>
-            </form>
+              </form>
             </section>
-        )}
+          )}
         </section>
-     </section>
+      </section>
     </main>
   );
-}
+};
 export default Page;

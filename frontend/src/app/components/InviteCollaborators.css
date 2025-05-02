@@ -1,62 +1,54 @@
 /* InviteCollaborators.css */
 
-.dialog-backdrop {
+.modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.3);
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  border: none;
-  padding: 0;
 }
 
 .invite-container {
-  background: #fff;
+  background: white;
+  border-radius: 10px;
   padding: 24px;
-  border-radius: 8px;
-  min-width: 320px;
-  max-width: 600px;
-  width: 90%;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
-.invite-title {
+.title {
   margin-bottom: 16px;
   font-size: 1.5rem;
   font-weight: bold;
 }
 
 .search-form {
-  margin-bottom: 12px;
-}
-
-.search-controls {
   display: flex;
-  margin-bottom: 8px;
+  gap: 8px;
+  margin-bottom: 16px;
 }
-
-.search-controls select,
-.search-controls input,
-.search-controls button {
-  font-size: 1rem;
-  padding: 6px 8px;
-}
-
-.search-controls select {
-  margin-right: 8px;
-}
-
-.search-controls input {
-  flex: 1;
-}
-
-.search-controls button {
-  margin-left: 8px;
+.search-input {
+  padding: 8px 12px;
+  background-color: var(--field-hover-color);
+  color: black;
+  border: none;
+  border-radius: 6px;
   cursor: pointer;
+}
+.search-button {
+  padding: 8px 12px;
+  background-color: var(--field-hover-color);
+  color: black;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.search-button:disabled {
+  background-color: #686869;
+  cursor: not-allowed;
 }
 
 .error-message {
@@ -87,15 +79,28 @@
 .user-entry p {
   margin: 0;
 }
-
-.actions {
-  margin-top: 12px;
+.action-buttons {
   display: flex;
-  gap: 8px;
+  justify-content: flex-end;
+  gap: 12px;
+}
+.cancel-button,
+.invite-button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.cancel-button {
+  background-color: #e5e7eb;
 }
 
-.actions button {
-  padding: 8px 12px;
-  font-size: 1rem;
-  cursor: pointer;
+.invite-button {
+  background-color: #000000;
+  color: white;
+}
+
+.invite-button:disabled {
+  background-color: #000000;
+  cursor: not-allowed;
 }

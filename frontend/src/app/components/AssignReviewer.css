@@ -30,10 +30,12 @@
 }
 
 .search-input {
-  flex: 1;
-  padding: 8px;
-  border: 1px solid #ccc;
+  padding: 8px 12px;
+  background-color: var(--field-hover-color);
+  color: black;
+  border: none;
   border-radius: 6px;
+  cursor: pointer;
 }
 
 .search-button {

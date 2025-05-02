@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import "./InviteCollaborators.css";
 
 type Collaborator = {
   user_ID: string;
@@ -117,102 +118,69 @@ const InviteCollaborators: React.FC<InviteCollaboratorsProps> = ({
   };
 
   return (
-    <dialog
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        width: "100vw",
-        height: "100vh",
-        background: "rgba(0,0,0,0.3)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 1000,
-        border: "none",
-        padding: 0,
-      }}
-    >
-      <section
-        style={{
-          background: "#fff",
-          padding: 24,
-          borderRadius: 8,
-          minWidth: 320,
-        }}
-      >
-        <h2>Invite Collaborators</h2>
-        <form onSubmit={handleSearch} style={{ marginBottom: 12 }}>
-          <section style={{ display: "flex", marginBottom: 8 }}>
-            <select
-              value={searchType}
-              onChange={(e) => setSearchType(e.target.value)}
-              style={{ marginRight: 8 }}
-            >
-              <option value="name">Name</option>
-              <option value="skill">Skill set</option>
-              <option value="position">Position</option>
-            </select>
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder={`Search by ${searchType}`}
-              style={{ flex: 1 }}
-            />
-            <button
-              type="submit"
-              disabled={loading}
-              style={{ marginLeft: 8 }}
-            >
-              {loading ? "Searching..." : "Search"}
-            </button>
-          </section>
+    <section className="modal-overlay">
+      <section className="invite-container">
+        <header>
+          <h2 className="title">Invite Collaborators</h2>
+        </header>
+
+        <form onSubmit={handleSearch} className="search-form">
+          <select
+            className="search-input"
+            value={searchType}
+            onChange={(e) => setSearchType(e.target.value)}
+          >
+            <option value="name">Name</option>
+            <option value="skill">Skill set</option>
+            <option value="position">Position</option>
+          </select>
+          <input
+            className="search-input"
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={`Search by ${searchType}`}
+          />
+          <button className="search-button" type="submit" disabled={loading}>
+            {loading ? "Searching..." : "Search"}
+          </button>
         </form>
-        {error && (
-          <p style={{ color: "red", marginBottom: 8 }}>{error}</p>
-        )}
-        <section style={{ maxHeight: 200, overflowY: "auto", marginBottom: 8 }}>
+        {error && <p className="error-message">{error}</p>}
+
+        <section className="results-container">
           {results.length === 0 && !loading && <p>No results.</p>}
           {results.map((u) => (
-            <section
-              key={u.user_ID}
-              data-testid="user-section"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                marginBottom: 4,
-              }}
-            >
+            <section className="user-entry" key={u.user_ID}>
               <input
                 type="checkbox"
                 checked={selected.includes(u.user_ID)}
                 onChange={() => handleSelect(u.user_ID)}
-                style={{ marginRight: 8 }}
               />
               <p>
                 <strong>
                   {u.fname} {u.sname}
                 </strong>{" "}
-                | {u.acc_role} | {u.res_area || ""}{" "}
-                {u.qualification ? `| ${u.qualification}` : ""}
+                | {u.acc_role} | {u.res_area || ""}
+                {u.qualification ? ` | ${u.qualification}` : ""}
               </p>
             </section>
           ))}
         </section>
-        <section style={{ marginTop: 12 }}>
+        <footer className="action-buttons">
+          <button onClick={onClose} className="cancel-button">
+            Cancel
+          </button>
+
           <button
             onClick={handleInvite}
             disabled={selected.length === 0 || inviteLoading}
+            className="invite-button"
           >
             {inviteLoading ? "Sending..." : "Send Invitation"}
           </button>
-          <button onClick={onClose} style={{ marginLeft: 8 }}>
-            Cancel
-          </button>
-        </section>
+        </footer>
       </section>
-    </dialog>
+    </section>
   );
 };
 

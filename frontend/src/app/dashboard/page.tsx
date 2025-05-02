@@ -25,40 +25,58 @@ const Page = () => {
   const [error, setError] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isInboxSidebarOpen, setIsInboxSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('my');
+  const [activeTab, setActiveTab] = useState("my");
 
   const [editProject, setEditProject] = useState<any | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
 
+  // useEffect(() => {
+  //   const fetchProjects = async () => {
+  //     try {
+  //       const token = localStorage.getItem("jwt");
+  //       if (!token) {
+  //         throw new Error("No access token found");
+  //       }
+
+  //       const response = await fetch(
+  //         "http://localhost:5000/api/projects/owner",
+  //         {
+  //           headers: {
+  //             Authorization: `Bearer ${token}`,
+  //           },
+  //         }
+  //       );
+
+  //       if (!response.ok) {
+  //         throw new Error("Failed to fetch projects");
+  //       }
+
+  //       const data = await response.json();
+  //       setProjects(data.projects || []);
+  //     } catch (err) {
+  //       setError(err instanceof Error ? err.message : "An error occurred");
+  //       console.error("Error fetching projects:", err);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+
+  //   fetchProjects();
+  // }, []);
   useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        const token = localStorage.getItem('jwt');
-        if (!token) {
-          throw new Error('No access token found');
-        }
+    const mockProjects = [
+      {
+        project_ID: "1",
+        title: "Mock Project",
+        description: "This is a mock project description.",
+        start_date: new Date().toISOString(),
+        end_date: new Date().toISOString(),
+        funding_available: true,
+      },
+    ];
 
-        const response = await fetch('http://localhost:5000/api/projects/owner', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch projects');
-        }
-
-        const data = await response.json();
-        setProjects(data.projects || []);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
-        console.error('Error fetching projects:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProjects();
+    setProjects(mockProjects);
+    setLoading(false);
   }, []);
 
   const togglerSidebar = () => {
@@ -117,7 +135,9 @@ const Page = () => {
   const [currentresearch_areas, setCurrentResArea] = useState("");
   const [currentstart_date, setCurrentStart] = useState("");
   const [currentend_date, setCurrentEnd] = useState("");
-  const [currentfunding_available, setCurrentFunding] = useState<boolean | null>(null);
+  const [currentfunding_available, setCurrentFunding] = useState<
+    boolean | null
+  >(null);
 
   const handleInviteClick = (e: React.MouseEvent, project: any) => {
     e.stopPropagation();
@@ -141,37 +161,37 @@ const Page = () => {
 
         <ul>
           <li>
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={() => {
-                setActiveTab('my');
+                setActiveTab("my");
                 router.push("/dashboard");
               }}
-              className={activeTab === 'my' ? styles.active : ''}
+              className={activeTab === "my" ? styles.active : ""}
             >
               My Projects
             </button>
           </li>
           <li>
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={() => {
-                setActiveTab('shared');
+                setActiveTab("shared");
                 router.push("/Shared_projects");
               }}
-              className={activeTab === 'shared' ? styles.active : ''}
+              className={activeTab === "shared" ? styles.active : ""}
             >
               Shared Projects
             </button>
           </li>
           <li>
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={() => {
-                setActiveTab('messager');
+                setActiveTab("messager");
                 router.push("/messager");
               }}
-              className={activeTab === 'messager' ? styles.active : ''}
+              className={activeTab === "messager" ? styles.active : ""}
             >
               Messager
             </button>
@@ -187,14 +207,14 @@ const Page = () => {
               <button className={styles.iconButton} onClick={togglerSidebar}>
                 <FaPaperPlane />
               </button>
-              <Sidebar
-                isOpen={isSidebarOpen}
-                onClose={togglerSidebar}
-              />
+              <Sidebar isOpen={isSidebarOpen} onClose={togglerSidebar} />
             </section>
 
             <section className={styles.sidebarSection}>
-              <button className={styles.iconButton} onClick={toggleInboxSidebar}>
+              <button
+                className={styles.iconButton}
+                onClick={toggleInboxSidebar}
+              >
                 <FaEnvelope />
               </button>
               <InboxSidebar
@@ -286,7 +306,10 @@ const Page = () => {
                       End: {new Date(project.end_date).toLocaleDateString()}
                     </time>
                     <p>
-                      Funding: {project.funding_available ? "Available" : "Not Available"}
+                      Funding:{" "}
+                      {project.funding_available
+                        ? "Available"
+                        : "Not Available"}
                     </p>
                   </section>
                 </section>
