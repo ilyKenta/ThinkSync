@@ -9,6 +9,13 @@ jest.mock('next/navigation', () => ({
   useRouter: jest.fn(),
 }));
 
+// Mock SentInvitations component
+jest.mock('../../components/SentInvitations', () => {
+  return function MockSentInvitations() {
+    return <div data-testid="mock-sent-invitations">Mock Sent Invitations</div>;
+  };
+});
+
 // Mock localStorage
 const localStorageMock = {
   getItem: jest.fn(),
@@ -25,6 +32,18 @@ global.fetch = jest.fn();
 const originalConsoleError = console.error;
 const originalConsoleLog = console.log;
 
+// Mock useAuth
+jest.mock('../../useAuth', () => {
+  return {
+    __esModule: true,
+    default: () => ({
+      isAuthenticated: true,
+      user: { role: 'researcher' },
+      token: 'mock-token'
+    })
+  };
+});
+
 describe('ResearcherDashboard', () => {
   const mockRouter = {
     push: jest.fn(),
@@ -39,6 +58,38 @@ describe('ResearcherDashboard', () => {
     // Mock console methods
     console.error = jest.fn();
     console.log = jest.fn();
+
+    // Mock fetch responses
+    (global.fetch as jest.Mock).mockImplementation((url) => {
+      if (url.includes('projects/owner')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ projects: [] }),
+        });
+      }
+      if (url.includes('delete')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ message: 'Project deleted successfully' }),
+        });
+      }
+      if (url.includes('api/auth')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ token: 'mock-token', role: 'researcher' }),
+        });
+      }
+      if (url.includes('invitations')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ invitations: [] }),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({}),
+      });
+    });
   });
 
   afterEach(() => {
@@ -76,12 +127,8 @@ describe('ResearcherDashboard', () => {
     
     // Wait for the loading state to appear
     await waitFor(() => {
-      // Check for any loading text
-      const loadingElements = screen.getAllByText(/Loading/i);
-      expect(loadingElements.length).toBeGreaterThan(0);
-      
-      // Check for the specific loading text that appears in the component
-      expect(screen.getByText('Loading sent invitations...')).toBeInTheDocument();
+      // Check for loading text in the received invitations section
+      expect(screen.getByText('Loading invitations...')).toBeInTheDocument();
     });
   });
 
@@ -147,7 +194,7 @@ describe('ResearcherDashboard', () => {
       if (url.includes('delete')) {
         return Promise.resolve({
           ok: true,
-          json: () => Promise.resolve({}),
+          json: () => Promise.resolve({ message: 'Project deleted successfully' }),
         });
       }
       return Promise.reject(new Error('Not found'));
