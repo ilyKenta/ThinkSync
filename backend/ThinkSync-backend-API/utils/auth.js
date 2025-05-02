@@ -10,7 +10,12 @@ const MICROSOFT_ENTRA_CONFIG = {
 // Function to validate the token
 async function validateToken(token) {
     try {
-        
+        // Basic validation
+        if (!token) {
+            console.error('Token is empty');
+            throw new Error('Token is empty');
+        }
+
         // Get the signing key from Microsoft's JWKS endpoint
         const client = jwksClient({
             jwksUri: MICROSOFT_ENTRA_CONFIG.jwksUri,
@@ -22,6 +27,7 @@ async function validateToken(token) {
         // Get the key ID from the token header
         const decodedToken = jwt.decode(token, { complete: true });
         if (!decodedToken || !decodedToken.header || !decodedToken.header.kid) {
+            console.error('Invalid token format');
             throw new Error('Invalid token format');
         }
 
@@ -29,14 +35,14 @@ async function validateToken(token) {
         const key = await client.getSigningKey(decodedToken.header.kid);
         const signingKey = key.getPublicKey();
 
-        // Verify the token without issuer check first
+        // Verify the token
         const verifiedToken = jwt.verify(token, signingKey, {
             algorithms: ['RS256'],
             ignoreExpiration: false,
             ignoreNotBefore: false
         });
-    
-        // Check if the audience matches any of the possible values
+
+        // Check if the audience matches
         const validAudiences = [
             MICROSOFT_ENTRA_CONFIG.audience,
             `api://${MICROSOFT_ENTRA_CONFIG.audience}`,
@@ -44,17 +50,23 @@ async function validateToken(token) {
         ];
 
         if (!validAudiences.includes(verifiedToken.aud)) {
+            console.error('Invalid audience:', {
+                received: verifiedToken.aud,
+                expected: validAudiences
+            });
             throw new Error(`Token invalid`);
         }
 
         // Check token expiration
         const now = Math.floor(Date.now() / 1000);
         if (verifiedToken.exp < now) {
+            console.error('Token expired');
             throw new Error('Token has expired');
         }
 
         // Check token not before time
         if (verifiedToken.nbf > now) {
+            console.error('Token not yet valid');
             throw new Error('Token is not yet valid');
         }
 
