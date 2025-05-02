@@ -30,7 +30,7 @@ const SubmittedProposalsPage = () => {
           throw new Error('No access token found');
         }
 
-        const response = await fetch('http://localhost:5000/api/admin/projects/pending', {
+        const response = await fetch('https://thinksyncapi.azurewebsites.net/api/admin/projects/pending', {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -150,6 +150,7 @@ const SubmittedProposalsPage = () => {
           {/* Proposal Details */}
           {selected && (
             <section
+              data-testid="proposal-details"
               style={{
                 flex: 1,
                 background: "#f8fafd",

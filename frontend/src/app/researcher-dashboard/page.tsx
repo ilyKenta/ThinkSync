@@ -40,6 +40,8 @@ const ResearcherDashboard = () => {
   const [currentstart_date, setCurrentStart] = useState("");
   const [currentend_date, setCurrentEnd] = useState("");
   const [currentfunding_available, setCurrentFunding] = useState<boolean | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filteredProjects, setFilteredProjects] = useState<any[]>([]);
 
   useEffect(() => {
     const roleString = typeof window !== "undefined" ? localStorage.getItem('role') : null;
@@ -65,6 +67,18 @@ const ResearcherDashboard = () => {
     }
   }, [hasResearcherRole]);
 
+  useEffect(() => {
+    if (searchQuery.trim() === '') {
+      setFilteredProjects(projects);
+    } else {
+      const filtered = projects.filter(project => 
+        project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        project.description.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredProjects(filtered);
+    }
+  }, [searchQuery, projects]);
+
   if (hasResearcherRole === null) {
     // Still checking role, render nothing or a spinner
     return null;
@@ -82,7 +96,7 @@ const ResearcherDashboard = () => {
         throw new Error('No access token found');
       }
 
-      const response = await fetch('http://localhost:5000/api/projects/owner', {
+      const response = await fetch('https://thinksyncapi.azurewebsites.net/api/projects/owner', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -122,7 +136,7 @@ const ResearcherDashboard = () => {
       }
 
       const res = await fetch(
-        `http://localhost:5000/api/projects/delete/${projectId}`,
+        `https://thinksyncapi.azurewebsites.net/api/projects/delete/${projectId}`,
         {
           method: "DELETE",
           headers: {
@@ -198,12 +212,13 @@ const ResearcherDashboard = () => {
           <h2>My Projects</h2>
           <nav className={styles.colabGroup}>
             <section className={styles.sidebarSection}>
-              <button className={styles.iconButton} onClick={togglerSidebar}>
+              <button className={styles.iconButton} onClick={togglerSidebar} data-testid="sidebar-toggle">
                 <FaPaperPlane />
               </button>
               <Sidebar
                 isOpen={isSidebarOpen}
                 onClose={togglerSidebar}
+                data-testid="sidebar"
               />
             </section>
 
@@ -253,6 +268,7 @@ const ResearcherDashboard = () => {
                 setShowReqForm(true);
                 fetchProjects();
               }}
+              data-testid="create-form"
             />
           )}
 
@@ -281,12 +297,14 @@ const ResearcherDashboard = () => {
               className={styles.searchInput}
               type="text"
               placeholder="Search projects..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
           </section>
         </section>
 
         <section className={styles.cardContainer}>
-          {projects.map((project) => (
+          {filteredProjects.map((project) => (
             <article
               key={project.project_ID}
               className={styles.card}
@@ -314,6 +332,7 @@ const ResearcherDashboard = () => {
                     <button
                       className={styles.editButton}
                       title="Edit project"
+                      data-testid="edit-project-button"
                       onClick={(e) => {
                         e.stopPropagation();
                         setEditProject(project);
@@ -368,6 +387,7 @@ const ResearcherDashboard = () => {
               setInviteModalOpen(false);
               setInviteProject(null);
             }}
+            data-testid="invite-modal"
           />
         )}
 
@@ -389,6 +409,7 @@ const ResearcherDashboard = () => {
               setShowEditForm(false);
               setEditProject(null);
             }}
+            data-testid="edit-form"
           />
         )}
       </section>

@@ -41,7 +41,7 @@ const Page = () => {
             throw new Error('No access token found');
           }
     
-          const response = await fetch('http://localhost:5000/api/reviewer/proposals', {
+          const response = await fetch('https://thinksyncapi.azurewebsites.net/api/reviewer/proposals', {
             headers: {
               'Authorization': `Bearer ${token}`
             }

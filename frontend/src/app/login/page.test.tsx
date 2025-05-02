@@ -64,7 +64,10 @@ describe('LoginPage', () => {
 
   it('handles successful login and redirects to dashboard', async () => {
     const mockToken = 'mock-access-token';
-    const mockResponse = { message: 'User authenticated successfully' };
+    const mockResponse = { 
+      message: 'User authenticated successfully',
+      role: [{ role_name: 'researcher' }]
+    };
 
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       json: () => Promise.resolve(mockResponse),
@@ -94,7 +97,7 @@ describe('LoginPage', () => {
       expect.any(Object)
     );
     expect(localStorage.getItem('jwt')).toBe(mockToken);
-    expect(mockRouter.push).toHaveBeenCalledWith('/dashboard');
+    expect(mockRouter.push).toHaveBeenCalledWith('/researcher-dashboard');
   });
 
   it('handles successful registration and redirects to role selection', async () => {

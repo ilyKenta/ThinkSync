@@ -175,7 +175,7 @@ describe('Auth Routes', () => {
 
         expect(response.status).toBe(200);
         expect(response.body.message).toBe('User authenticated successfully');
-        expect(response.body.role).toBe('researcher');
+        expect(response.body.role).toEqual([{ role_name: "researcher" }]);
       });
     });
 

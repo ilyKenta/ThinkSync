@@ -45,7 +45,7 @@ export default function AdminSignupPage() {
     console.log(bodie);
 
     try {
-      const response = await fetch("http://localhost:5000/api/auth/admin", {
+      const response = await fetch("https://thinksyncapi.azurewebsites.net/api/auth/admin", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
