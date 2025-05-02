@@ -15,17 +15,29 @@ try {
     const containerName = process.env.AZURE_STORAGE_CONTAINER_NAME;
 
     if (!connectionString) {
-        throw new Error('Azure Storage connection string is not configured');
+        console.error('Azure Storage connection string is not configured');
+        process.exit(1);
     }
     if (!containerName) {
-        throw new Error('Azure Storage container name is not configured');
+        console.error('Azure Storage container name is not configured');
+        process.exit(1);
+    }
+
+    // Validate connection string format
+    if (!connectionString.includes('BlobEndpoint=') || !connectionString.includes('SharedAccessSignature=')) {
+        console.error('Invalid Azure Storage connection string format');
+        process.exit(1);
     }
 
     blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
     containerClient = blobServiceClient.getContainerClient(containerName);
+
+    // Test the connection
+    await containerClient.getProperties();
+    console.log('Successfully connected to Azure Blob Storage');
 } catch (error) {
     console.error('Failed to initialize Azure Storage client:', error);
-    // Don't throw here, allow the server to start but handle errors in routes
+    process.exit(1);
 }
 
 // Middleware to authenticate user
