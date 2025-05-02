@@ -32,7 +32,7 @@ const PropInfoPage = () => {
             throw new Error('No access token found');
           }
 
-          const response = await fetch(`https://thinksyncapi.azurewebsites.net/api/reviewer/proposals/${projectId}/review`, {
+          const response = await fetch(`http://localhost:5000/api/reviewer/proposals/${projectId}/review`, {
             headers: {
               'Authorization': `Bearer ${token}`
             }
@@ -65,7 +65,7 @@ const PropInfoPage = () => {
         return;
       }
 
-      const res = await fetch(`https://thinksyncapi.azurewebsites.net/api/reviewer/proposals/${projectId}/review`, {
+      const res = await fetch(`http://localhost:5000/api/reviewer/proposals/${projectId}/review`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

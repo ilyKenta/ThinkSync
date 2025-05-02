@@ -44,7 +44,7 @@ const AssignReviewer: React.FC<AssignReviewerProps> = ({
       const token = localStorage.getItem("jwt");
       if (!token) throw new Error("Not authenticated");
 
-      const res = await fetch(`https://thinksyncapi.azurewebsites.net/api/admin/reviewers/search?research_area=${encodeURIComponent(search)}`, {
+      const res = await fetch(`http://localhost:5000/api/admin/reviewers/search?research_area=${encodeURIComponent(search)}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -75,7 +75,7 @@ const AssignReviewer: React.FC<AssignReviewerProps> = ({
       const token = localStorage.getItem("jwt");
       if (!token) throw new Error("Not authenticated");
 
-      const res = await fetch(`https://thinksyncapi.azurewebsites.net/api/admin/projects/${projectId}/assign-reviewer`, {
+      const res = await fetch(`http://localhost:5000/api/admin/projects/${projectId}/assign-reviewer`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -28,7 +28,7 @@ const Page = () => {
           throw new Error('No access token found');
         }
 
-        const response = await fetch('https://thinksyncapi.azurewebsites.net/api/projects/collaborator', {
+        const response = await fetch('http://localhost:5000/api/projects/collaborator', {
           headers: {
             'Authorization': `Bearer ${token}`
           }
