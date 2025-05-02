@@ -6,39 +6,40 @@ const { BlobServiceClient } = require('@azure/storage-blob');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
 
-// Initialize Azure Blob Storage client with error handling
+// Initialize Azure Blob Storage client
 let blobServiceClient;
 let containerClient;
 
-try {
-    const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING;
-    const containerName = process.env.AZURE_STORAGE_CONTAINER_NAME;
+// Function to initialize Azure Storage
+async function initializeAzureStorage() {
+    try {
+        const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING;
+        const containerName = process.env.AZURE_STORAGE_CONTAINER_NAME;
 
-    if (!connectionString) {
-        console.error('Azure Storage connection string is not configured');
+        if (!connectionString) {
+            throw new Error('Azure Storage connection string is not configured');
+        }
+        if (!containerName) {
+            throw new Error('Azure Storage container name is not configured');
+        }
+
+        blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
+        containerClient = blobServiceClient.getContainerClient(containerName);
+
+        // Test the connection
+        await containerClient.getProperties();
+        console.log('Successfully connected to Azure Blob Storage');
+    } catch (error) {
+        console.error('Failed to initialize Azure Storage client:', error);
         process.exit(1);
     }
-    if (!containerName) {
-        console.error('Azure Storage container name is not configured');
-        process.exit(1);
-    }
-
-    // Validate connection string format
-    if (!connectionString.includes('BlobEndpoint=') || !connectionString.includes('SharedAccessSignature=')) {
-        console.error('Invalid Azure Storage connection string format');
-        process.exit(1);
-    }
-
-    blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
-    containerClient = blobServiceClient.getContainerClient(containerName);
-
-    // Test the connection
-    await containerClient.getProperties();
-    console.log('Successfully connected to Azure Blob Storage');
-} catch (error) {
-    console.error('Failed to initialize Azure Storage client:', error);
-    process.exit(1);
 }
+
+// Initialize storage on startup
+initializeAzureStorage().catch(error => {
+    console.error('Failed to initialize Azure Storage:', error);
+    process.exit(1);
+});
 
 // Middleware to authenticate user
 const authenticateUser = async (req, res, next) => {
