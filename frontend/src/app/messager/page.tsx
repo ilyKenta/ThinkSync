@@ -297,6 +297,7 @@ const Page = () => {
 
               <form className={styles.messageForm} onSubmit={sendMessage}>
                 <textarea
+                  className={styles.messageBox}
                   placeholder="Type a message..."
                   value={newMessage.body}
                   onChange={(e) =>
