@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import styles from "../dashboard/page.module.css";
+import styles from "../researcher-dashboard/page.module.css";
 
 interface User {
   id: string;
@@ -74,10 +74,6 @@ const ManageUsersPage = () => {
 
   return (
     <main className={styles.container}>
-      <aside className={styles.sidebar}>
-        <h2 style={{ margin: 0 }}>ThinkSync</h2>
-        <h3>Manage Users</h3>
-      </aside>
       <section style={{ flex: 1, padding: "40px 60px" }}>
         <h1 style={{ marginBottom: 32 }}>User Management</h1>
         <table style={{ width: "100%", borderCollapse: "collapse", background: "#fff", borderRadius: 8, boxShadow: "0 2px 10px rgba(0,0,0,0.06)" }}>

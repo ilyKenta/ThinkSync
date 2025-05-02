@@ -17,87 +17,90 @@ import Sidebar from "../sent-sidebar/sidebar";
 import InboxSidebar from "../inbox-sidebar/inb_sidebar";
 import useAuth from "../useAuth";
 
-const Page = () => {
-  //useAuth();
+const ResearcherDashboard = () => {
+  useAuth();
   const router = useRouter();
+  const [hasResearcherRole, setHasResearcherRole] = useState<boolean | null>(null);
   const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isInboxSidebarOpen, setIsInboxSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('my');
-
   const [editProject, setEditProject] = useState<any | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const [inviteProject, setInviteProject] = useState<any | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [showRequirementsForm, setShowReqForm] = useState(false);
+  const [currentProjectName, setCurrentProjectName] = useState("");
+  const [currentprojectDesc, setCurrentprojectDesc] = useState("");
+  const [currentgoals, setCurrentGoals] = useState("");
+  const [currentresearch_areas, setCurrentResArea] = useState("");
+  const [currentstart_date, setCurrentStart] = useState("");
+  const [currentend_date, setCurrentEnd] = useState("");
+  const [currentfunding_available, setCurrentFunding] = useState<boolean | null>(null);
 
   useEffect(() => {
-    // DEMO MODE: Commented out API call and using mock data for demonstration
-    /*
-    const fetchProjects = async () => {
+    const roleString = typeof window !== "undefined" ? localStorage.getItem('role') : null;
+    let researcher = false;
+    if (roleString) {
       try {
-        const token = localStorage.getItem('jwt');
-        if (!token) {
-          throw new Error('No access token found');
-        }
-
-        const response = await fetch('http://localhost:5000/api/projects/owner', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch projects');
-        }
-
-        const data = await response.json();
-        setProjects(data.projects || []);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
-        console.error('Error fetching projects:', err);
-      } finally {
-        setLoading(false);
+        const roles = JSON.parse(roleString);
+        researcher = Array.isArray(roles) && roles.some((r: { role_name: string; }) => r.role_name === 'researcher');
+      } catch (e) {
+        researcher = false;
       }
-    };
+    }
+    setHasResearcherRole(researcher);
+    if (!researcher) {
+      router.push('/login');
+    }
+  }, [router]);
 
-    fetchProjects();
-    */
+  useEffect(() => {
+    if (hasResearcherRole) {
+      fetchProjects();
+      setLoading(false);
+    }
+  }, [hasResearcherRole]);
 
-    // MOCK DATA FOR DEMO
-    setProjects([
-      {
-        project_ID: '1',
-        title: 'AI for Healthcare',
-        description: 'Using machine learning to predict patient outcomes and optimize treatments.',
-        status: 'Active',
-        members: ['Alice', 'Bob', 'Carol'],
-        start_date: '2024-04-01',
-        end_date: '2024-12-31',
-        funding_available: true
-      },
-      {
-        project_ID: '2',
-        title: 'Sustainable Energy Research',
-        description: 'Developing new materials for efficient solar panels.',
-        status: 'Planning',
-        members: ['David', 'Eva'],
-        start_date: '2024-03-15',
-        end_date: '2024-09-30',
-        funding_available: false
-      },
-      {
-        project_ID: '3',
-        title: 'Cognitive Science Collaboration',
-        description: 'Cross-university study on learning and memory.',
-        status: 'Completed',
-        members: ['Frank', 'Grace', 'Heidi'],
-        start_date: '2023-01-10',
-        end_date: '2023-12-10',
-        funding_available: true
+  if (hasResearcherRole === null) {
+    // Still checking role, render nothing or a spinner
+    return null;
+  }
+  if (!hasResearcherRole) {
+    // Redirecting, render nothing
+    return null;
+  }
+
+  // Move fetchProjects to top-level so it can be called after project creation
+  const fetchProjects = async () => {
+    try {
+      const token = localStorage.getItem('jwt');
+      if (!token) {
+        throw new Error('No access token found');
       }
-    ]);
-    setLoading(false);
-  }, []);
+
+      const response = await fetch('http://localhost:5000/api/projects/owner', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch projects');
+      }
+
+      const data = await response.json();
+      setProjects(data.projects || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Error fetching projects:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const togglerSidebar = () => {
     setIsSidebarOpen((prev) => !prev);
@@ -106,10 +109,6 @@ const Page = () => {
   const toggleInboxSidebar = () => {
     setIsInboxSidebarOpen((prev) => !prev);
   };
-
-  // State for invite modal
-  const [inviteModalOpen, setInviteModalOpen] = useState(false);
-  const [inviteProject, setInviteProject] = useState<any | null>(null);
 
   const handleCardClick = (projectId: string) => {
     //router.push(`/projectInfo/${projectId}`);
@@ -146,17 +145,6 @@ const Page = () => {
     }
   };
 
-  const [showForm, setShowForm] = useState(false);
-  const [showRequirementsForm, setShowReqForm] = useState(false);
-
-  const [currentProjectName, setCurrentProjectName] = useState("");
-  const [currentprojectDesc, setCurrentprojectDesc] = useState("");
-  const [currentgoals, setCurrentGoals] = useState("");
-  const [currentresearch_areas, setCurrentResArea] = useState("");
-  const [currentstart_date, setCurrentStart] = useState("");
-  const [currentend_date, setCurrentEnd] = useState("");
-  const [currentfunding_available, setCurrentFunding] = useState<boolean | null>(null);
-
   const handleInviteClick = (e: React.MouseEvent, project: any) => {
     e.stopPropagation();
     setInviteProject(project);
@@ -183,9 +171,9 @@ const Page = () => {
               type="button" 
               onClick={() => {
                 setActiveTab('my');
-                router.push("/dashboard");
+                router.push("/researcher-dashboard");
               }}
-              className={activeTab === 'my' ? styles.active : ''}
+              className={activeTab === 'my' ? styles.activeTab : ''}
             >
               My Projects
             </button>
@@ -197,7 +185,7 @@ const Page = () => {
                 setActiveTab('shared');
                 router.push("/Shared_projects");
               }}
-              className={activeTab === 'shared' ? styles.active : ''}
+              className={activeTab === 'shared' ? styles.activeTab : ''}
             >
               Shared Projects
             </button>
@@ -263,6 +251,7 @@ const Page = () => {
                 setCurrentFunding(Funding);
                 setShowForm(false);
                 setShowReqForm(true);
+                fetchProjects();
               }}
             />
           )}
@@ -277,8 +266,12 @@ const Page = () => {
               setEnd={currentend_date}
               Funding={currentfunding_available}
               onClose={() => setShowReqForm(false)}
-              onCreate={(projectName: string) => {
+              onCreate={() => {
                 setShowReqForm(false);
+                console.log('Requirements form submitted, reloading page to refresh projects');
+                setTimeout(() => {
+                  window.location.reload();
+                }, 400); // Delay reload to allow fetch to complete
               }}
             />
           )}
@@ -403,4 +396,4 @@ const Page = () => {
   );
 };
 
-export default Page;
+export default ResearcherDashboard;

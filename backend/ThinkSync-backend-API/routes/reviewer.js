@@ -16,7 +16,9 @@ const isReviewer = async (req, res, next) => {
             `SELECT r.role_name FROM user_roles ur JOIN roles r ON ur.role_ID = r.role_ID WHERE ur.user_ID = ?`,
             [userId]
         );
-        if (result.length === 0 || result[0].role_name !== 'reviewer') {
+        // Check if any of the user's roles is 'reviewer'
+        const hasReviewerRole = result.some(r => r.role_name === 'reviewer');
+        if (result.length === 0 || !hasReviewerRole) {
             return res.status(403).json({ error: 'Unauthorized: User is not a reviewer' });
         }
         req.userId = userId;

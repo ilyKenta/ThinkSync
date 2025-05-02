@@ -46,7 +46,7 @@ router.post('/microsoft', async (req, res) => {
             
             const response = {
                 message: 'User authenticated successfully',
-                role: roleResults.length > 0 ? roleResults[0].role_name : null
+                role: roleResults.length > 0 ? roleResults : null
             };
             
             return res.status(200).json(response);

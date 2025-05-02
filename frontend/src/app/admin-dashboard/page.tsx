@@ -1,12 +1,46 @@
 "use client";
 
-import React from "react";
-import styles from "../dashboard/page.module.css";
+import React, { useState, useEffect } from "react";
+import styles from "../researcher-dashboard/page.module.css";
 import { FaUserCircle } from "react-icons/fa";
+import ManageUsersPage from "../manage-users/page";
+import SubmittedProposalsPage from "../submitted-proposals/page";
+import useAuth from "../useAuth";
+import { useRouter } from "next/navigation";
 // For navigation
 // import { useRouter } from "next/navigation";
 
 const AdminDashboard = () => {
+  const router = useRouter();
+  const [hasAdminRole, setHasAdminRole] = useState<boolean | null>(null);
+  const [activeTab, setActiveTab] = useState<'users' | 'proposals'>('users');
+
+  useEffect(() => {
+    const roleString = typeof window !== "undefined" ? localStorage.getItem('role') : null;
+    let admin = false;
+    if (roleString) {
+      try {
+        const roles = JSON.parse(roleString);
+        admin = Array.isArray(roles) && roles.some((r: { role_name: string; }) => r.role_name === 'admin');
+      } catch (e) {
+        admin = false;
+      }
+    }
+    setHasAdminRole(admin);
+    if (!admin) {
+      router.push('/login');
+    }
+  }, [router]);
+
+  if (hasAdminRole === null) {
+    // Still checking role, render nothing or a spinner
+    return null;
+  }
+  if (!hasAdminRole) {
+    // Redirecting, render nothing
+    return null;
+  }
+
   return (
     <main className={styles.container}>
       {/* Sidebar */}
@@ -17,7 +51,8 @@ const AdminDashboard = () => {
           <li>
             <button
               type="button"
-              onClick={() => window.location.href = '/manage-users'}
+              onClick={() => setActiveTab('users')}
+              className={activeTab === 'users' ? styles.activeTab : ''}
             >
               Manage Users
             </button>
@@ -25,7 +60,8 @@ const AdminDashboard = () => {
           <li>
             <button
               type="button"
-              onClick={() => window.location.href = '/submitted-proposals'}
+              onClick={() => setActiveTab('proposals')}
+              className={activeTab === 'proposals' ? styles.activeTab : ''}
             >
               Submitted Proposals
             </button>
@@ -51,7 +87,8 @@ const AdminDashboard = () => {
           <FaUserCircle size={32} style={{ color: "#222" }} />
         </header>
         
-        {/* Main content area can be expanded here later */}
+        {/* Content based on active tab */}
+        {activeTab === 'users' ? <ManageUsersPage /> : <SubmittedProposalsPage />}
       </section>
     </main>
   );

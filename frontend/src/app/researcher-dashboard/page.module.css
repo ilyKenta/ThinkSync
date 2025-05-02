@@ -34,32 +34,36 @@
 .sidebar li button {
   background: none;
   border: none;
-  padding: 0;
+  padding: 10px 10px;
   margin: 0;
   font: inherit;
   color: inherit;
   cursor: pointer;
+  border-radius: var(--button-radius);
+  width: 100%;
+  text-align: left;
 }
 
-.sidebar li:first-child {
-  padding: 10px 10px;
-  /*color: #555;*/
-  cursor: pointer;
-  transition: color 0.3s ease;
-  border-radius: var(--button-radius);
-  background-color: var(--field-hover-color);
-}
-
-.sidebar li:last-child {
-  padding: 10px 10px;
-  /*color: #555;*/
-  cursor: pointer;
-  transition: color 0.3s ease;
-  border-radius: var(--button-radius);
+.sidebar li {
+  /* Remove background from li, only style the button */
+  background: none;
+  padding: 0;
 }
 
 .sidebar li:hover {
   background-color: var(--field-hover-color);
+}
+
+.sidebar li button.activeTab {
+  background-color: #d3d3d3 !important;
+  font-weight: bold;
+  border-radius: var(--button-radius);
+  padding: 10px 10px;
+}
+
+.sidebar li button:not(.activeTab) {
+  background: none !important;
+  font-weight: normal;
 }
 
 .searchContainer {

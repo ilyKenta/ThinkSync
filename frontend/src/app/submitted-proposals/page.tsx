@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import styles from "../dashboard/page.module.css";
+import styles from "../researcher-dashboard/page.module.css";
 import AssignReviewers from "../components/AssignReviewers";
 
 interface Proposal {
@@ -23,8 +23,6 @@ const SubmittedProposalsPage = () => {
   const [assignProject, setAssignProject] = useState<any | null>(null);
 
   useEffect(() => {
-    // DEMO MODE: Commented out API call and using mock data for demonstration
-    /*
     const fetchProposals = async () => {
       try {
         const token = localStorage.getItem('jwt');
@@ -43,7 +41,6 @@ const SubmittedProposalsPage = () => {
         }
 
         const data = await response.json();
-        console.log(data);
         setProposals(data.projects.map((project: any) => ({
           id: project.project_ID,
           title: project.title,
@@ -61,36 +58,6 @@ const SubmittedProposalsPage = () => {
     };
 
     fetchProposals();
-    */
-
-    // MOCK DATA FOR DEMO
-    setProposals([
-      {
-        id: '101',
-        title: 'AI for Climate Research',
-        researcher: 'Alice Smith',
-        researchAreas: 'Artificial Intelligence, Climate Science',
-        summary: 'Using AI to analyze climate data and predict trends.',
-        project_ID: '101'
-      },
-      {
-        id: '102',
-        title: 'Quantum Computing Applications',
-        researcher: 'Bob Johnson',
-        researchAreas: 'Quantum Computing, Algorithms',
-        summary: 'Exploring new algorithms for quantum processors.',
-        project_ID: '102'
-      },
-      {
-        id: '103',
-        title: 'Renewable Energy Storage',
-        researcher: 'Carol Lee',
-        researchAreas: 'Energy, Materials Science',
-        summary: 'Innovative storage solutions for solar and wind energy.',
-        project_ID: '103'
-      }
-    ]);
-    setLoading(false);
   }, []);
 
   const handleAssignClick = (e: React.MouseEvent, proposal: any) => {
@@ -109,10 +76,6 @@ const SubmittedProposalsPage = () => {
 
   return (
     <main className={styles.container}>
-      <aside className={styles.sidebar}>
-        <h2 style={{ margin: 0 }}>ThinkSync</h2>
-        <h3>Submitted Proposals</h3>
-      </aside>
       <section style={{ flex: 1, padding: "40px 60px" }}>
         <h1 style={{ marginBottom: 32 }}>Submitted Proposals</h1>
         {/* Proposals List */}
