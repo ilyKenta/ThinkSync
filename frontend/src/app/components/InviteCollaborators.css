@@ -99,3 +99,25 @@
   font-size: 1rem;
   cursor: pointer;
 }
+
+.cancel-button,
+.assign-button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.cancel-button {
+  background-color: #e5e7eb;
+}
+
+.assign-button {
+  background-color: #000000;
+  color: white;
+}
+
+.assign-button:disabled {
+  background-color: #000000;
+  cursor: not-allowed;
+}

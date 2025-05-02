@@ -23,6 +23,8 @@ const SubmittedProposalsPage = () => {
   const [assignProject, setAssignProject] = useState<any | null>(null);
 
   useEffect(() => {
+    // DEMO MODE: Commented out API call and using mock data for demonstration
+    /*
     const fetchProposals = async () => {
       try {
         const token = localStorage.getItem('jwt');
@@ -59,6 +61,36 @@ const SubmittedProposalsPage = () => {
     };
 
     fetchProposals();
+    */
+
+    // MOCK DATA FOR DEMO
+    setProposals([
+      {
+        id: '101',
+        title: 'AI for Climate Research',
+        researcher: 'Alice Smith',
+        researchAreas: 'Artificial Intelligence, Climate Science',
+        summary: 'Using AI to analyze climate data and predict trends.',
+        project_ID: '101'
+      },
+      {
+        id: '102',
+        title: 'Quantum Computing Applications',
+        researcher: 'Bob Johnson',
+        researchAreas: 'Quantum Computing, Algorithms',
+        summary: 'Exploring new algorithms for quantum processors.',
+        project_ID: '102'
+      },
+      {
+        id: '103',
+        title: 'Renewable Energy Storage',
+        researcher: 'Carol Lee',
+        researchAreas: 'Energy, Materials Science',
+        summary: 'Innovative storage solutions for solar and wind energy.',
+        project_ID: '103'
+      }
+    ]);
+    setLoading(false);
   }, []);
 
   const handleAssignClick = (e: React.MouseEvent, proposal: any) => {

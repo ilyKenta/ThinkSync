@@ -1,6 +1,8 @@
 /* app/page.module.css */
 
 .main {
+  scroll-behavior: smooth;
+
   font-family: sans-serif;
   padding: 0;
   margin: 0;
@@ -11,6 +13,13 @@
 }
 
 .header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: #fff;
+  transition: box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -63,6 +72,8 @@
 }
 
 .hero {
+  min-height: 60vh;
+
   flex: 1;
   display: flex;
   flex-direction: row;
@@ -120,6 +131,8 @@
 }
 
 .glassCard {
+  animation: float 3s ease-in-out infinite alternate;
+
   width: 90%;
   aspect-ratio: 1/1;
   border-radius: 20px;

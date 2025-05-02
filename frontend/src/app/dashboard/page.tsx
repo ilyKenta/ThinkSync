@@ -31,6 +31,8 @@ const Page = () => {
   const [showEditForm, setShowEditForm] = useState(false);
 
   useEffect(() => {
+    // DEMO MODE: Commented out API call and using mock data for demonstration
+    /*
     const fetchProjects = async () => {
       try {
         const token = localStorage.getItem('jwt');
@@ -59,6 +61,42 @@ const Page = () => {
     };
 
     fetchProjects();
+    */
+
+    // MOCK DATA FOR DEMO
+    setProjects([
+      {
+        project_ID: '1',
+        title: 'AI for Healthcare',
+        description: 'Using machine learning to predict patient outcomes and optimize treatments.',
+        status: 'Active',
+        members: ['Alice', 'Bob', 'Carol'],
+        start_date: '2024-04-01',
+        end_date: '2024-12-31',
+        funding_available: true
+      },
+      {
+        project_ID: '2',
+        title: 'Sustainable Energy Research',
+        description: 'Developing new materials for efficient solar panels.',
+        status: 'Planning',
+        members: ['David', 'Eva'],
+        start_date: '2024-03-15',
+        end_date: '2024-09-30',
+        funding_available: false
+      },
+      {
+        project_ID: '3',
+        title: 'Cognitive Science Collaboration',
+        description: 'Cross-university study on learning and memory.',
+        status: 'Completed',
+        members: ['Frank', 'Grace', 'Heidi'],
+        start_date: '2023-01-10',
+        end_date: '2023-12-10',
+        funding_available: true
+      }
+    ]);
+    setLoading(false);
   }, []);
 
   const togglerSidebar = () => {
@@ -315,7 +353,9 @@ const Page = () => {
                       title="Delete project"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleDelete(project.project_ID);
+                        if (window.confirm('Are you sure you want to delete this project?')) {
+                          handleDelete(project.project_ID);
+                        }
                       }}
                     >
                       🗑️
