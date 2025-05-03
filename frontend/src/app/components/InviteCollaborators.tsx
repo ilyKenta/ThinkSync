@@ -52,7 +52,7 @@ const InviteCollaborators: React.FC<InviteCollaboratorsProps> = ({
       const token = localStorage.getItem("jwt");
       if (!token) throw new Error("Not authenticated");
       const res = await fetch(
-        "http://localhost:5000/api/collaborations/search",
+        "https://thinksyncapi.azurewebsites.net/api/collaborations/search",
         {
           method: "POST",
           headers: {
@@ -87,7 +87,7 @@ const InviteCollaborators: React.FC<InviteCollaboratorsProps> = ({
       const token = localStorage.getItem("jwt");
       if (!token) throw new Error("Not authenticated");
       for (const userId of selected) {
-        await fetch("http://localhost:5000/api/collaborations/invite", {
+        await fetch("https://thinksyncapi.azurewebsites.net/api/collaborations/invite", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -119,9 +119,14 @@ const InviteCollaborators: React.FC<InviteCollaboratorsProps> = ({
 
   return (
     <section className="modal-overlay">
-      <section className="invite-container">
+      <section 
+        className="invite-container"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="invite-collaborators-title"
+      >
         <header>
-          <h2 className="title">Invite Collaborators</h2>
+          <h2 className="title" id="invite-collaborators-title">Invite Collaborators</h2>
         </header>
 
         <form onSubmit={handleSearch} className="search-form">
@@ -150,13 +155,14 @@ const InviteCollaborators: React.FC<InviteCollaboratorsProps> = ({
         <section className="results-container">
           {results.length === 0 && !loading && <p>No results.</p>}
           {results.map((u) => (
-            <section className="user-entry" key={u.user_ID}>
+            <section className="user-entry" key={u.user_ID} data-testid="user-section">
               <input
                 type="checkbox"
                 checked={selected.includes(u.user_ID)}
                 onChange={() => handleSelect(u.user_ID)}
+                data-testid="user-checkbox"
               />
-              <p>
+              <p data-testid="user-info">
                 <strong>
                   {u.fname} {u.sname}
                 </strong>{" "}

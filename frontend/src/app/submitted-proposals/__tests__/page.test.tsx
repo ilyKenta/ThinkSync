@@ -15,6 +15,17 @@ const localStorageMock = {
 };
 Object.defineProperty(window, 'localStorage', { value: localStorageMock });
 
+beforeAll(() => {
+  jest.spyOn(console, 'error').mockImplementation((msg) => {
+    if (typeof msg === 'string' && msg.includes('Error fetching proposals')) return;
+  });
+});
+afterAll(() => {
+  if ((console.error as any).mockRestore) {
+    (console.error as any).mockRestore();
+  }
+});
+
 describe('SubmittedProposalsPage', () => {
   const mockProposals = [
     {

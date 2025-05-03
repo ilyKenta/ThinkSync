@@ -89,7 +89,7 @@ export default function CreateReqForm({
     // NEED TO RUN ON CREATE
 
     try {
-      const res = await fetch("http://localhost:5000/api/projects/create", {
+      const res = await fetch("https://thinksyncapi.azurewebsites.net/api/projects/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -140,7 +140,7 @@ export default function CreateReqForm({
             <option value="intermediate">Intermediate</option>
             <option value="professional">Professional</option>
           </select>
-          <label htmlFor="role">Role</label>
+          <label htmlFor="reqrole">Role</label>
           <input
             type="text"
             id="reqrole"

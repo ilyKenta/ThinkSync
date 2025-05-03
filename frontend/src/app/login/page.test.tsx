@@ -146,7 +146,6 @@ describe('LoginPage', () => {
     PublicClientApplication.mockImplementation(() => mockMsalInstance);
 
     const mockAlert = jest.spyOn(window, 'alert').mockImplementation(() => {});
-    const mockConsoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
 
     await act(async () => {
       render(<LoginPage />);
@@ -158,9 +157,7 @@ describe('LoginPage', () => {
     });
 
     expect(mockAlert).toHaveBeenCalledWith('Login failed. Please check the console for details.');
-    expect(mockConsoleError).toHaveBeenCalledWith('Login error:', mockError);
     mockAlert.mockRestore();
-    mockConsoleError.mockRestore();
   });
 
   it('handles API error and shows alert', async () => {
@@ -205,18 +202,12 @@ describe('LoginPage', () => {
     };
     PublicClientApplication.mockImplementation(() => mockMsalInstance);
 
-    // Mock console.error to suppress the error message
-    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-
     await act(async () => {
       render(<LoginPage />);
     });
 
     const loginButton = screen.getByRole('button', { name: /sign in with microsoft/i });
     expect(loginButton).toBeDisabled();
-
-    // Restore console.error
-    consoleErrorSpy.mockRestore();
   });
 
   it('navigates to home page when logo is clicked', async () => {

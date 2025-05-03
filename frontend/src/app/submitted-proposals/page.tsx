@@ -21,7 +21,6 @@ const SubmittedProposalsPage = () => {
   const [selected, setSelected] = useState<Proposal | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  //assigning projects (Arika)
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [assignProject, setAssignProject] = useState<any | null>(null);
 
@@ -33,7 +32,7 @@ const SubmittedProposalsPage = () => {
           throw new Error('No access token found');
         }
 
-        const response = await fetch('http://localhost:5000/api/admin/projects/pending', {
+        const response = await fetch('https://thinksyncapi.azurewebsites.net/api/admin/projects/pending', {
           headers: {
             'Authorization': `Bearer ${token}`
           }

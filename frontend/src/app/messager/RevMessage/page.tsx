@@ -52,7 +52,7 @@ const Page = () => {
   useEffect(() => {
     const fetchMessages = async () => {
       const token = localStorage.getItem("jwt");
-      const response = await fetch("http://localhost:5000/api/messages", {
+      const response = await fetch("https://thinksyncapi.azurewebsites.net/api/messages", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -95,7 +95,7 @@ const Page = () => {
       formData.append("attachments", file);
     });
 
-    const response = await fetch("http://localhost:5000/api/messages", {
+    const response = await fetch("https://thinksyncapi.azurewebsites.net/api/messages", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -145,7 +145,7 @@ const Page = () => {
     const token = localStorage.getItem("jwt");
     try {
       const response = await fetch(
-        `http://localhost:5000/api/messages/${messageId}/attachments/${attachmentId}`,
+        `https://thinksyncapi.azurewebsites.net/api/messages/${messageId}/attachments/${attachmentId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

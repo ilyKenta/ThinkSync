@@ -45,7 +45,7 @@ const ComposeMessage: React.FC<ComposeMessageProps> = ({ onClose }) => {
     }
     try {
       const token = localStorage.getItem('jwt');
-      const response = await fetch(`http://localhost:5000/api/messages/search-users?query=${query}`, {
+      const response = await fetch(`https://thinksyncapi.azurewebsites.net/api/messages/search-users?query=${query}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -65,7 +65,7 @@ const ComposeMessage: React.FC<ComposeMessageProps> = ({ onClose }) => {
     }
     try {
       const token = localStorage.getItem('jwt');
-      const response = await fetch(`http://localhost:5000/api/messages/search-projects?query=${query}`, {
+      const response = await fetch(`https://thinksyncapi.azurewebsites.net/api/messages/search-projects?query=${query}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -180,7 +180,7 @@ const ComposeMessage: React.FC<ComposeMessageProps> = ({ onClose }) => {
         formData.append('attachments', file);
       });
 
-      const response = await fetch('http://localhost:5000/api/messages', {
+      const response = await fetch('https://thinksyncapi.azurewebsites.net/api/messages', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -284,7 +284,7 @@ const ComposeMessage: React.FC<ComposeMessageProps> = ({ onClose }) => {
                 </ul>
               )}
               {selectedProject && (
-                <mark className={styles.selectedDisplay}>
+                <mark className={styles.selectedDisplay} data-testid="linked-project">
                   Linked: {selectedProject.title}
                 </mark>
               )}

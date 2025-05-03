@@ -50,7 +50,7 @@ const Page = () => {
   useEffect(() => {
     const fetchMessages = async () => {
       const token = localStorage.getItem("jwt");
-      const response = await fetch("http://localhost:5000/api/messages", {
+      const response = await fetch("https://thinksyncapi.azurewebsites.net/api/messages", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -107,7 +107,7 @@ const Page = () => {
   //         {
   //           attachment_ID: 1,
   //           file_name: "requirements.pdf",
-  //           file_url: "http://localhost:5000/files/requirements.pdf",
+  //           file_url: "https://thinksyncapi.azurewebsites.net/files/requirements.pdf",
   //         },
   //       ],
   //     },
@@ -188,7 +188,7 @@ const Page = () => {
     
     try {
       // First, send the message
-      const messageResponse = await fetch("http://localhost:5000/api/messages", {
+      const messageResponse = await fetch("https://thinksyncapi.azurewebsites.net/api/messages", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -216,7 +216,7 @@ const Page = () => {
           formData.append("file", file);
 
           const attachmentResponse = await fetch(
-            `http://localhost:5000/api/messages/${messageId}/attachments`,
+            `https://thinksyncapi.azurewebsites.net/api/messages/${messageId}/attachments`,
             {
               method: "POST",
               headers: {
@@ -233,7 +233,7 @@ const Page = () => {
       }
 
       // Refresh messages after successful send
-      const updatedMessages = await fetch("http://localhost:5000/api/messages", {
+      const updatedMessages = await fetch("https://thinksyncapi.azurewebsites.net/api/messages", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -255,7 +255,7 @@ const Page = () => {
     const token = localStorage.getItem("jwt");
     try {
       const response = await fetch(
-        `http://localhost:5000/api/messages/${messageId}/attachments/${attachmentId}`,
+        `https://thinksyncapi.azurewebsites.net/api/messages/${messageId}/attachments/${attachmentId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
