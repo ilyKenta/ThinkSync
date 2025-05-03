@@ -83,7 +83,7 @@ const Page = () => {
               type="button" 
               onClick={() => {
                 setActiveTab('my');
-                router.push("/dashboard");
+                router.push("/researcher-dashboard");
               }}
               className={activeTab === 'my' ? styles.active : ''}
             >

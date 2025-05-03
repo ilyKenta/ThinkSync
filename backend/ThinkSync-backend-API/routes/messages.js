@@ -7,8 +7,58 @@ const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
 
 // Initialize Azure Blob Storage client
-const blobServiceClient = BlobServiceClient.fromConnectionString(process.env.AZURE_STORAGE_CONNECTION_STRING);
-const containerClient = blobServiceClient.getContainerClient(process.env.AZURE_STORAGE_CONTAINER_NAME);
+let blobServiceClient;
+let containerClient;
+
+// Allowed file types and max size
+const ALLOWED_TYPES = [
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // DOCX
+  'application/xml',
+  'text/xml',
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/bmp',
+  'image/webp',
+  'image/svg+xml',
+  'image/tiff',
+  'image/x-icon',
+  'image/heic',
+  'image/heif',
+];
+const MAX_SIZE = 50 * 1024 * 1024; // 50MB
+
+// Function to initialize Azure Storage
+async function initializeAzureStorage() {
+    try {
+        const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING;
+        const containerName = process.env.AZURE_STORAGE_CONTAINER_NAME;
+
+        if (!connectionString) {
+            throw new Error('Azure Storage connection string is not configured');
+        }
+        if (!containerName) {
+            throw new Error('Azure Storage container name is not configured');
+        }
+
+        blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
+        containerClient = blobServiceClient.getContainerClient(containerName);
+
+        // Test the connection
+        await containerClient.getProperties();
+        console.log('Successfully connected to Azure Blob Storage');
+    } catch (error) {
+        console.error('Failed to initialize Azure Storage client:', error);
+        process.exit(1);
+    }
+}
+
+// Initialize storage on startup
+initializeAzureStorage().catch(error => {
+    console.error('Failed to initialize Azure Storage:', error);
+    process.exit(1);
+});
 
 // Middleware to authenticate user
 const authenticateUser = async (req, res, next) => {
@@ -37,8 +87,10 @@ router.get('/', authenticateUser, async (req, res) => {
                 m.is_read,
                 m.project_ID,
                 p.title as project_title,
-                sender.sname as sender_name,
-                receiver.sname as receiver_name,
+                sender.sname as sender_sname,
+                sender.fname as sender_fname,
+                receiver.sname as receiver_sname,
+                receiver.fname as receiver_fname,
                 GROUP_CONCAT(
                     JSON_OBJECT(
                         'attachment_ID', ma.attachment_ID,
@@ -108,6 +160,16 @@ router.post('/', authenticateUser, upload.array('attachments', 5), async (req, r
         const userId = req.userId;
         const { receiver_ID, subject, body, project_ID } = req.body;
         const files = req.files || [];
+
+        // Validate files
+        for (const file of files) {
+            if (!ALLOWED_TYPES.includes(file.mimetype)) {
+                return res.status(400).json({ error: `File ${file.originalname} is not an allowed type.` });
+            }
+            if (file.size > MAX_SIZE) {
+                return res.status(400).json({ error: `File ${file.originalname} is too large. Maximum size is 50MB.` });
+            }
+        }
 
         // Insert the message
         const messageQuery = `
@@ -191,68 +253,131 @@ router.put('/:messageId/read', authenticateUser, async (req, res) => {
     }
 });
 
-// Get a specific message's attachment
-router.get('/attachments/:attachmentId', authenticateUser, async (req, res) => {
+// Upload attachment
+router.post('/:messageId/attachments', authenticateUser, upload.single('file'), async (req, res) => {
     try {
-        const userId = req.userId;
-        const { attachmentId } = req.params;
-
-        // First verify the user has access to this attachment
-        const accessQuery = `
-            SELECT ma.*, m.sender_ID, m.receiver_ID
-            FROM message_attachments ma
-            JOIN messages m ON ma.message_ID = m.message_ID
-            WHERE ma.attachment_ID = ? AND (m.sender_ID = ? OR m.receiver_ID = ?)
-        `;
-        
-        const attachment = await executeQuery(accessQuery, [attachmentId, userId, userId]);
-        
-        if (!attachment || attachment.length === 0) {
-            return res.status(404).json({ error: 'Attachment not found or access denied' });
+        if (!blobServiceClient || !containerClient) {
+            throw new Error('Azure Storage is not properly configured');
         }
 
-        const { storage_container, blob_name, file_name } = attachment[0]; // Get first result from array
-
-        if (!blob_name) {
-            return res.status(404).json({ error: 'Attachment blob name not found' });
+        const { messageId } = req.params;
+        const file = req.file;
+        if (!file) {
+            return res.status(400).json({ error: 'No file uploaded' });
+        }
+        if (!ALLOWED_TYPES.includes(file.mimetype)) {
+            return res.status(400).json({ error: `File ${file.originalname} is not an allowed type.` });
+        }
+        if (file.size > MAX_SIZE) {
+            return res.status(400).json({ error: `File ${file.originalname} is too large. Maximum size is 50MB.` });
         }
 
-        try {
-            // Get the blob client
-            const containerClient = blobServiceClient.getContainerClient(storage_container || process.env.AZURE_STORAGE_CONTAINER_NAME);
-            const blockBlobClient = containerClient.getBlockBlobClient(blob_name);
+        const blobName = `${messageId}/${file.originalname}`;
+        const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+        await blockBlobClient.uploadData(file.buffer);
 
-            // Get blob properties and metadata
-            const properties = await blockBlobClient.getProperties();
-            
-            // Use the original filename from the database
-            const originalFileName = file_name;
-            
-            // Set response headers with proper metadata and CORS
-            res.setHeader('Access-Control-Allow-Origin', '*');
-            res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-            res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-            res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition, X-File-Name, Content-Type');
-            
-            // Set content headers
-            res.setHeader('Content-Type', properties.contentType || 'application/octet-stream');
-            res.setHeader('X-File-Name', originalFileName);
-            res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(originalFileName)}`);
-            res.setHeader('Content-Length', properties.contentLength);
+        const attachmentUrl = blockBlobClient.url;
+        await executeQuery(
+            'INSERT INTO message_attachments (message_ID, file_name, file_url, storage_container, blob_name) VALUES (?, ?, ?, ?, ?)',
+            [messageId, file.originalname, attachmentUrl, process.env.AZURE_STORAGE_CONTAINER_NAME, blobName]
+        );
 
-            // Stream the blob to the response
-            const downloadResponse = await blockBlobClient.download();
-            downloadResponse.readableStreamBody.pipe(res);
-        } catch (error) {
-            console.error('Error accessing blob:', error);
-            res.status(500).json({ error: 'Failed to access attachment file' });
+        res.json({ url: attachmentUrl });
+    } catch (error) {
+        console.error('Error uploading attachment:', error);
+        res.status(500).json({ error: 'Failed to upload attachment' });
+    }
+});
+
+// Get attachment
+router.get('/:messageId/attachments/:attachmentId', authenticateUser, async (req, res) => {
+    try {
+        if (!blobServiceClient || !containerClient) {
+            throw new Error('Azure Storage is not properly configured');
         }
 
+        const { messageId, attachmentId } = req.params;
+        const [attachment] = await executeQuery(
+            'SELECT * FROM message_attachments WHERE attachment_ID = ? AND message_ID = ?',
+            [attachmentId, messageId]
+        );
+
+        if (!attachment) {
+            return res.status(404).json({ error: 'Attachment not found' });
+        }
+
+        // Use the exact blob_name from the database
+        const blobName = attachment.blob_name;
+        const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+        const downloadBlockBlobResponse = await blockBlobClient.download();
+        const downloaded = downloadBlockBlobResponse.readableStreamBody || downloadBlockBlobResponse.blobBody;
+
+        res.setHeader('Content-Type', attachment.file_type || 'application/octet-stream');
+        res.setHeader('Content-Disposition', `attachment; filename="${attachment.file_name}"`);
+
+        if (downloaded && typeof downloaded.pipe === 'function') {
+            downloaded.pipe(res);
+        } else {
+            // If not a stream, buffer and send
+            const buffer = await streamToBuffer(downloaded);
+            res.end(buffer);
+        }
     } catch (error) {
         console.error('Error downloading attachment:', error);
-        if (!res.headersSent) {
-            res.status(500).json({ error: 'Failed to download attachment' });
-        }
+        res.status(500).json({ error: 'Failed to download attachment' });
+    }
+});
+
+// Helper to convert stream to buffer
+function streamToBuffer(readableStream) {
+    return new Promise((resolve, reject) => {
+        const chunks = [];
+        readableStream.on('data', (data) => {
+            chunks.push(data instanceof Buffer ? data : Buffer.from(data));
+        });
+        readableStream.on('end', () => {
+            resolve(Buffer.concat(chunks));
+        });
+        readableStream.on('error', reject);
+    });
+}
+
+// Search users by name
+router.get('/search-users', authenticateUser, async (req, res) => {
+    try {
+        const { query } = req.query;
+        const searchQuery = `
+            SELECT user_ID, sname, fname
+            FROM users 
+            WHERE sname LIKE ? OR fname LIKE ? OR CONCAT(fname, ' ', sname) LIKE ?
+            LIMIT 10
+        `;
+        const searchTerm = `%${query}%`;
+        const users = await executeQuery(searchQuery, [searchTerm, searchTerm, searchTerm]);
+        res.json(users);
+    } catch (error) {
+        console.error('Error searching users:', error);
+        res.status(500).json({ error: 'Failed to search users' });
+    }
+});
+
+// Search projects by title
+router.get('/search-projects', authenticateUser, async (req, res) => {
+    try {
+        const { query } = req.query;
+        const searchQuery = `
+            SELECT p.project_ID, p.title, u.fname as owner_fname, u.sname as owner_sname
+            FROM projects p
+            JOIN users u ON p.owner_ID = u.user_ID
+            WHERE p.title LIKE ?
+            LIMIT 10
+        `;
+        const searchTerm = `%${query}%`;
+        const projects = await executeQuery(searchQuery, [searchTerm]);
+        res.json(projects);
+    } catch (error) {
+        console.error('Error searching projects:', error);
+        res.status(500).json({ error: 'Failed to search projects' });
     }
 });
 

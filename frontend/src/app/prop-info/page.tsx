@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import styles from '../Shared_projects/page.module.css'; // reuse your styles
 
-const PropInfoPage = () => {
+const PropInfoContent = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const projectId = searchParams.get('projectId');
@@ -240,6 +240,14 @@ const PropInfoPage = () => {
         )}
       </section>
     </main>
+  );
+};
+
+const PropInfoPage = () => {
+  return (
+    <Suspense fallback={<main className={styles.container}>Loading...</main>}>
+      <PropInfoContent />
+    </Suspense>
   );
 };
 

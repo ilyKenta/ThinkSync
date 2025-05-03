@@ -3,86 +3,99 @@
 import React, { useState, useEffect } from "react";
 import styles from "./page.module.css";
 import { useRouter } from "next/navigation";
-import { FaPaperPlane, FaEnvelope, FaUserCircle } from "react-icons/fa";
-import Sidebar from "../sent-sidebar/sidebar";
-import InboxSidebar from "../inbox-sidebar/inb_sidebar";
+import useAuth from "../useAuth";
 
 const Page = () => {
+  useAuth();
   const router = useRouter();
+  const [hasReviewerRole, setHasReviewerRole] = useState<boolean | null>(null);
   const [proposal, setProp] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isInboxSidebarOpen, setIsInboxSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("shared");
-
-  //un comment actual api call bellow
-
-  // useEffect(() => {
-  //   const fetchProposals = async () => {
-  //     try {
-  //       const token = localStorage.getItem("jwt");
-  //       if (!token) {
-  //         throw new Error("No access token found");
-  //       }
-
-  //       const response = await fetch(
-  //         "http://localhost:5000/api/reviewer/proposals",
-  //         {
-  //           headers: {
-  //             Authorization: `Bearer ${token}`,
-  //           },
-  //         }
-  //       );
-
-  //       if (!response.ok) {
-  //         throw new Error("Failed to fetch proposals");
-  //       }
-
-  //       const data = await response.json();
-  //       setProp(data.proposals);
-  //     } catch (err) {
-  //       setError(err instanceof Error ? err.message : "An error occurred");
-  //       console.error("Error fetching proposals:", err);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-
-  //   fetchProposals();
-  // }, []);
+  const [activeTab, setActiveTab] = useState('shared');
 
   useEffect(() => {
-    // Simulate API delay with dummy data
-    const dummyProposals = [
-      {
-        project_ID: "123",
-        title: "AI for Healthcare",
-        description: "Improving diagnostics with machine learning.",
-        start_date: new Date().toISOString(),
-        Assigned_at: new Date().toISOString(),
-      },
-      {
-        project_ID: "456",
-        title: "Sustainable Agriculture",
-        description: "Using IoT for precision farming.",
-        start_date: new Date().toISOString(),
-        Assigned_at: new Date().toISOString(),
-      },
-    ];
-    setTimeout(() => {
-      setProp(dummyProposals);
-      setLoading(false);
-    }, 500); // simulate delay
-  }, []);
+    //setHasReviewerRole(true);
+    const roleString = typeof window !== "undefined" ? localStorage.getItem('role') : null;
+    let reviewer = false;
+    if (roleString) {
+      try {
+        const roles = JSON.parse(roleString);
+        reviewer = Array.isArray(roles) && roles.some((r: { role_name: string; }) => r.role_name === 'reviewer');
+      } catch (e) {
+        reviewer = false;
+      }
+    }
+    setHasReviewerRole(reviewer);
+    if (!reviewer) {
+      router.push('/login');
+    }
+  }, [router]);
 
-  const togglerSidebar = () => {
-    setIsSidebarOpen((prev) => !prev);
-  };
+  useEffect(() => {
+    if (hasReviewerRole) {
+      const fetchProposals = async () => {
+        try {
+          const token = localStorage.getItem('jwt');
+          if (!token) {
+            throw new Error('No access token found');
+          }
+    
+          const response = await fetch('http://localhost:5000/api/reviewer/proposals', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+    
+          if (!response.ok) {
+            throw new Error('Failed to fetch proposals');
+          }
+    
+          const data = await response.json();
+          setProp(data.proposals); 
+        } catch (err) {
+          setError(err instanceof Error ? err.message : 'An error occurred');
+          console.error('Error fetching proposals:', err);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchProposals();
+    }
+  }, [hasReviewerRole]);
 
-  const toggleInboxSidebar = () => {
-    setIsInboxSidebarOpen((prev) => !prev);
-  };
+  if (hasReviewerRole === null) {
+    // Still checking role, render nothing or a spinner
+    return null;
+  }
+  if (!hasReviewerRole) {
+    // Redirecting, render nothing
+    return null;
+  }
+
+  // useEffect(() => {
+  //   // Simulate API delay with dummy data
+  //   const dummyProposals = [
+  //     {
+  //       project_ID: "123",
+  //       title: "AI for Healthcare",
+  //       description: "Improving diagnostics with machine learning.",
+  //       start_date: new Date().toISOString(),
+  //       Assigned_at: new Date().toISOString(),
+  //     },
+  //     {
+  //       project_ID: "456",
+  //       title: "Sustainable Agriculture",
+  //       description: "Using IoT for precision farming.",
+  //       start_date: new Date().toISOString(),
+  //       Assigned_at: new Date().toISOString(),
+  //     },
+  //   ];
+  //   setTimeout(() => {
+  //     setProp(dummyProposals);
+  //     setLoading(false);
+  //   }, 500); // simulate delay
+  // }, []);
 
   const handleCardClick = (projectId: string) => {
     // Find the selected project from the proposals array
@@ -153,33 +166,7 @@ const Page = () => {
       <section className={styles.mainContent}>
         <header className={styles.heading}>
           <h2>Assigned Proposals</h2>
-          {/* <nav className={styles.colabGroup}>
-            <section className={styles.sidebarSection}>
-              <button className={styles.iconButton} onClick={togglerSidebar}>
-                <FaPaperPlane />
-              </button>
-              <Sidebar isOpen={isSidebarOpen} onClose={togglerSidebar} />
-            </section>
-
-            <section className={styles.sidebarSection}>
-              <button
-                className={styles.iconButton}
-                onClick={toggleInboxSidebar}
-              >
-                <FaEnvelope />
-              </button>
-              <InboxSidebar
-                isOpen={isInboxSidebarOpen}
-                onClose={toggleInboxSidebar}
-              />
-            </section>
-
-            <button className={styles.iconButton}>
-              <FaUserCircle />
-            </button>
-          </nav> */}
         </header>
-
         <section className={styles.buttonHeader}>
           <section className={styles.searchContainer}>
             <input

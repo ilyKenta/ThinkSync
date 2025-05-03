@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import styles from "../Shared_projects/page.module.css";
+import styles from "../researcher-dashboard/page.module.css";
 import AssignReviewers from "../components/AssignReviewers";
 import { useRouter } from "next/navigation";
 
@@ -44,7 +44,6 @@ const SubmittedProposalsPage = () => {
         }
 
         const data = await response.json();
-        console.log(data);
         setProposals(data.projects.map((project: any) => ({
           id: project.project_ID,
           title: project.title,
@@ -199,6 +198,7 @@ const SubmittedProposalsPage = () => {
           {/* Proposal Details */}
           {selected && (
             <section
+              data-testid="proposal-details"
               style={{
                 flex: 1,
                 background: "#f8fafd",

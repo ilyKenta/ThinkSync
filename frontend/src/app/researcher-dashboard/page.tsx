@@ -17,67 +17,104 @@ import Sidebar from "../sent-sidebar/sidebar";
 import InboxSidebar from "../inbox-sidebar/inb_sidebar";
 import useAuth from "../useAuth";
 
-const Page = () => {
-  //useAuth();
+const ResearcherDashboard = () => {
+  useAuth();
   const router = useRouter();
+  const [hasResearcherRole, setHasResearcherRole] = useState<boolean | null>(null);
   const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isInboxSidebarOpen, setIsInboxSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("my");
-
+  const [activeTab, setActiveTab] = useState('my');
   const [editProject, setEditProject] = useState<any | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const [inviteProject, setInviteProject] = useState<any | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [showRequirementsForm, setShowReqForm] = useState(false);
+  const [currentProjectName, setCurrentProjectName] = useState("");
+  const [currentprojectDesc, setCurrentprojectDesc] = useState("");
+  const [currentgoals, setCurrentGoals] = useState("");
+  const [currentresearch_areas, setCurrentResArea] = useState("");
+  const [currentstart_date, setCurrentStart] = useState("");
+  const [currentend_date, setCurrentEnd] = useState("");
+  const [currentfunding_available, setCurrentFunding] = useState<boolean | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filteredProjects, setFilteredProjects] = useState<any[]>([]);
 
-  // useEffect(() => {
-  //   const fetchProjects = async () => {
-  //     try {
-  //       const token = localStorage.getItem("jwt");
-  //       if (!token) {
-  //         throw new Error("No access token found");
-  //       }
-
-  //       const response = await fetch(
-  //         "http://localhost:5000/api/projects/owner",
-  //         {
-  //           headers: {
-  //             Authorization: `Bearer ${token}`,
-  //           },
-  //         }
-  //       );
-
-  //       if (!response.ok) {
-  //         throw new Error("Failed to fetch projects");
-  //       }
-
-  //       const data = await response.json();
-  //       setProjects(data.projects || []);
-  //     } catch (err) {
-  //       setError(err instanceof Error ? err.message : "An error occurred");
-  //       console.error("Error fetching projects:", err);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-
-  //   fetchProjects();
-  // }, []);
   useEffect(() => {
-    const mockProjects = [
-      {
-        project_ID: "1",
-        title: "Mock Project",
-        description: "This is a mock project description.",
-        start_date: new Date().toISOString(),
-        end_date: new Date().toISOString(),
-        funding_available: true,
-      },
-    ];
+    const roleString = typeof window !== "undefined" ? localStorage.getItem('role') : null;
+    let researcher = false;
+    if (roleString) {
+      try {
+        const roles = JSON.parse(roleString);
+        researcher = Array.isArray(roles) && roles.some((r: { role_name: string; }) => r.role_name === 'researcher');
+      } catch (e) {
+        researcher = false;
+      }
+    }
+    setHasResearcherRole(researcher);
+    if (!researcher) {
+      router.push('/login');
+    }
+  }, [router]);
 
-    setProjects(mockProjects);
-    setLoading(false);
-  }, []);
+  useEffect(() => {
+    if (hasResearcherRole) {
+      fetchProjects();
+      setLoading(false);
+    }
+  }, [hasResearcherRole]);
+
+  useEffect(() => {
+    if (searchQuery.trim() === '') {
+      setFilteredProjects(projects);
+    } else {
+      const filtered = projects.filter(project => 
+        project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        project.description.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredProjects(filtered);
+    }
+  }, [searchQuery, projects]);
+
+  if (hasResearcherRole === null) {
+    // Still checking role, render nothing or a spinner
+    return null;
+  }
+  if (!hasResearcherRole) {
+    // Redirecting, render nothing
+    return null;
+  }
+
+  // Move fetchProjects to top-level so it can be called after project creation
+  const fetchProjects = async () => {
+    try {
+      const token = localStorage.getItem('jwt');
+      if (!token) {
+        throw new Error('No access token found');
+      }
+
+      const response = await fetch('http://localhost:5000/api/projects/owner', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch projects');
+      }
+
+      const data = await response.json();
+      setProjects(data.projects || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Error fetching projects:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const togglerSidebar = () => {
     setIsSidebarOpen((prev) => !prev);
@@ -86,10 +123,6 @@ const Page = () => {
   const toggleInboxSidebar = () => {
     setIsInboxSidebarOpen((prev) => !prev);
   };
-
-  // State for invite modal
-  const [inviteModalOpen, setInviteModalOpen] = useState(false);
-  const [inviteProject, setInviteProject] = useState<any | null>(null);
 
   const handleCardClick = (projectId: string) => {
     //router.push(`/projectInfo/${projectId}`);
@@ -126,19 +159,6 @@ const Page = () => {
     }
   };
 
-  const [showForm, setShowForm] = useState(false);
-  const [showRequirementsForm, setShowReqForm] = useState(false);
-
-  const [currentProjectName, setCurrentProjectName] = useState("");
-  const [currentprojectDesc, setCurrentprojectDesc] = useState("");
-  const [currentgoals, setCurrentGoals] = useState("");
-  const [currentresearch_areas, setCurrentResArea] = useState("");
-  const [currentstart_date, setCurrentStart] = useState("");
-  const [currentend_date, setCurrentEnd] = useState("");
-  const [currentfunding_available, setCurrentFunding] = useState<
-    boolean | null
-  >(null);
-
   const handleInviteClick = (e: React.MouseEvent, project: any) => {
     e.stopPropagation();
     setInviteProject(project);
@@ -161,37 +181,37 @@ const Page = () => {
 
         <ul>
           <li>
-            <button
-              type="button"
+            <button 
+              type="button" 
               onClick={() => {
-                setActiveTab("my");
-                router.push("/dashboard");
+                setActiveTab('my');
+                router.push("/researcher-dashboard");
               }}
-              className={activeTab === "my" ? styles.active : ""}
+              className={activeTab === 'my' ? styles.activeTab : ''}
             >
               My Projects
             </button>
           </li>
           <li>
-            <button
-              type="button"
+            <button 
+              type="button" 
               onClick={() => {
-                setActiveTab("shared");
+                setActiveTab('shared');
                 router.push("/Shared_projects");
               }}
-              className={activeTab === "shared" ? styles.active : ""}
+              className={activeTab === 'shared' ? styles.activeTab : ''}
             >
               Shared Projects
             </button>
           </li>
           <li>
-            <button
-              type="button"
+          <button 
+              type="button" 
               onClick={() => {
-                setActiveTab("messager");
+                setActiveTab('messager');
                 router.push("/messager");
               }}
-              className={activeTab === "messager" ? styles.active : ""}
+              className={activeTab === 'messager' ? styles.activeTab : ''}
             >
               Messager
             </button>
@@ -204,17 +224,18 @@ const Page = () => {
           <h2>My Projects</h2>
           <nav className={styles.colabGroup}>
             <section className={styles.sidebarSection}>
-              <button className={styles.iconButton} onClick={togglerSidebar}>
+              <button className={styles.iconButton} onClick={togglerSidebar} data-testid="sidebar-toggle">
                 <FaPaperPlane />
               </button>
-              <Sidebar isOpen={isSidebarOpen} onClose={togglerSidebar} />
+              <Sidebar
+                isOpen={isSidebarOpen}
+                onClose={togglerSidebar}
+                data-testid="sidebar"
+              />
             </section>
 
             <section className={styles.sidebarSection}>
-              <button
-                className={styles.iconButton}
-                onClick={toggleInboxSidebar}
-              >
+              <button className={styles.iconButton} onClick={toggleInboxSidebar}>
                 <FaEnvelope />
               </button>
               <InboxSidebar
@@ -257,7 +278,9 @@ const Page = () => {
                 setCurrentFunding(Funding);
                 setShowForm(false);
                 setShowReqForm(true);
+                fetchProjects();
               }}
+              data-testid="create-form"
             />
           )}
 
@@ -271,8 +294,12 @@ const Page = () => {
               setEnd={currentend_date}
               Funding={currentfunding_available}
               onClose={() => setShowReqForm(false)}
-              onCreate={(projectName: string) => {
+              onCreate={() => {
                 setShowReqForm(false);
+                console.log('Requirements form submitted, reloading page to refresh projects');
+                setTimeout(() => {
+                  window.location.reload();
+                }, 400); // Delay reload to allow fetch to complete
               }}
             />
           )}
@@ -282,12 +309,14 @@ const Page = () => {
               className={styles.searchInput}
               type="text"
               placeholder="Search projects..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
           </section>
         </section>
 
         <section className={styles.cardContainer}>
-          {projects.map((project) => (
+          {filteredProjects.map((project) => (
             <article
               key={project.project_ID}
               className={styles.card}
@@ -306,10 +335,7 @@ const Page = () => {
                       End: {new Date(project.end_date).toLocaleDateString()}
                     </time>
                     <p>
-                      Funding:{" "}
-                      {project.funding_available
-                        ? "Available"
-                        : "Not Available"}
+                      Funding: {project.funding_available ? "Available" : "Not Available"}
                     </p>
                   </section>
                 </section>
@@ -318,6 +344,7 @@ const Page = () => {
                     <button
                       className={styles.editButton}
                       title="Edit project"
+                      data-testid="edit-project-button"
                       onClick={(e) => {
                         e.stopPropagation();
                         setEditProject(project);
@@ -350,7 +377,9 @@ const Page = () => {
                       title="Delete project"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleDelete(project.project_ID);
+                        if (window.confirm('Are you sure you want to delete this project?')) {
+                          handleDelete(project.project_ID);
+                        }
                       }}
                     >
                       🗑️
@@ -370,6 +399,7 @@ const Page = () => {
               setInviteModalOpen(false);
               setInviteProject(null);
             }}
+            data-testid="invite-modal"
           />
         )}
 
@@ -391,6 +421,7 @@ const Page = () => {
               setShowEditForm(false);
               setEditProject(null);
             }}
+            data-testid="edit-form"
           />
         )}
       </section>
@@ -398,4 +429,4 @@ const Page = () => {
   );
 };
 
-export default Page;
+export default ResearcherDashboard;

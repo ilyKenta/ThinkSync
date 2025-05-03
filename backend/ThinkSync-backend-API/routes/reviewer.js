@@ -7,13 +7,18 @@ const { getUserIdFromToken, extractToken } = require('../utils/auth');
 const isReviewer = async (req, res, next) => {
     try {
         const token = extractToken(req);
+        if (!token) {
+            return res.status(401).json({ error: 'Authentication failed' });
+        }
         const userId = await getUserIdFromToken(token);
         // Check user role in user_roles and roles tables
         const result = await db.executeQuery(
             `SELECT r.role_name FROM user_roles ur JOIN roles r ON ur.role_ID = r.role_ID WHERE ur.user_ID = ?`,
             [userId]
         );
-        if (result.length !== 0 && result.role_name === 'reviewer') {
+        // Check if any of the user's roles is 'reviewer'
+        const hasReviewerRole = result.some(r => r.role_name === 'reviewer');
+        if (result.length === 0 || !hasReviewerRole) {
             return res.status(403).json({ error: 'Unauthorized: User is not a reviewer' });
         }
         req.userId = userId;
@@ -82,7 +87,7 @@ router.post('/proposals/:projectId/review', isReviewer, async (req, res) => {
             'SELECT * FROM review_assignments WHERE project_ID = ? AND reviewer_ID = ?',
             [projectId, req.userId]
         );
-        if (!assignment) {
+        if (!assignment || assignment.length === 0) {
             return res.status(403).json({ error: 'Project not assigned to this reviewer' });
         }
         // Insert review
@@ -113,7 +118,7 @@ router.get('/proposals/:projectId/review', isReviewer, async (req, res) => {
             [projectId]
         );
 
-        if (review.length === 0) {
+        if (!review || review.length === 0) {
             return res.json({ review: null });
         }
 

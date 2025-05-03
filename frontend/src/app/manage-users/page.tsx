@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import styles from "../dashboard/page.module.css";
+import styles from "../researcher-dashboard/page.module.css";
 import { useRouter } from "next/navigation";
 
 interface User {

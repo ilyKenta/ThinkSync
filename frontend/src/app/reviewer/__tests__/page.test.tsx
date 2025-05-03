@@ -80,9 +80,15 @@ describe('ReviewerSignupPage', () => {
   });
 
   it('handles form submission successfully', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ message: 'Success' }),
+    // Mock the fetch call with the correct URL
+    (global.fetch as jest.Mock).mockImplementation((url) => {
+      if (url === 'https://thinksyncapi.azurewebsites.net/api/auth/reviewer') {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ message: 'Success' }),
+        });
+      }
+      return Promise.reject(new Error('Not found'));
     });
 
     render(<ReviewerSignupPage />);

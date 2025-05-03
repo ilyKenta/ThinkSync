@@ -26,9 +26,11 @@
   font-weight: var(--font-weight-semibold);
 }
 
-.sidebar ul {
-  list-style: none;
-  padding: 0;
+.sidebar menu,
+.sidebar menu li {
+  list-style: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
 }
 
 .sidebar li button {
@@ -358,6 +360,23 @@
 
 .inboxTitle {
   margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.composeButton {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.composeButton:hover {
+  background-color: #0056b3;
 }
 
 .previewList {
@@ -415,21 +434,84 @@
 }
 
 .chatBubble {
-  margin-bottom: 1rem;
+  margin: 8px 0;
+  padding: 12px;
+  border-radius: 12px;
+  max-width: 70%;
+  word-wrap: break-word;
 }
 
-.chatBubble article {
-  background-color: #c6d4eb;
-  padding: 0.75rem;
-  border-radius: 10px;
-  max-width: 75%;
+.sentMessage {
+  background-color: #007bff;
+  color: white;
+  margin-left: auto;
+  border-bottom-right-radius: 4px;
 }
 
-.chatBubble time {
+.receivedMessage {
+  background-color: #f1f1f1;
+  color: black;
+  margin-right: auto;
+  border-bottom-left-radius: 4px;
+}
+
+.messageContent {
+  margin-bottom: 4px;
+}
+
+.messageSubject {
+  font-weight: bold;
+  margin-bottom: 8px;
+  font-size: 1.1rem;
+}
+
+.projectLink {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 8px;
+  font-style: italic;
+}
+
+.messageTime {
   font-size: 0.75rem;
-  color: #646464;
+  opacity: 0.8;
   display: block;
-  margin-top: 0.25rem;
+  text-align: right;
+  margin-top: 4px;
+  white-space: nowrap;
+}
+
+.attachments {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.attachmentLink {
+  color: #fff;
+  background: none !important;
+  border: none !important;
+  border-radius: 0;
+  padding: 0;
+  font-size: 1em;
+  font-weight: normal;
+  cursor: pointer;
+  box-shadow: none;
+  margin: 2px 0;
+  outline: none;
+  display: inline;
+  word-break: break-all;
+  text-decoration: underline;
+  transition: none;
+}
+
+.attachmentLink:hover, .attachmentLink:focus {
+  color: #fff;
+  text-decoration: underline;
+  background: none !important;
+  border: none !important;
+  box-shadow: none;
 }
 
 .messageForm {
@@ -450,6 +532,11 @@
   font-size: 0.9rem;
 }
 
+.messageForm .buttonGroup {
+  justify-content: flex-start;
+  margin-top: 0.5rem;
+}
+
 .messageForm button {
   align-self: flex-end;
   background-color: #4b6796;
@@ -462,4 +549,163 @@
 
 .messageForm button:hover {
   background-color: #213b69;
+}
+
+.composeModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.composeContent {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 8px;
+  width: 100vw;
+  max-width: 700px;
+  height: 90vh;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.composeContent form {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.formGroup {
+  margin-bottom: 1.2rem;
+  flex: unset;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.formGroup input[type="text"] {
+  height: 2.2em;
+  min-height: 2.2em;
+  max-height: 2.2em;
+  padding: 0.3em 0.7em;
+  font-size: 1em;
+}
+
+.formGroup textarea {
+  min-height: 7em;
+  max-height: 20em;
+  resize: vertical;
+  padding: 0.7em;
+  font-size: 1em;
+}
+
+.formGroup legend {
+  font-size: 1.05em;
+  font-weight: bold;
+  margin-bottom: 0.3em;
+}
+
+.formGroup input[type="file"] {
+  margin-top: 0.3em;
+}
+
+.buttonGroup {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+  justify-content: flex-end;
+}
+
+.searchResults {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  z-index: 1;
+}
+
+.searchResults li {
+  padding: 0.5rem;
+  cursor: pointer;
+}
+
+.searchResults li:hover {
+  background-color: #f0f0f0;
+}
+
+.resultButton {
+  width: 100%;
+  background: none;
+  border: none;
+  text-align: left;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.resultButton:hover,
+.selectedResult .resultButton {
+  background-color: #e6e6e6;
+}
+
+.selectedResult .resultButton {
+  font-weight: bold;
+}
+
+.selectedDisplay {
+  margin-top: 0.5rem;
+  font-size: 0.95rem;
+  color: #007bff;
+}
+
+.attachmentList {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0 0;
+}
+
+.attachmentList li {
+  padding: 0.25rem 0;
+  font-size: 0.95rem;
+}
+
+.noResults {
+  padding: 0.5rem 1rem;
+  color: #888;
+  font-size: 0.98rem;
+  background: #fafafa;
+  border-bottom-left-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+
+.projectOwner {
+  color: #888;
+  font-size: 0.95em;
+  margin-left: 0.5em;
+}
+
+.receivedAttachmentLink {
+  color: #111 !important;
+}
+
+.sentAttachmentLink {
+  color: #fff !important;
 }

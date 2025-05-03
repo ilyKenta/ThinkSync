@@ -19,7 +19,7 @@ export default function LoginPage() {
           auth: {
             clientId: process.env.NEXT_PUBLIC_AZURE_CLIENT_ID!,
             authority: `https://login.microsoftonline.com/${process.env.NEXT_PUBLIC_AZURE_TENANT_ID}`,
-            redirectUri: 'http://localhost:3000/login',
+            redirectUri: `${process.env.NEXT_PUBLIC_AZURE_REDIRECT_URI}`,
             postLogoutRedirectUri: '/',
             navigateToLoginRequestUrl: true
           },
@@ -56,7 +56,6 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const loginResponse: AuthenticationResult = await msalInstance.loginPopup(loginRequest);
-      console.log('Login response:', loginResponse);
       
       const accessToken = loginResponse.accessToken;
       localStorage.setItem('jwt', accessToken);
@@ -70,20 +69,31 @@ export default function LoginPage() {
         body: JSON.stringify({ token: accessToken }),
       });
 
-      console.log('API response:', response);
-
       console.log('API response status:', response.status);
       const data = await response.json();
       console.log('API response data:', data);
+
+      // Store roles as array and check for roles safe
+      const roles = Array.isArray(data.role) ? data.role : [];
+      localStorage.setItem('role', JSON.stringify(roles));
+      localStorage.setItem('user_ID', data.user_ID);
+
+      const hasReviewerRole = roles.some((r: { role_name: string; }) => r.role_name === 'reviewer');
+      const hasAdminRole = roles.some((r: { role_name: string; }) => r.role_name === 'admin');
+      const hasResearcherRole = roles.some((r: { role_name: string; }) => r.role_name === 'researcher');
+
+      console.log('hasReviewerRole:', hasReviewerRole);
+      console.log('hasAdminRole:', hasAdminRole);
+      console.log('hasResearcherRole:', hasResearcherRole);
       
-      if (data.role === 'reviewer') {
+      if (hasReviewerRole) {
         router.push('/review-dash');
       }
-      else if (data.role === 'admin') {
+      else if (hasAdminRole) {
         router.push('/admin-dashboard');
       }
-      else if (data.role === 'researcher') {
-        router.push('/dashboard');
+      else if (hasResearcherRole) {
+        router.push('/researcher-dashboard');
       }
       else if(data.message === 'User registered successfully') {
         localStorage.setItem('user_ID', data.user_ID);

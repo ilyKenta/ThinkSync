@@ -1,163 +1,93 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import styles from "../dashboard/page.module.css";
+import React, { useState, useEffect } from "react";
+import styles from "../researcher-dashboard/page.module.css";
+import { FaUserCircle } from "react-icons/fa";
+import ManageUsersPage from "../manage-users/page";
+import SubmittedProposalsPage from "../submitted-proposals/page";
+import useAuth from "../useAuth";
 import { useRouter } from "next/navigation";
+// For navigation
+// import { useRouter } from "next/navigation";
 
-interface User {
-  id: string;
-  name: string;
-  role: string;
-}
-//these are just mock data but we will connect to backend after
-// API data will be loaded into users state
-
-const roles = ["researcher", "reviewer", "admin"];
-
-const ManageUsersPage = () => {
-    const router = useRouter();
-  const [users, setUsers] = useState<User[]>([]);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editRole, setEditRole] = useState<string>("");
-  const [activeTab, setActiveTab] = useState("shared");
+const AdminDashboard = () => {
+  const router = useRouter();
+  const [hasAdminRole, setHasAdminRole] = useState<boolean | null>(null);
+  const [activeTab, setActiveTab] = useState<'users' | 'proposals'>('users');
 
   useEffect(() => {
-    const fetchUsers = async () => {
+    const roleString = typeof window !== "undefined" ? localStorage.getItem('role') : null;
+    let admin = false;
+    if (roleString) {
       try {
-        const token = localStorage.getItem('jwt');
-        const res = await fetch('http://localhost:5000/api/admin/users', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        const data = await res.json();
-        if (res.ok && data.users) {
-          setUsers(data.users.map((u: any) => ({
-            id: u.user_ID.toString(),
-            name: `${u.fname} ${u.sname}`,
-            role: u.roles || u.acc_role || '',
-          })));
-        } else {
-          setUsers([]);
-        }
-      } catch (err) {
-        setUsers([]);
+        const roles = JSON.parse(roleString);
+        admin = Array.isArray(roles) && roles.some((r: { role_name: string; }) => r.role_name === 'admin');
+      } catch (e) {
+        admin = false;
       }
-    };
-    fetchUsers();
-  }, []);
-
-  const handleEdit = (user: User) => {
-    setEditingId(user.id);
-    setEditRole(user.role);
-  };
-
-  const handleSave = async (user: User) => {
-    try {
-      const token = localStorage.getItem('jwt');
-      const res = await fetch(`http://localhost:5000/api/admin/users/${user.id}/role`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ newRole: editRole }),
-      });
-      if (res.ok) {
-        setUsers(users.map(u => u.id === user.id ? { ...u, role: editRole } : u));
-        setEditingId(null);
-      } else {
-        // Optionally handle error
-        alert('Failed to update role');
-      }
-    } catch (err) {
-      alert('Error updating user role');
     }
-  };
+    setHasAdminRole(admin);
+    if (!admin) {
+      router.push('/login');
+    }
+  }, [router]);
+
+  if (hasAdminRole === null) {
+    // Still checking role, render nothing or a spinner
+    return null;
+  }
+  if (!hasAdminRole) {
+    // Redirecting, render nothing
+    return null;
+  }
 
   return (
     <main className={styles.container}>
       {/* Sidebar */}
       <aside className={styles.sidebar}>
         <h2 style={{ margin: 0 }}>ThinkSync</h2>
-        <h3>Dashboard</h3>
+        <h3>Admin Dashboard</h3>
         <ul>
-          <li>
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTab("my");
-                  router.push("/manage-users");
-                }}
-                className={activeTab === "my" ? styles.active : ""}
-              >
-                Manage Users
-              </button>
-          </li>
-
-          <li>
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTab("my");
-                  router.push("/submitted-proposals");
-                }}
-                className={activeTab === "my" ? styles.active : ""}
-              >
-                Submitted Proposals
-              </button>
-          </li>
-
           <li>
             <button
               type="button"
-              onClick={() => {
-                setActiveTab("my");
-                router.push("/messager/AdminMessage");
-              }}
-              className={activeTab === "my" ? styles.active : ""}
+              onClick={() => setActiveTab('users')}
+              className={activeTab === 'users' ? styles.activeTab : ''}
             >
-              Messager
+              Manage Users
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => setActiveTab('proposals')}
+              className={activeTab === 'proposals' ? styles.activeTab : ''}
+            >
+              Submitted Proposals
             </button>
           </li>
         </ul>
       </aside>
       <section style={{ flex: 1, padding: "40px 60px" }}>
-        <h1 style={{ marginBottom: 32 }}>User Management</h1>
-        <table style={{ width: "100%", borderCollapse: "collapse", background: "#fff", borderRadius: 8, boxShadow: "0 2px 10px rgba(0,0,0,0.06)" }}>
-          <thead>
-            <tr style={{ background: "#f5f5f5" }}>
-              <th style={{ textAlign: "left", padding: 12 }}>Name</th>
-              <th style={{ textAlign: "left", padding: 12 }}>Role</th>
-              <th style={{ textAlign: "left", padding: 12 }}></th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map(user => (
-              <tr key={user.id}>
-                <td style={{ padding: 12 }}>{user.name}</td>
-                <td style={{ padding: 12 }}>
-                  {editingId === user.id ? (
-                    <select value={editRole} onChange={e => setEditRole(e.target.value)}>
-                      {roles.map(role => (
-                        <option key={role} value={role}>{role}</option>
-                      ))}
-                    </select>
-                  ) : (
-                    user.role
-                  )}
-                </td>
-                <td style={{ padding: 12 }}>
-                  {editingId === user.id ? (
-                    <button style={{ background: '#222', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 16px', marginRight: 8 }} onClick={() => handleSave(user)}>Save</button>
-                  ) : (
-                    <button style={{ background: '#eee', color: '#222', border: 'none', borderRadius: 6, padding: '6px 16px' }} onClick={() => handleEdit(user)}>Edit</button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <header style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 16, marginBottom: 32 }}>
+          <input
+            type="text"
+            placeholder="Search..."
+            style={{
+              padding: "8px 16px",
+              borderRadius: 8,
+              border: "1px solid #ccc",
+              fontSize: 16,
+              marginRight: 20,
+              width: 240,
+              background: "#f9f9f9"
+            }}
+          />
+          <FaUserCircle size={32} style={{ color: "#222" }} />
+        </header>
+        
+        {/* Content based on active tab */}
+        {activeTab === 'users' ? <ManageUsersPage /> : <SubmittedProposalsPage />}
       </section>
     </main>
   );
