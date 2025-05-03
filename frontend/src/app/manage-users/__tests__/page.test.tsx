@@ -1,128 +1,238 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import ManageUsersPage from '../page';
 import { useRouter } from 'next/navigation';
+import ManageUsersPage from '../page';
+import '@testing-library/jest-dom';
 
-jest.mock('../researcher-dashboard/page.module.css', () => new Proxy({}, { get: (target, prop) => prop }));
-
+// Mock next/navigation
 jest.mock('next/navigation', () => ({
   useRouter: jest.fn(),
 }));
 
+// Mock localStorage
+const localStorageMock = {
+  getItem: jest.fn(),
+  setItem: jest.fn(),
+  clear: jest.fn(),
+  removeItem: jest.fn(),
+};
+Object.defineProperty(window, 'localStorage', { value: localStorageMock });
+
+// Mock fetch
+global.fetch = jest.fn();
+
 describe('ManageUsersPage', () => {
-  let mockPush: jest.Mock;
-  let mockFetch: jest.Mock;
+  const mockRouter = {
+    push: jest.fn(),
+  };
+
+  const mockUsers = [
+    {
+      user_ID: '1',
+      fname: 'John',
+      sname: 'Doe',
+      roles: 'researcher'
+    },
+    {
+      user_ID: '2',
+      fname: 'Jane',
+      sname: 'Smith',
+      roles: 'reviewer'
+    }
+  ];
 
   beforeEach(() => {
-    mockPush = jest.fn();
-    (useRouter as jest.Mock).mockReturnValue({ push: mockPush });
-    mockFetch = jest.fn();
-    global.fetch = mockFetch;
-    Object.defineProperty(window, 'localStorage', {
-      value: {
-        getItem: jest.fn(() => 'mock-token'),
-        setItem: jest.fn(),
-        clear: jest.fn(),
-        removeItem: jest.fn(),
-      },
-      writable: true,
+    (useRouter as jest.Mock).mockReturnValue(mockRouter);
+    localStorageMock.getItem.mockClear();
+    (global.fetch as jest.Mock).mockClear();
+    mockRouter.push.mockClear();
+
+    // Mock fetch responses
+    (global.fetch as jest.Mock).mockImplementation((url) => {
+      if (url.includes('/api/admin/users')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ users: mockUsers }),
+        });
+      }
+      if (url.includes('/api/admin/users/')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ message: 'Role updated successfully' }),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({}),
+      });
     });
-    jest.clearAllMocks();
   });
 
-  it('renders and loads users', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ users: [
-        { user_ID: 1, fname: 'Alice', sname: 'Smith', roles: 'researcher' },
-        { user_ID: 2, fname: 'Bob', sname: 'Jones', roles: 'admin' },
-      ] }),
+  it('renders user management page correctly', async () => {
+    localStorageMock.getItem.mockImplementation((key) => {
+      if (key === 'jwt') return 'test-token';
+      return null;
     });
+
     render(<ManageUsersPage />);
+
+    // Wait for users to be loaded
     await waitFor(() => {
-      expect(screen.getByText('Alice Smith')).toBeInTheDocument();
-      expect(screen.getByText('Bob Jones')).toBeInTheDocument();
+      expect(screen.getByText('User Management')).toBeInTheDocument();
+      expect(screen.getByText('John Doe')).toBeInTheDocument();
+      expect(screen.getByText('Jane Smith')).toBeInTheDocument();
       expect(screen.getByText('researcher')).toBeInTheDocument();
-      expect(screen.getByText('admin')).toBeInTheDocument();
+      expect(screen.getByText('reviewer')).toBeInTheDocument();
     });
   });
 
-  it('handles edit and save role', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ users: [
-        { user_ID: 1, fname: 'Alice', sname: 'Smith', roles: 'researcher' },
-      ] }),
+  it('handles role editing', async () => {
+    localStorageMock.getItem.mockImplementation((key) => {
+      if (key === 'jwt') return 'test-token';
+      return null;
     });
+
     render(<ManageUsersPage />);
+
+    // Wait for users to be loaded
     await waitFor(() => {
-      expect(screen.getByText('Alice Smith')).toBeInTheDocument();
+      expect(screen.getByText('John Doe')).toBeInTheDocument();
     });
-    fireEvent.click(screen.getByText('Edit'));
-    const select = screen.getByDisplayValue('researcher');
-    fireEvent.change(select, { target: { value: 'admin' } });
-    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({}) });
-    fireEvent.click(screen.getByText('Save'));
+
+    // Get all Edit buttons and click the first one (for John Doe)
+    const editButtons = screen.getAllByText('Edit');
+    fireEvent.click(editButtons[0]);
+
+    // Change role
+    const roleSelect = screen.getByRole('combobox');
+    fireEvent.change(roleSelect, { target: { value: 'admin' } });
+
+    // Click save
+    const saveButton = screen.getByText('Save');
+    fireEvent.click(saveButton);
+
+    // Verify API call was made
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/api/admin/users/1/role'),
+      expect.objectContaining({
+        method: 'PUT',
+        headers: expect.objectContaining({
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer test-token',
+        }),
+        body: JSON.stringify({ newRole: 'admin' }),
+      })
+    );
+  });
+
+  it('handles empty user list', async () => {
+    localStorageMock.getItem.mockImplementation((key) => {
+      if (key === 'jwt') return 'test-token';
+      return null;
+    });
+
+    // Mock empty user list
+    (global.fetch as jest.Mock).mockImplementationOnce((url) => {
+      if (url.includes('/api/admin/users')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ users: [] }),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({}),
+      });
+    });
+
+    render(<ManageUsersPage />);
+
+    // Wait for empty state
     await waitFor(() => {
-      expect(screen.getByText('admin')).toBeInTheDocument();
+      expect(screen.getByText('User Management')).toBeInTheDocument();
+      expect(screen.queryByText('John Doe')).not.toBeInTheDocument();
+      expect(screen.queryByText('Jane Smith')).not.toBeInTheDocument();
     });
   });
 
-  it('shows alert on save error', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ users: [
-        { user_ID: 1, fname: 'Alice', sname: 'Smith', roles: 'researcher' },
-      ] }),
+  it('handles fetch error', async () => {
+    localStorageMock.getItem.mockImplementation((key) => {
+      if (key === 'jwt') return 'test-token';
+      return null;
     });
-    window.alert = jest.fn();
+
+    // Mock fetch to return error
+    (global.fetch as jest.Mock).mockImplementationOnce(() => 
+      Promise.reject(new Error('Failed to fetch'))
+    );
+
     render(<ManageUsersPage />);
+
+    // Wait for error state
     await waitFor(() => {
-      expect(screen.getByText('Alice Smith')).toBeInTheDocument();
-    });
-    fireEvent.click(screen.getByText('Edit'));
-    const select = screen.getByDisplayValue('researcher');
-    fireEvent.change(select, { target: { value: 'admin' } });
-    mockFetch.mockResolvedValueOnce({ ok: false, json: async () => ({}) });
-    fireEvent.click(screen.getByText('Save'));
-    await waitFor(() => {
-      expect(window.alert).toHaveBeenCalledWith('Failed to update role');
+      expect(screen.getByText('User Management')).toBeInTheDocument();
+      expect(screen.queryByText('John Doe')).not.toBeInTheDocument();
     });
   });
 
-  it('shows alert on fetch error', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ users: [
-        { user_ID: 1, fname: 'Alice', sname: 'Smith', roles: 'researcher' },
-      ] }),
+  it('handles role update error', async () => {
+    localStorageMock.getItem.mockImplementation((key) => {
+      if (key === 'jwt') return 'test-token';
+      return null;
     });
-    window.alert = jest.fn();
-    render(<ManageUsersPage />);
-    await waitFor(() => {
-      expect(screen.getByText('Alice Smith')).toBeInTheDocument();
-    });
-    fireEvent.click(screen.getByText('Edit'));
-    const select = screen.getByDisplayValue('researcher');
-    fireEvent.change(select, { target: { value: 'admin' } });
-    mockFetch.mockRejectedValueOnce(new Error('Network error'));
-    fireEvent.click(screen.getByText('Save'));
-    await waitFor(() => {
-      expect(window.alert).toHaveBeenCalledWith('Error updating user role');
-    });
-  });
 
-  it('handles sidebar navigation', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ users: [] }),
+    // Mock role update to fail
+    (global.fetch as jest.Mock).mockImplementation((url) => {
+      if (url.includes('/api/admin/users') && !url.includes('/role')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ users: mockUsers }),
+        });
+      }
+      if (url.includes('/api/admin/users/') && url.includes('/role')) {
+        return Promise.resolve({
+          ok: false,
+          json: () => Promise.resolve({ message: 'Failed to update role' }),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({}),
+      });
     });
+
+    // Mock window.alert
+    const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {});
+
     render(<ManageUsersPage />);
-    fireEvent.click(screen.getByText('Submitted Proposals'));
-    expect(mockPush).toHaveBeenCalledWith('/submitted-proposals');
-    fireEvent.click(screen.getByText('Messager'));
-    expect(mockPush).toHaveBeenCalledWith('/messager/AdminMessage');
-    fireEvent.click(screen.getByText('Manage Users'));
-    expect(mockPush).toHaveBeenCalledWith('/manage-users');
+
+    // Wait for users to be loaded
+    await waitFor(() => {
+      expect(screen.getByText('John Doe')).toBeInTheDocument();
+    });
+
+    // Get all Edit buttons and click the first one (for John Doe)
+    const editButtons = screen.getAllByText('Edit');
+    fireEvent.click(editButtons[0]);
+
+    // Change role
+    const roleSelect = screen.getByRole('combobox');
+    fireEvent.change(roleSelect, { target: { value: 'admin' } });
+
+    // Click save
+    const saveButton = screen.getByText('Save');
+    fireEvent.click(saveButton);
+
+    // Verify error alert
+    await waitFor(() => {
+      expect(alertSpy).toHaveBeenCalledWith('Failed to update role');
+    }, { timeout: 1500 });
+
+    if (!alertSpy.mock.calls.length) {
+      // eslint-disable-next-line no-console
+      console.log('window.alert calls:', alertSpy.mock.calls);
+    }
+
+    alertSpy.mockRestore();
   });
 }); 

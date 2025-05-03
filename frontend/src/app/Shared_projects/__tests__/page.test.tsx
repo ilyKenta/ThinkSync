@@ -42,6 +42,25 @@ describe('SharedProjectsPage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     localStorage.setItem('jwt', 'test-token');
+    (global.fetch as jest.Mock).mockImplementation((url) => {
+      if (url.includes('/api/projects/collaborator')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ projects: mockProjects })
+        });
+      }
+      if (url.includes('/api/messages/unread')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve([])
+        });
+      }
+      // Default: return a valid empty response for any other endpoint
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({})
+      });
+    });
   });
 
   it('renders the shared projects page correctly', async () => {

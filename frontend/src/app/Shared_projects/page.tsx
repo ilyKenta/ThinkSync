@@ -19,6 +19,7 @@ const Page = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isInboxSidebarOpen, setIsInboxSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('shared');
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -49,6 +50,21 @@ const Page = () => {
     };
 
     fetchProjects();
+  }, []);
+
+  useEffect(() => {
+    const fetchUnread = async () => {
+      const token = localStorage.getItem('jwt');
+      if (!token) return;
+      const res = await fetch('https://thinksyncapi.azurewebsites.net/api/messages/unread', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUnreadCount(Array.isArray(data) ? data.length : 0);
+      }
+    };
+    fetchUnread();
   }, []);
 
   const togglerSidebar = () => {
@@ -112,6 +128,25 @@ const Page = () => {
               className={activeTab === 'messager' ? styles.active : ''}
             >
               Messager
+              {unreadCount > 0 && (
+                <span style={{
+                  display: 'inline-block',
+                  marginLeft: 8,
+                  minWidth: 20,
+                  height: 20,
+                  borderRadius: '50%',
+                  background: 'red',
+                  color: 'white',
+                  fontWeight: 600,
+                  fontSize: 12,
+                  textAlign: 'center',
+                  lineHeight: '20px',
+                  padding: '0 6px',
+                  verticalAlign: 'middle',
+                }}>
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
             </button>
           </li>
         </ul>

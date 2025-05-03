@@ -49,26 +49,23 @@ const Page = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showCompose, setShowCompose] = useState(false);
   
+  const fetchMessages = async () => {
+    const token = localStorage.getItem("jwt");
+    const response = await fetch("https://thinksyncapi.azurewebsites.net/api/messages", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const data = await response.json();
+    const counts: Record<number, number> = {};
+    data.forEach((msg: Message) => {
+      counts[msg.sender_ID] = (counts[msg.sender_ID] || 0) + 1;
+    });
+    setGroupedCounts(counts);
+    setMessages(data);
+  };
+
   useEffect(() => {
-    const fetchMessages = async () => {
-      const token = localStorage.getItem("jwt");
-      const response = await fetch("https://thinksyncapi.azurewebsites.net/api/messages", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const data = await response.json();
-
-      const counts: Record<number, number> = {};
-      data.forEach((msg: Message) => {
-        counts[msg.sender_ID] = (counts[msg.sender_ID] || 0) + 1;
-      });
-
-      setGroupedCounts(counts);
-      setMessages(data);
-    };
-
     fetchMessages();
   }, []);
 
@@ -108,6 +105,7 @@ const Page = () => {
       setNewMessage({ receiver_ID: "", subject: "", body: "", project_ID: "" });
       setAttachments([]);
       fileInputRef.current?.value && (fileInputRef.current.value = "");
+      await fetchMessages();
     } else {
       alert("Failed to send message.");
     }
@@ -172,6 +170,20 @@ const Page = () => {
     }
   };
 
+  const handleSelectUser = async (otherUserId: string) => {
+    setSelectedUser(otherUserId);
+    const token = localStorage.getItem('jwt');
+    await fetch('https://thinksyncapi.azurewebsites.net/api/messages/mark-read', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ senderId: otherUserId }),
+    });
+    await fetchMessages();
+  };
+
   return (
     <main className={styles.container}>
       <nav className={styles.sidebar}>
@@ -183,10 +195,10 @@ const Page = () => {
             <button
               type="button"
               onClick={() => {
-                setActiveTab("my");
-                router.push("/manage-users");
+                setActiveTab("users");
+                router.push("/admin-dashboard");
               }}
-              className={activeTab === "my" ? styles.active : ""}
+              className={activeTab === "users" ? styles.active : ""}
             >
               Manage Users
             </button>
@@ -195,10 +207,10 @@ const Page = () => {
             <button
               type="button"
               onClick={() => {
-                setActiveTab("my");
-                router.push("/submitted-proposals");
+                setActiveTab("proposals");
+                router.push("/admin-dashboard");
               }}
-              className={activeTab === "my" ? styles.active : ""}
+              className={activeTab === "proposals" ? styles.active : ""}
             >
               Submitted Proposals
             </button>
@@ -238,22 +250,43 @@ const Page = () => {
               {conversationPreviews.length === 0 && (
                 <div className={styles.noResults}>No messages yet.</div>
               )}
-              {conversationPreviews.map(({ key, latestMsg, otherUser }) => (
-                <article
-                  key={key}
-                  className={styles.previewItem}
-                  onClick={() => setSelectedUser(otherUser.id)}
-                >
-                  <section className={styles.previewContent}>
-                    <strong className={styles.previewName}>
-                      {otherUser.fname} {otherUser.sname}
-                    </strong>
-                    <p className={styles.previewText}>
-                      {latestMsg.body.slice(0, 30)}...
-                    </p>
-                  </section>
-                </article>
-              ))}
+              {conversationPreviews.map(({ key, latestMsg, otherUser }) => {
+                const currentUserId = localStorage.getItem('user_ID');
+                const conversationMsgs = groupedConversations[key] || [];
+                const hasUnread = conversationMsgs.some(
+                  msg => !msg.is_read && String(msg.receiver_ID) === String(currentUserId)
+                );
+                return (
+                  <article
+                    key={key}
+                    className={styles.previewItem}
+                    onClick={() => handleSelectUser(otherUser.id)}
+                  >
+                    <section className={styles.previewContent}>
+                      <strong className={styles.previewName}>
+                        {otherUser.fname} {otherUser.sname}
+                        {hasUnread && (
+                          <span
+                            style={{
+                              display: 'inline-block',
+                              marginLeft: 8,
+                              width: 10,
+                              height: 10,
+                              borderRadius: '50%',
+                              background: 'red',
+                              verticalAlign: 'middle'
+                            }}
+                            aria-label="unread messages"
+                          />
+                        )}
+                      </strong>
+                      <p className={styles.previewText}>
+                        {latestMsg.body.slice(0, 30)}...
+                      </p>
+                    </section>
+                  </article>
+                );
+              })}
             </nav>
           </aside>
 
@@ -300,7 +333,7 @@ const Page = () => {
                       >
                         <header className={styles.messageContent}>
                           <p className={styles.senderName}>
-                            {'You'}
+                            {String(msg.sender_ID) === String(currentUserId) ? 'You' : msg.sender_fname}
                           </p>
                           {msg.subject && (
                             <h4 className={styles.messageSubject}>{msg.subject}</h4>

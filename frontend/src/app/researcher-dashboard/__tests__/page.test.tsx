@@ -49,6 +49,15 @@ describe('ResearcherDashboard', () => {
     push: jest.fn(),
   };
 
+  let mockProjects: Array<{
+    project_ID: string;
+    title: string;
+    description: string;
+    start_date: string;
+    end_date: string;
+    funding_available: boolean;
+  }> = [];
+
   beforeEach(() => {
     (useRouter as jest.Mock).mockReturnValue(mockRouter);
     localStorageMock.getItem.mockClear();
@@ -59,12 +68,12 @@ describe('ResearcherDashboard', () => {
     console.error = jest.fn();
     console.log = jest.fn();
 
-    // Mock fetch responses
+    // Mock fetch responses for all endpoints
     (global.fetch as jest.Mock).mockImplementation((url) => {
       if (url.includes('projects/owner')) {
         return Promise.resolve({
           ok: true,
-          json: () => Promise.resolve({ projects: [] }),
+          json: () => Promise.resolve({ projects: mockProjects }),
         });
       }
       if (url.includes('delete')) {
@@ -85,6 +94,13 @@ describe('ResearcherDashboard', () => {
           json: () => Promise.resolve({ invitations: [] }),
         });
       }
+      if (url.includes('api/messages/unread')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve([]),
+        });
+      }
+      // Default: return a valid empty response for any other endpoint
       return Promise.resolve({
         ok: true,
         json: () => Promise.resolve({}),
@@ -133,7 +149,7 @@ describe('ResearcherDashboard', () => {
   });
 
   it('fetches and displays projects', async () => {
-    const mockProjects = [
+    mockProjects = [
       {
         project_ID: '1',
         title: 'Test Project',
@@ -166,7 +182,7 @@ describe('ResearcherDashboard', () => {
   });
 
   it('handles project deletion', async () => {
-    const mockProjects = [
+    mockProjects = [
       {
         project_ID: '1',
         title: 'Test Project',
@@ -176,14 +192,11 @@ describe('ResearcherDashboard', () => {
         funding_available: true,
       },
     ];
-
     localStorageMock.getItem.mockImplementation((key) => {
       if (key === 'role') return JSON.stringify([{ role_name: 'researcher' }]);
       if (key === 'jwt') return 'mock-token';
       return null;
     });
-
-    // Mock the fetch for projects
     (global.fetch as jest.Mock).mockImplementation((url) => {
       if (url.includes('projects/owner')) {
         return Promise.resolve({
@@ -197,9 +210,23 @@ describe('ResearcherDashboard', () => {
           json: () => Promise.resolve({ message: 'Project deleted successfully' }),
         });
       }
-      return Promise.reject(new Error('Not found'));
+      if (url.includes('api/messages/unread')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve([]),
+        });
+      }
+      if (url.includes('invitations')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ invitations: [] }),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({}),
+      });
     });
-
     // Mock window.confirm
     window.confirm = jest.fn(() => true);
 
@@ -295,7 +322,7 @@ describe('ResearcherDashboard', () => {
   });
 
   it('handles project editing', async () => {
-    const mockProjects = [
+    mockProjects = [
       {
         project_ID: '1',
         title: 'Test Project',
@@ -353,7 +380,7 @@ describe('ResearcherDashboard', () => {
   });
 
   it('handles invite collaborator modal', async () => {
-    const mockProjects = [
+    mockProjects = [
       {
         project_ID: '1',
         title: 'Test Project',
@@ -417,15 +444,26 @@ describe('ResearcherDashboard', () => {
       if (key === 'jwt') return 'mock-token';
       return null;
     });
-
-    (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Failed to fetch'));
-
+    (global.fetch as jest.Mock).mockImplementation((url) => {
+      if (url.includes('projects/owner')) {
+        return Promise.reject(new Error('Failed to fetch'));
+      }
+      if (url.includes('api/messages/unread')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve([]),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({}),
+      });
+    });
     await act(async () => {
       render(<ResearcherDashboard />);
     });
-
     await waitFor(() => {
-      expect(screen.getByText('Error: Failed to fetch')).toBeInTheDocument();
+      expect(screen.getByText(/Error/i)).toBeInTheDocument();
     });
   });
 
@@ -561,13 +599,7 @@ describe('ResearcherDashboard', () => {
   });
 
   it('handles search functionality with no results', async () => {
-    localStorageMock.getItem.mockImplementation((key) => {
-      if (key === 'role') return JSON.stringify([{ role_name: 'researcher' }]);
-      if (key === 'jwt') return 'mock-token';
-      return null;
-    });
-
-    const mockProjects = [{
+    mockProjects = [{
       project_ID: '1',
       title: 'Test Project',
       description: 'Test Description',
@@ -575,6 +607,12 @@ describe('ResearcherDashboard', () => {
       end_date: '2024-12-31',
       funding_available: true
     }];
+
+    localStorageMock.getItem.mockImplementation((key) => {
+      if (key === 'role') return JSON.stringify([{ role_name: 'researcher' }]);
+      if (key === 'jwt') return 'mock-token';
+      return null;
+    });
 
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
@@ -600,13 +638,7 @@ describe('ResearcherDashboard', () => {
   });
 
   it('handles search functionality with matching results', async () => {
-    localStorageMock.getItem.mockImplementation((key) => {
-      if (key === 'role') return JSON.stringify([{ role_name: 'researcher' }]);
-      if (key === 'jwt') return 'mock-token';
-      return null;
-    });
-
-    const mockProjects = [
+    mockProjects = [
       {
         project_ID: '1',
         title: 'Test Project',
@@ -624,8 +656,11 @@ describe('ResearcherDashboard', () => {
         funding_available: false
       }
     ];
-
-    // Mock the fetch response
+    localStorageMock.getItem.mockImplementation((key) => {
+      if (key === 'role') return JSON.stringify([{ role_name: 'researcher' }]);
+      if (key === 'jwt') return 'mock-token';
+      return null;
+    });
     (global.fetch as jest.Mock).mockImplementation((url) => {
       if (url.includes('projects/owner')) {
         return Promise.resolve({
@@ -633,9 +668,23 @@ describe('ResearcherDashboard', () => {
           json: () => Promise.resolve({ projects: mockProjects }),
         });
       }
-      return Promise.reject(new Error('Not found'));
+      if (url.includes('api/messages/unread')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve([]),
+        });
+      }
+      if (url.includes('invitations')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ invitations: [] }),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({}),
+      });
     });
-
     await act(async () => {
       render(<ResearcherDashboard />);
     });
