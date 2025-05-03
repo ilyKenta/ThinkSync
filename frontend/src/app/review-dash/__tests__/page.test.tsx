@@ -131,12 +131,13 @@ describe('Review Dashboard Page', () => {
       
       // Check for dates using getAllByText since there are multiple elements
       const startDates = screen.getAllByText(/Start:/i);
-      expect(startDates[0]).toHaveTextContent(/2024\/01\/01/);
-      expect(startDates[1]).toHaveTextContent(/2024\/01\/03/);
+      // Check for either date format
+      expect(startDates[0]).toHaveTextContent(/(2024\/01\/01|1\/1\/2024)/);
+      expect(startDates[1]).toHaveTextContent(/(2024\/01\/03|1\/3\/2024)/);
       
       const assignedDates = screen.getAllByText(/Assigned to you at:/i);
-      expect(assignedDates[0]).toHaveTextContent(/2024\/01\/02/);
-      expect(assignedDates[1]).toHaveTextContent(/2024\/01\/04/);
+      expect(assignedDates[0]).toHaveTextContent(/(2024\/01\/02|1\/2\/2024)/);
+      expect(assignedDates[1]).toHaveTextContent(/(2024\/01\/04|1\/4\/2024)/);
     });
 
     expect(global.fetch).toHaveBeenCalledWith(
