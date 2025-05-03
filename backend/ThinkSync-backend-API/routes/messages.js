@@ -136,7 +136,8 @@ router.get('/unread', authenticateUser, async (req, res) => {
                 m.sender_ID,
                 m.subject,
                 m.sent_at,
-                sender.name as sender_name,
+                sender.sname as sender_sname,
+                sender.fname as sender_fname,
                 COUNT(ma.attachment_ID) as attachment_count
             FROM messages m
             LEFT JOIN users sender ON m.sender_ID = sender.user_ID
@@ -234,24 +235,24 @@ router.post('/', authenticateUser, upload.array('attachments', 5), async (req, r
 });
 
 // Mark a message as read
-router.put('/:messageId/read', authenticateUser, async (req, res) => {
-    try {
-        const userId = req.userId;
-        const { messageId } = req.params;
+// router.put('/:messageId/read', authenticateUser, async (req, res) => {
+//     try {
+//         const userId = req.userId;
+//         const { messageId } = req.params;
 
-        const query = `
-            UPDATE messages 
-            SET is_read = TRUE 
-            WHERE message_ID = ? AND receiver_ID = ?
-        `;
+//         const query = `
+//             UPDATE messages 
+//             SET is_read = TRUE 
+//             WHERE message_ID = ? AND receiver_ID = ?
+//         `;
         
-        await executeQuery(query, [messageId, userId]);
-        res.json({ message: 'Message marked as read' });
-    } catch (error) {
-        console.error('Error marking message as read:', error);
-        res.status(500).json({ error: 'Failed to mark message as read' });
-    }
-});
+//         await executeQuery(query, [messageId, userId]);
+//         res.json({ message: 'Message marked as read' });
+//     } catch (error) {
+//         console.error('Error marking message as read:', error);
+//         res.status(500).json({ error: 'Failed to mark message as read' });
+//     }
+// });
 
 // Upload attachment
 router.post('/:messageId/attachments', authenticateUser, upload.single('file'), async (req, res) => {
@@ -378,6 +379,29 @@ router.get('/search-projects', authenticateUser, async (req, res) => {
     } catch (error) {
         console.error('Error searching projects:', error);
         res.status(500).json({ error: 'Failed to search projects' });
+    }
+});
+
+// Mark all messages as read in a conversation
+router.put('/mark-read', authenticateUser, async (req, res) => {
+    try {
+        const userId = req.userId;
+        const { senderId } = req.body; // senderId = the other user in the chat
+
+        if (!senderId) {
+            return res.status(400).json({ error: 'senderId is required' });
+        }
+
+        const query = `
+            UPDATE messages
+            SET is_read = TRUE
+            WHERE sender_ID = ? AND receiver_ID = ? AND is_read = FALSE
+        `;
+        await executeQuery(query, [senderId, userId]);
+        res.json({ message: 'Messages marked as read' });
+    } catch (error) {
+        console.error('Error marking messages as read:', error);
+        res.status(500).json({ error: 'Failed to mark messages as read' });
     }
 });
 

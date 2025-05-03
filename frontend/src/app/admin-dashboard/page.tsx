@@ -14,6 +14,7 @@ const AdminDashboard = () => {
   const router = useRouter();
   const [hasAdminRole, setHasAdminRole] = useState<boolean | null>(null);
   const [activeTab, setActiveTab] = useState<'users' | 'proposals'>('users');
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     const roleString = typeof window !== "undefined" ? localStorage.getItem('role') : null;
@@ -31,6 +32,21 @@ const AdminDashboard = () => {
       router.push('/login');
     }
   }, [router]);
+
+  useEffect(() => {
+    const fetchUnread = async () => {
+      const token = localStorage.getItem('jwt');
+      if (!token) return;
+      const res = await fetch('http://localhost:5000/api/messages/unread', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUnreadCount(Array.isArray(data) ? data.length : 0);
+      }
+    };
+    fetchUnread();
+  }, []);
 
   if (hasAdminRole === null) {
     // Still checking role, render nothing or a spinner
@@ -66,6 +82,34 @@ const AdminDashboard = () => {
               Submitted Proposals
             </button>
           </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => router.push('/messager/AdminMessage')}
+              className={''}
+            >
+              Messager
+              {unreadCount > 0 && (
+                <span style={{
+                  display: 'inline-block',
+                  marginLeft: 8,
+                  minWidth: 20,
+                  height: 20,
+                  borderRadius: '50%',
+                  background: 'red',
+                  color: 'white',
+                  fontWeight: 600,
+                  fontSize: 12,
+                  textAlign: 'center',
+                  lineHeight: '20px',
+                  padding: '0 6px',
+                  verticalAlign: 'middle',
+                }}>
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
+            </button>
+          </li>
         </ul>
       </aside>
       <section style={{ flex: 1, padding: "40px 60px" }}>
@@ -93,4 +137,4 @@ const AdminDashboard = () => {
   );
 };
 
-export default ManageUsersPage;
+export default AdminDashboard;
