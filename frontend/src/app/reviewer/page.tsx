@@ -47,7 +47,7 @@ export default function ReviewerSignupPage() {
       const data = await res.json();
 
       if (res.ok) {
-        router.push('/dashboard');
+        router.push('/review-dash');
         console.log(data);
       } else {
         alert(`Error: ${data.error}`);

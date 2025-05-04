@@ -103,7 +103,7 @@ describe('AdminSignupPage', () => {
           }),
         })
       );
-      expect(mockRouter.push).toHaveBeenCalledWith('/dashboard');
+      expect(mockRouter.push).toHaveBeenCalledWith('/admin-dashboard');
     });
   });
 

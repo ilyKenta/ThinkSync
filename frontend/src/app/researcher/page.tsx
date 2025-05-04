@@ -48,7 +48,7 @@ export default function ResearcherSignupPage() {
       const data = await res.json();
 
       if (res.ok) {
-        router.push('/dashboard');
+        router.push('/researcher-dashboard');
         console.log(data);
       } else {
         alert(`Error: ${data.error}`);

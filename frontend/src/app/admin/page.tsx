@@ -55,7 +55,7 @@ export default function AdminSignupPage() {
 
       const result = await response.json();
       if (response.ok) {
-        router.push('/dashboard');
+        router.push('/admin-dashboard');
       } else {
         alert("Error: " + result.error);
       }

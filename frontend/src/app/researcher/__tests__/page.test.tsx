@@ -118,7 +118,7 @@ describe('ResearcherSignupPage', () => {
           }),
         })
       );
-      expect(mockRouter.push).toHaveBeenCalledWith('/dashboard');
+      expect(mockRouter.push).toHaveBeenCalledWith('/researcher-dashboard');
     });
   });
 

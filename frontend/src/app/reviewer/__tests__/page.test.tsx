@@ -124,7 +124,7 @@ describe('ReviewerSignupPage', () => {
           }),
         })
       );
-      expect(mockRouter.push).toHaveBeenCalledWith('/dashboard');
+      expect(mockRouter.push).toHaveBeenCalledWith('/review-dash');
     });
   });
 
