@@ -80,32 +80,58 @@ router.put('/users/:userId/role', isAdmin, async (req, res) => {
             return res.status(400).json({ error: 'Invalid role specified' });
         }
 
-        // Get current role
+        // Get current roles
         const currentRoleQuery = `
             SELECT r.role_name 
             FROM roles r
             JOIN user_roles ur ON r.role_ID = ur.role_ID
             WHERE ur.user_ID = ?
         `;
-        //const currentRoles = await db.executeQuery(currentRoleQuery, [userId]);
+        const currentRolesResult = await db.executeQuery(currentRoleQuery, [userId]);
 
         // Remove all current roles
         const removeRolesQuery = 'DELETE FROM user_roles WHERE user_ID = ?';
         await db.executeQuery(removeRolesQuery, [userId]);
 
-        // If user was a researcher, delete their projects
-        // if (currentRoles.some(role => role.role_name === 'researcher')) {
-        //     const deleteProjectsQuery = 'DELETE FROM projects WHERE owner_ID = ?';
-        //     await db.executeQuery(deleteProjectsQuery, [userId]);
-        // }
+        // If switching to admin, do not touch researcher/reviewer tables
+        if (newRole === 'admin') {
+            const addRoleQuery = `
+                INSERT INTO user_roles (user_ID, role_ID)
+                SELECT ?, r.role_ID
+                FROM roles r
+                WHERE r.role_name = ?
+            `;
+            await db.executeQuery(addRoleQuery, [userId, newRole]);
+            return res.status(200).json({ message: 'User role updated successfully' });
+        }
 
-        // If user was a reviewer, delete their reviews and assignments
-        // if (currentRoles.some(role => role.role_name === 'reviewer')) {
-        //     const deleteReviewsQuery = 'DELETE FROM reviews WHERE reviewer_ID = ?';
-        //     const deleteAssignmentsQuery = 'DELETE FROM review_assignments WHERE reviewer_ID = ?';
-        //     await db.executeQuery(deleteReviewsQuery, [userId]);
-        //     await db.executeQuery(deleteAssignmentsQuery, [userId]);
-        // }
+        // Helper to migrate or create data between tables
+        async function migrateOrCreateUserData(fromTable, toTable) {
+            // Try to fetch data from the old table
+            const selectQuery = `SELECT res_area, qualification, current_proj FROM ${fromTable} WHERE user_ID = ?`;
+            const oldData = await db.executeQuery(selectQuery, [userId]);
+            let res_area = '', qualification = '', current_proj = '';
+            if (oldData.length > 0) {
+                res_area = oldData[0].res_area || '';
+                qualification = oldData[0].qualification || '';
+                current_proj = oldData[0].current_proj || '';
+                // Remove from old table
+                await db.executeQuery(`DELETE FROM ${fromTable} WHERE user_ID = ?`, [userId]);
+            }
+            // Remove from new table to avoid duplicates
+            await db.executeQuery(`DELETE FROM ${toTable} WHERE user_ID = ?`, [userId]);
+            // Insert into new table (either migrated or empty)
+            await db.executeQuery(
+                `INSERT INTO ${toTable} (user_ID, res_area, qualification, current_proj) VALUES (?, ?, ?, ?)`,
+                [userId, res_area, qualification, current_proj]
+            );
+        }
+
+        if (newRole === 'researcher') {
+            await migrateOrCreateUserData('reviewer', 'researcher');
+        } else if (newRole === 'reviewer') {
+            await migrateOrCreateUserData('researcher', 'reviewer');
+        }
 
         // Add new role
         const addRoleQuery = `
@@ -119,6 +145,10 @@ router.put('/users/:userId/role', isAdmin, async (req, res) => {
         return res.status(200).json({ message: 'User role updated successfully' });
     } catch (error) {
         console.error('Error updating user role:', error);
+        if (error.message === 'User has no data in the old role table to migrate.') {
+            // This error should not occur anymore, but keep for safety
+            return res.status(400).json({ error: error.message });
+        }
         if (error.message === 'Access token is required' || 
             error.message === 'Invalid authorization format' || 
             error.message === 'Invalid token') {
