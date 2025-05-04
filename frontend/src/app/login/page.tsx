@@ -99,6 +99,11 @@ export default function LoginPage() {
         localStorage.setItem('user_ID', data.user_ID);
         router.push('/role');
       }
+      else if (!roles.length) {
+        // User exists but has no roles assigned
+        localStorage.setItem('user_ID', data.user_ID);
+        router.push('/role');
+      }
       else {
         console.error('Authentication error:', data);
         alert('Error: ' + (data.error || 'Authentication failed'));
@@ -130,7 +135,7 @@ export default function LoginPage() {
       </header>
 
       <section className={styles.loginBox}>
-        <h1 className={styles.title}>Login</h1>
+        <h1 className={styles.title}>Login/Sign up</h1>
         <form className={styles.loginForm} onSubmit={(e) => e.preventDefault()}>
           <button 
             className={styles.loginButton} 
