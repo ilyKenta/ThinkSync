@@ -160,7 +160,7 @@ describe('LoginPage', () => {
     mockAlert.mockRestore();
   });
 
-  it('handles API error and shows alert', async () => {
+  it('handles API error and redirects to role selection', async () => {
     const mockToken = 'mock-access-token';
     const mockError = { error: 'Authentication failed' };
 
@@ -177,8 +177,6 @@ describe('LoginPage', () => {
     };
     PublicClientApplication.mockImplementation(() => mockMsalInstance);
 
-    const mockAlert = jest.spyOn(window, 'alert').mockImplementation(() => {});
-
     await act(async () => {
       render(<LoginPage />);
     });
@@ -188,8 +186,7 @@ describe('LoginPage', () => {
       fireEvent.click(loginButton);
     });
 
-    expect(mockAlert).toHaveBeenCalledWith('Error: Authentication failed');
-    mockAlert.mockRestore();
+    expect(mockRouter.push).toHaveBeenCalledWith('/role');
   });
 
   it('disables login button when MSAL initialization fails', async () => {
