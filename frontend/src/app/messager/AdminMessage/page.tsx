@@ -51,7 +51,7 @@ const Page = () => {
   
   const fetchMessages = async () => {
     const token = localStorage.getItem("jwt");
-    const response = await fetch("https://thinksyncapi.azurewebsites.net/api/messages", {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -69,16 +69,6 @@ const Page = () => {
     fetchMessages();
   }, []);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files) return;
-    const selectedFiles = Array.from(e.target.files);
-    if (selectedFiles.length + attachments.length > 5) {
-      alert("You can attach up to 5 files.");
-      return;
-    }
-    setAttachments([...attachments, ...selectedFiles]);
-  };
-
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     const token = localStorage.getItem("jwt");
@@ -92,7 +82,7 @@ const Page = () => {
       formData.append("attachments", file);
     });
 
-    const response = await fetch("https://thinksyncapi.azurewebsites.net/api/messages", {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -145,7 +135,7 @@ const Page = () => {
     const token = localStorage.getItem("jwt");
     try {
       const response = await fetch(
-        `https://thinksyncapi.azurewebsites.net/api/messages/${messageId}/attachments/${attachmentId}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/messages/${messageId}/attachments/${attachmentId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -173,7 +163,7 @@ const Page = () => {
   const handleSelectUser = async (otherUserId: string) => {
     setSelectedUser(otherUserId);
     const token = localStorage.getItem('jwt');
-    await fetch('https://thinksyncapi.azurewebsites.net/api/messages/mark-read', {
+    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages/mark-read`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',

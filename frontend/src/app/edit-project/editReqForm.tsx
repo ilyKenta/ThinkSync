@@ -72,7 +72,7 @@ export default function EditReqForm({
       };
 
       const res = await fetch(
-        `https://thinksyncapi.azurewebsites.net/api/projects/update/${projectId}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/projects/update/${projectId}`,
         {
           method: "PUT",
           headers: {

@@ -93,7 +93,7 @@ describe('LoginPage', () => {
 
     expect(mockMsalInstance.loginPopup).toHaveBeenCalled();
     expect(global.fetch).toHaveBeenCalledWith(
-      'https://thinksyncapi.azurewebsites.net/api/auth/microsoft',
+      `${process.env.NEXT_PUBLIC_API_URL}/api/auth/microsoft`,
       expect.any(Object)
     );
     expect(localStorage.getItem('jwt')).toBe(mockToken);

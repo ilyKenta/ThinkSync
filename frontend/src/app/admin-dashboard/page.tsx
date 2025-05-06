@@ -37,7 +37,7 @@ const AdminDashboard = () => {
     const fetchUnread = async () => {
       const token = localStorage.getItem('jwt');
       if (!token) return;
-      const res = await fetch('https://thinksyncapi.azurewebsites.net/api/messages/unread', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages/unread`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {

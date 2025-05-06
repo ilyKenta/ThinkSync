@@ -69,13 +69,13 @@ describe('Review Dashboard Page', () => {
       return null;
     });
     (global.fetch as jest.Mock).mockImplementation((url) => {
-      if (url === 'https://thinksyncapi.azurewebsites.net/api/reviewer/proposals') {
+      if (url === `${process.env.NEXT_PUBLIC_API_URL}/api/reviewer/proposals`) {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ proposals: mockProposals }),
         });
       }
-      if (url === 'https://thinksyncapi.azurewebsites.net/api/messages/unread') {
+      if (url === `${process.env.NEXT_PUBLIC_API_URL}/api/messages/unread`) {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve([]),
@@ -111,10 +111,10 @@ describe('Review Dashboard Page', () => {
 
   it('renders error state when fetch fails', async () => {
     (global.fetch as jest.Mock).mockImplementation((url) => {
-      if (url === 'https://thinksyncapi.azurewebsites.net/api/reviewer/proposals') {
+      if (url === `${process.env.NEXT_PUBLIC_API_URL}/api/reviewer/proposals`) {
         return Promise.reject(new Error('Failed to fetch'));
       }
-      if (url === 'https://thinksyncapi.azurewebsites.net/api/messages/unread') {
+      if (url === `${process.env.NEXT_PUBLIC_API_URL}/api/messages/unread`) {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve([]),
@@ -168,13 +168,13 @@ describe('Review Dashboard Page', () => {
 
   it('handles API error response', async () => {
     (global.fetch as jest.Mock).mockImplementation((url) => {
-      if (url === 'https://thinksyncapi.azurewebsites.net/api/reviewer/proposals') {
+      if (url === `${process.env.NEXT_PUBLIC_API_URL}/api/reviewer/proposals`) {
         return Promise.resolve({
           ok: false,
           json: () => Promise.resolve({ error: 'Invalid request' })
         });
       }
-      if (url === 'https://thinksyncapi.azurewebsites.net/api/messages/unread') {
+      if (url === `${process.env.NEXT_PUBLIC_API_URL}/api/messages/unread`) {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve([]),
@@ -193,10 +193,10 @@ describe('Review Dashboard Page', () => {
 
   it('handles network error', async () => {
     (global.fetch as jest.Mock).mockImplementation((url) => {
-      if (url === 'https://thinksyncapi.azurewebsites.net/api/reviewer/proposals') {
+      if (url === `${process.env.NEXT_PUBLIC_API_URL}/api/reviewer/proposals`) {
         return Promise.reject(new Error('Network error'));
       }
-      if (url === 'https://thinksyncapi.azurewebsites.net/api/messages/unread') {
+      if (url === `${process.env.NEXT_PUBLIC_API_URL}/api/messages/unread`) {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve([]),

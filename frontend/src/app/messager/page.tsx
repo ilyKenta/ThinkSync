@@ -50,7 +50,7 @@ const Page = () => {
   useEffect(() => {
     const fetchMessages = async () => {
       const token = localStorage.getItem("jwt");
-      const response = await fetch("https://thinksyncapi.azurewebsites.net/api/messages", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -72,123 +72,13 @@ const Page = () => {
     fetchMessages();
   }, []);
 
-  // useEffect(() => {
-  //   // Mock message data for testing
-  //   const mockData: Message[] = [
-  //     {
-  //       message_ID: 1,
-  //       sender_ID: 101,
-  //       receiver_ID: 999,
-  //       subject: "Project Sync",
-  //       body: "Hey, are you available to discuss the ThinkSync project timeline?",
-  //       sent_at: "2025-05-01T09:30:00Z",
-  //       is_read: false,
-  //       sender_fname: "Alice",
-  //       sender_sname: "Johnson",
-  //       receiver_fname: "You",
-  //       receiver_sname: "",
-  //       project_title: "ThinkSync",
-  //       attachments: [],
-  //     },
-  //     {
-  //       message_ID: 2,
-  //       sender_ID: 102,
-  //       receiver_ID: 999,
-  //       subject: "Re: Requirements",
-  //       body: "Here are the updated requirements for the AI module.",
-  //       sent_at: "2025-05-01T10:15:00Z",
-  //       is_read: true,
-  //       sender_fname: "Bob",
-  //       sender_sname: "Smith",
-  //       receiver_fname: "You",
-  //       receiver_sname: "",
-  //       project_title: "AI Enhancer",
-  //       attachments: [
-  //         {
-  //           attachment_ID: 1,
-  //           file_name: "requirements.pdf",
-  //           file_url: "https://thinksyncapi.azurewebsites.net/files/requirements.pdf",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       message_ID: 3,
-  //       sender_ID: 101,
-  //       receiver_ID: 999,
-  //       subject: "Follow-up",
-  //       body: "Just checking if you received the last document.",
-  //       sent_at: "2025-05-01T11:00:00Z",
-  //       is_read: false,
-  //       sender_fname: "Alice",
-  //       sender_sname: "Johnson",
-  //       receiver_fname: "You",
-  //       receiver_sname: "",
-  //       project_title: "ThinkSync",
-  //       attachments: [],
-  //     },
-  //     {
-  //       message_ID: 4,
-  //       sender_ID: 999,
-  //       receiver_ID: 101,
-  //       subject: "RE: Follow-up",
-  //       body: "Yes, I got it. I'll review by this evening.",
-  //       sent_at: "2025-05-01T11:30:00Z",
-  //       is_read: true,
-  //       sender_fname: "You",
-  //       sender_sname: "",
-  //       receiver_fname: "Alice",
-  //       receiver_sname: "Johnson",
-  //       project_title: "ThinkSync",
-  //       attachments: [],
-  //     },
-  //   ];
-
-  //   const counts: Record<number, number> = {};
-  //   mockData.forEach((msg: Message) => {
-  //     counts[msg.sender_ID] = (counts[msg.sender_ID] || 0) + 1;
-  //   });
-
-  //   setGroupedCounts(counts);
-  //   setMessages(mockData);
-  // }, []);
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files) return;
-    const selectedFiles = Array.from(e.target.files);
-    
-    // Check file types and sizes
-    const validFiles = selectedFiles.filter(file => {
-      const fileType = file.type;
-      const fileSize = file.size;
-      const maxSize = 10 * 1024 * 1024; // 10MB limit
-      
-      if (fileSize > maxSize) {
-        alert(`File ${file.name} is too large. Maximum size is 10MB.`);
-        return false;
-      }
-      
-      if (!['application/pdf', 'image/jpeg', 'image/png', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'].includes(fileType)) {
-        alert(`File ${file.name} is not a supported type. Supported types are: PDF, JPEG, PNG, DOC, DOCX`);
-        return false;
-      }
-      
-      return true;
-    });
-
-    if (validFiles.length + attachments.length > 5) {
-      alert("You can attach up to 5 files.");
-      return;
-    }
-    setAttachments([...attachments, ...validFiles]);
-  };
-
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     const token = localStorage.getItem("jwt");
     
     try {
       // First, send the message
-      const messageResponse = await fetch("https://thinksyncapi.azurewebsites.net/api/messages", {
+      const messageResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -205,35 +95,8 @@ const Page = () => {
       if (!messageResponse.ok) {
         throw new Error("Failed to send message");
       }
-
-      const messageData = await messageResponse.json();
-      const messageId = messageData.message_ID;
-
-      // Then, upload attachments if any
-      if (attachments.length > 0) {
-        for (const file of attachments) {
-          const formData = new FormData();
-          formData.append("file", file);
-
-          const attachmentResponse = await fetch(
-            `https://thinksyncapi.azurewebsites.net/api/messages/${messageId}/attachments`,
-            {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-              body: formData,
-            }
-          );
-
-          if (!attachmentResponse.ok) {
-            throw new Error(`Failed to upload attachment: ${file.name}`);
-          }
-        }
-      }
-
       // Refresh messages after successful send
-      const updatedMessages = await fetch("https://thinksyncapi.azurewebsites.net/api/messages", {
+      const updatedMessages = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -255,7 +118,7 @@ const Page = () => {
     const token = localStorage.getItem("jwt");
     try {
       const response = await fetch(
-        `https://thinksyncapi.azurewebsites.net/api/messages/${messageId}/attachments/${attachmentId}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/messages/${messageId}/attachments/${attachmentId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -315,21 +178,10 @@ const Page = () => {
     };
   });
 
-  // Helper to infer file type from file name
-  function getFileType(fileName: string | null | undefined): string {
-    if (!fileName || typeof fileName !== 'string') return '';
-    const ext = fileName.split('.').pop()?.toLowerCase();
-    if (!ext) return '';
-    if (ext === 'pdf') return 'pdf';
-    if (["jpg", "jpeg", "png", "gif", "bmp", "webp"].includes(ext)) return 'image';
-    if (["doc", "docx"].includes(ext)) return 'word';
-    return 'other';
-  }
-
   const handleSelectUser = async (otherUserId: string) => {
     setSelectedUser(otherUserId);
     const token = localStorage.getItem('jwt');
-    await fetch('https://thinksyncapi.azurewebsites.net/api/messages/mark-read', {
+    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages/mark-read`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -338,7 +190,7 @@ const Page = () => {
       body: JSON.stringify({ senderId: otherUserId }),
     });
     // Optionally refresh messages
-    const response = await fetch("https://thinksyncapi.azurewebsites.net/api/messages", {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     const updatedMessages = await response.json();

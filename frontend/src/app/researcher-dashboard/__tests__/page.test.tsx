@@ -250,7 +250,7 @@ describe('ResearcherDashboard', () => {
 
     // Verify delete request was made
     expect(global.fetch).toHaveBeenCalledWith(
-      'https://thinksyncapi.azurewebsites.net/api/projects/delete/1',
+      `${process.env.NEXT_PUBLIC_API_URL}/api/projects/delete/1`,
       {
         method: 'DELETE',
         headers: {

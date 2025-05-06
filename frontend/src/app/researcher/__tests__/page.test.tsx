@@ -101,7 +101,7 @@ describe('ResearcherSignupPage', () => {
 
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith(
-        'https://thinksyncapi.azurewebsites.net/api/auth/researcher',
+        `${process.env.NEXT_PUBLIC_API_URL}/api/auth/researcher`,
         expect.objectContaining({
           method: 'POST',
           headers: {

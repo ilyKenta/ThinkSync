@@ -26,7 +26,7 @@ const ManageUsersPage = () => {
     const fetchUsers = async () => {
       try {
         const token = localStorage.getItem('jwt');
-        const res = await fetch('https://thinksyncapi.azurewebsites.net/api/admin/users', {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/users`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -56,7 +56,7 @@ const ManageUsersPage = () => {
   const handleSave = async (user: User) => {
     try {
       const token = localStorage.getItem('jwt');
-      const res = await fetch(`https://thinksyncapi.azurewebsites.net/api/admin/users/${user.id}/role`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/users/${user.id}/role`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

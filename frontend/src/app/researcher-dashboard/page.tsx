@@ -84,7 +84,7 @@ const ResearcherDashboard = () => {
     const fetchUnread = async () => {
       const token = localStorage.getItem('jwt');
       if (!token) return;
-      const res = await fetch('https://thinksyncapi.azurewebsites.net/api/messages/unread', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages/unread`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -112,7 +112,7 @@ const ResearcherDashboard = () => {
         throw new Error('No access token found');
       }
 
-      const response = await fetch('https://thinksyncapi.azurewebsites.net/api/projects/owner', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/projects/owner`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -152,7 +152,7 @@ const ResearcherDashboard = () => {
       }
 
       const res = await fetch(
-        `https://thinksyncapi.azurewebsites.net/api/projects/delete/${projectId}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/projects/delete/${projectId}`,
         {
           method: "DELETE",
           headers: {

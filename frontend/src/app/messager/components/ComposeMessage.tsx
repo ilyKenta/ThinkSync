@@ -45,7 +45,7 @@ const ComposeMessage: React.FC<ComposeMessageProps> = ({ onClose }) => {
     }
     try {
       const token = localStorage.getItem('jwt');
-      const response = await fetch(`https://thinksyncapi.azurewebsites.net/api/messages/search-users?query=${query}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages/search-users?query=${query}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -65,7 +65,7 @@ const ComposeMessage: React.FC<ComposeMessageProps> = ({ onClose }) => {
     }
     try {
       const token = localStorage.getItem('jwt');
-      const response = await fetch(`https://thinksyncapi.azurewebsites.net/api/messages/search-projects?query=${query}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages/search-projects?query=${query}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -180,7 +180,7 @@ const ComposeMessage: React.FC<ComposeMessageProps> = ({ onClose }) => {
         formData.append('attachments', file);
       });
 
-      const response = await fetch('https://thinksyncapi.azurewebsites.net/api/messages', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,

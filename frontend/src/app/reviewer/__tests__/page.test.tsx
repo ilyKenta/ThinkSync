@@ -82,7 +82,7 @@ describe('ReviewerSignupPage', () => {
   it('handles form submission successfully', async () => {
     // Mock the fetch call with the correct URL
     (global.fetch as jest.Mock).mockImplementation((url) => {
-      if (url === 'https://thinksyncapi.azurewebsites.net/api/auth/reviewer') {
+      if (url === `${process.env.NEXT_PUBLIC_API_URL}/api/auth/reviewer`) {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ message: 'Success' }),
@@ -107,7 +107,7 @@ describe('ReviewerSignupPage', () => {
 
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith(
-        'https://thinksyncapi.azurewebsites.net/api/auth/reviewer',
+        `${process.env.NEXT_PUBLIC_API_URL}/api/auth/reviewer`,
         expect.objectContaining({
           method: 'POST',
           headers: {

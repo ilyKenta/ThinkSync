@@ -15,8 +15,6 @@ interface Proposal {
 }
 
 const SubmittedProposalsPage = () => {
-    const router = useRouter();
-      const [activeTab, setActiveTab] = useState("shared");
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [selected, setSelected] = useState<Proposal | null>(null);
   const [loading, setLoading] = useState(true);
@@ -32,7 +30,7 @@ const SubmittedProposalsPage = () => {
           throw new Error('No access token found');
         }
 
-        const response = await fetch('https://thinksyncapi.azurewebsites.net/api/admin/projects/pending', {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/projects/pending`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
