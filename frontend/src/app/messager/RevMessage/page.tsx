@@ -51,7 +51,7 @@ const Page = () => {
   
   const fetchMessages = async () => {
     const token = localStorage.getItem("jwt");
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/messages`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -82,7 +82,7 @@ const Page = () => {
       formData.append("attachments", file);
     });
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/messages`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -133,7 +133,7 @@ const Page = () => {
     const token = localStorage.getItem("jwt");
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/messages/${messageId}/attachments/${attachmentId}`,
+        `${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/messages/${messageId}/attachments/${attachmentId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -161,7 +161,7 @@ const Page = () => {
   const handleSelectUser = async (otherUserId: string) => {
     setSelectedUser(otherUserId);
     const token = localStorage.getItem('jwt');
-    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages/mark-read`, {
+    await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/messages/mark-read`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',

@@ -50,7 +50,7 @@ const Page = () => {
   useEffect(() => {
     const fetchMessages = async () => {
       const token = localStorage.getItem("jwt");
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/messages`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -78,7 +78,7 @@ const Page = () => {
     
     try {
       // First, send the message
-      const messageResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages`, {
+      const messageResponse = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/messages`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -96,7 +96,7 @@ const Page = () => {
         throw new Error("Failed to send message");
       }
       // Refresh messages after successful send
-      const updatedMessages = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages`, {
+      const updatedMessages = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/messages`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -118,7 +118,7 @@ const Page = () => {
     const token = localStorage.getItem("jwt");
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/messages/${messageId}/attachments/${attachmentId}`,
+        `${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/messages/${messageId}/attachments/${attachmentId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -181,7 +181,7 @@ const Page = () => {
   const handleSelectUser = async (otherUserId: string) => {
     setSelectedUser(otherUserId);
     const token = localStorage.getItem('jwt');
-    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages/mark-read`, {
+    await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/messages/mark-read`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -190,7 +190,7 @@ const Page = () => {
       body: JSON.stringify({ senderId: otherUserId }),
     });
     // Optionally refresh messages
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/messages`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     const updatedMessages = await response.json();

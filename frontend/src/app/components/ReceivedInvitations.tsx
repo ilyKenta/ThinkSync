@@ -22,7 +22,7 @@ const ReceivedInvitations: React.FC = () => {
             const token = localStorage.getItem('jwt');
             if (!token) throw new Error('Not authenticated');
 
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/collaborations/invitations/received`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/collaborations/invitations/received`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -51,7 +51,7 @@ const ReceivedInvitations: React.FC = () => {
             const token = localStorage.getItem('jwt');
             if (!token) throw new Error('Not authenticated');
 
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/collaborations/invitation/${invitationId}`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/collaborations/invitation/${invitationId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

@@ -96,7 +96,7 @@ describe('SubmittedProposalsPage', () => {
     });
 
     expect(global.fetch).toHaveBeenCalledWith(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/admin/projects/pending`,
+      `${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/admin/projects/pending`,
       expect.objectContaining({
         headers: {
           'Authorization': 'Bearer test-token'

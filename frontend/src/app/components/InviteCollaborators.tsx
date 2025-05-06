@@ -52,7 +52,7 @@ const InviteCollaborators: React.FC<InviteCollaboratorsProps> = ({
       const token = localStorage.getItem("jwt");
       if (!token) throw new Error("Not authenticated");
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/collaborations/search`,
+        `${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/collaborations/search`,
         {
           method: "POST",
           headers: {
@@ -87,7 +87,7 @@ const InviteCollaborators: React.FC<InviteCollaboratorsProps> = ({
       const token = localStorage.getItem("jwt");
       if (!token) throw new Error("Not authenticated");
       for (const userId of selected) {
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/collaborations/invite`, {
+        await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/collaborations/invite`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

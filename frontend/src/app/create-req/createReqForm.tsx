@@ -89,7 +89,7 @@ export default function CreateReqForm({
     // NEED TO RUN ON CREATE
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/projects/create`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/projects/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

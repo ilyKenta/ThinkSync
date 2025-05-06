@@ -42,7 +42,7 @@ const Page = () => {
             throw new Error('No access token found');
           }
     
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/reviewer/proposals`, {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/reviewer/proposals`, {
             headers: {
               'Authorization': `Bearer ${token}`
             }
@@ -69,7 +69,7 @@ const Page = () => {
     const fetchUnread = async () => {
       const token = localStorage.getItem('jwt');
       if (!token) return;
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages/unread`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/messages/unread`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {

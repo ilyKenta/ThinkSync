@@ -36,7 +36,7 @@ export default function ReviewerSignupPage() {
     console.log(payload);
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/reviewer`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/auth/reviewer`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -140,7 +140,7 @@ describe('PropInfoContent', () => {
 
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/reviewer/proposals/123/review`,
+        `${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/reviewer/proposals/123/review`,
         expect.objectContaining({
           method: 'POST',
           headers: {

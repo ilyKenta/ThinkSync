@@ -45,7 +45,7 @@ export default function AdminSignupPage() {
     console.log(bodie);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/admin`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/auth/admin`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

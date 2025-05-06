@@ -30,7 +30,7 @@ const SubmittedProposalsPage = () => {
           throw new Error('No access token found');
         }
 
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/projects/pending`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/admin/projects/pending`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }

@@ -32,7 +32,7 @@ const PropInfoContent = () => {
             throw new Error('No access token found');
           }
 
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/reviewer/proposals/${projectId}/review`, {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/reviewer/proposals/${projectId}/review`, {
             headers: {
               'Authorization': `Bearer ${token}`
             }
@@ -65,7 +65,7 @@ const PropInfoContent = () => {
         return;
       }
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/reviewer/proposals/${projectId}/review`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/reviewer/proposals/${projectId}/review`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

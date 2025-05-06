@@ -89,7 +89,7 @@ describe('AdminSignupPage', () => {
 
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/auth/admin`,
+        `${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/auth/admin`,
         expect.objectContaining({
           method: 'POST',
           headers: {
