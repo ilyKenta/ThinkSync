@@ -70,6 +70,7 @@ jobs:
           NEXT_PUBLIC_AZURE_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_AZURE_CLIENT_ID }}
           NEXT_PUBLIC_AZURE_TENANT_ID: ${{ secrets.NEXT_PUBLIC_AZURE_TENANT_ID }}
           NEXT_PUBLIC_AZURE_REDIRECT_URI: "https://purple-field-0bb305703.6.azurestaticapps.net/login"
+          NEXT_PUBLIC_AZURE_API_URL: ${{ secrets.NEXT_PUBLIC_AZURE_API_URL }}
           ###### End of Repository/Build Configurations ######
 
   close_pull_request_job:
