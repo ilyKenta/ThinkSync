@@ -1,0 +1,119 @@
+.createMilestoneBg {
+  min-height: 100vh;
+  background: #fafbfc;
+}
+
+.centerForm {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 2.5rem;
+}
+
+.formCard {
+  background: #fff;
+  border: 1px solid #e6e8eb;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(44,62,80,0.03);
+  max-width: 540px;
+  width: 100%;
+  padding: 2.5rem 2.5rem 2rem 2.5rem;
+}
+
+.formTitle {
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  color: #222;
+}
+
+.label {
+  font-size: 1.04rem;
+  font-weight: 600;
+  color: #51545c;
+  margin-bottom: 0.25rem;
+}
+
+.input,
+.textarea,
+.dateInput {
+  width: 100%;
+  border: 1px solid #e6e8eb;
+  border-radius: 7px;
+  padding: 0.65rem 1rem;
+  margin-bottom: 1.4rem;
+  font-size: 1rem;
+  color: #23272f;
+  background: #fafbfc;
+  transition: border 0.2s;
+}
+.input:focus,
+.textarea:focus,
+.dateInput:focus {
+  border-color: #b4b9c1;
+  outline: none;
+}
+
+.textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+.buttonRow {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 1.2rem;
+}
+
+.cancelBtn {
+  background: #fff;
+  color: #23272f;
+  border: 1px solid #e6e8eb;
+  border-radius: 6px;
+  padding: 0.5rem 1.15rem;
+  font-size: 1rem;
+  margin-right: 1rem;
+  cursor: pointer;
+  transition: background 0.18s, border 0.18s;
+}
+.cancelBtn:hover {
+  background: #f4f5f7;
+  border-color: #b4b9c1;
+}
+
+.createBtn {
+  background: #182952;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1.15rem;
+  font-size: 1rem;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.18s;
+}
+.createBtn:hover {
+  background: #0f1830;
+}
+
+.backRow {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  font-size: 1rem;
+  color: #23272f;
+  font-weight: 500;
+}
+
+.backArrow {
+  display: flex;
+  align-items: center;
+  margin-right: 0.5rem;
+  color: #23272f;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.backArrow:hover {
+  color: #111;
+}

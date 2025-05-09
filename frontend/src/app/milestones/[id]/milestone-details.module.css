@@ -1,0 +1,84 @@
+.milestoneDetailsBg {
+  min-height: 100vh;
+  background: #fafbfc;
+}
+
+.headerRow {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2.5rem;
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #23272f;
+}
+
+.backArrow {
+  display: flex;
+  align-items: center;
+  margin-right: 0.75rem;
+  color: #23272f;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.backArrow:hover {
+  color: #111;
+}
+
+.centerCard {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid #e6e8eb;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(44,62,80,0.03);
+  max-width: 650px;
+  width: 100%;
+  padding: 2.5rem 2.5rem 2rem 2.5rem;
+}
+
+.title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+  color: #222;
+}
+
+.projectName {
+  font-size: 1rem;
+  color: #7a7f87;
+  margin-bottom: 1.5rem;
+}
+
+.label {
+  font-size: 1.04rem;
+  font-weight: 600;
+  color: #51545c;
+  margin-bottom: 0.25rem;
+}
+
+.description {
+  color: #23272f;
+  margin-bottom: 2.2rem;
+  line-height: 1.7;
+}
+
+.dueDateRow {
+  display: flex;
+  align-items: center;
+  color: #6c6f75;
+  font-size: 1.03rem;
+  font-weight: 500;
+}
+
+.dueDateLabel {
+  font-weight: 600;
+  margin-right: 0.5rem;
+}
+
+.dueDateIcon {
+  margin-right: 0.4rem;
+}
