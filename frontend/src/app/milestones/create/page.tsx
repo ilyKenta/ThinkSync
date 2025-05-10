@@ -20,74 +20,74 @@ interface Project {
 
 // Main component for the create milestone page
 export default function CreateMilestonePage() {
-    // Get the router object for navigation after form submission
+  // Get the router object for navigation after form submission
   const router = useRouter();
-  
-    // State for the milestone title input
-  const [title, setTitle] = useState("");
-    // State for the milestone description input
-  const [description, setDescription] = useState("");
-    // State for the selected project ID (not used in UI, but could be for multi-project support)
-  const [projectId, setProjectId] = useState("");
-    // State for the milestone due date input
-  const [dueDate, setDueDate] = useState("");
-    // State for the list of available projects (not shown in UI, but could be used for a dropdown)
-  const [projects, setProjects] = useState<Project[]>([]);
-    // State to track if the data is still loading
-  const [loading, setLoading] = useState(true);
-    // State to track if the form is being submitted
-  const [submitting, setSubmitting] = useState(false);
-    // State to track any error that occurs
-  const [error, setError] = useState<string | null>(null);
 
-    // useEffect runs on mount to fetch projects (not shown in UI)
+  // State for the milestone title input
+  const [title, setTitle] = useState("");
+  // State for the milestone description input
+  const [description, setDescription] = useState("");
+  // State for the selected project ID (not used in UI, but could be for multi-project support)
+  const [projectId, setProjectId] = useState("");
+  // State for the milestone due date input
+  const [dueDate, setDueDate] = useState("");
+  // State for the list of available projects (not shown in UI, but could be used for a dropdown)
+  const [projects, setProjects] = useState<Project[]>([]);
+  // State to track if the data is still loading
+  const [loading, setLoading] = useState(true);
+  // State to track if the form is being submitted
+  const [submitting, setSubmitting] = useState(false);
+  // State to track any error that occurs
+  const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState("");
+  const [collaborators, setCollaborators] = useState("");
+
+  // useEffect runs on mount to fetch projects (not shown in UI)
   useEffect(() => {
-        // Fetch all projects from mock data (not used in UI)
+    // Fetch all projects from mock data (not used in UI)
     const fetchProjects = async () => {
       try {
-
         // This will be replaced with actual API call later
         // const response = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/projects/owner`, {
         //   headers: {
         //     'Authorization': `Bearer ${token}`
         //   }
         // });
-        
+
         // Mock data for now
-                // Mock data simulating a response from an API
+        // Mock data simulating a response from an API
         const mockProjects = [
           {
             project_ID: "1",
-            title: "Quantum Computing Research"
+            title: "Quantum Computing Research",
           },
           {
             project_ID: "2",
-            title: "Climate Change Study"
-          }
+            title: "Climate Change Study",
+          },
         ];
-        
+
         setProjects(mockProjects);
         setLoading(false);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
-        console.error('Error fetching projects:', err);
+        setError(err instanceof Error ? err.message : "An error occurred");
+        console.error("Error fetching projects:", err);
         setLoading(false);
       }
     };
 
-        // Call the async function to fetch projects
+    // Call the async function to fetch projects
     fetchProjects();
   }, []);
 
-    // Handle form submission for creating a milestone
+  // Handle form submission for creating a milestone
   const handleSubmit = async (e: React.FormEvent) => {
-        // Prevent default form submission behavior
+    // Prevent default form submission behavior
     e.preventDefault();
-        // Set submitting state to true to disable the button
+    // Set submitting state to true to disable the button
     setSubmitting(true);
-    
-    try {
 
+    try {
       // This will be replaced with actual API call later
       // const response = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/milestones`, {
       //   method: 'POST',
@@ -97,25 +97,31 @@ export default function CreateMilestonePage() {
       //   },
       //   body: JSON.stringify({ title, description, projectId, dueDate })
       // });
-      
+
       // Simulate successful API call
-            // Simulate a successful API call with a delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
+      // Simulate a successful API call with a delay
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
       // Navigate back to milestones page
-            // Navigate back to the milestones page after creation
-      router.push('/milestones');
+      // Navigate back to the milestones page after creation
+      router.push("/milestones");
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create milestone');
-      console.error('Error creating milestone:', err);
+      setError(
+        err instanceof Error ? err.message : "Failed to create milestone"
+      );
+      console.error("Error creating milestone:", err);
       setSubmitting(false);
     }
   };
 
   // Show loading message if data is still being fetched
-    // Show loading message if data is still being fetched
+  // Show loading message if data is still being fetched
   if (loading && !error) {
-    return <main><section>Loading projects...</section></main>;
+    return (
+      <main>
+        <section>Loading projects...</section>
+      </main>
+    );
   }
 
   // Main create milestone page rendering
@@ -140,7 +146,16 @@ export default function CreateMilestonePage() {
             <h1 className={styles.formTitle}>Create New Milestone</h1>
             {/* If there is an error, show it above the form */}
             {error && (
-              <section style={{background:'#fdeaea',border:'1px solid #f5c2c7',color:'#b94a48',padding:'0.75rem 1rem',borderRadius:8,marginBottom:18}}>
+              <section
+                style={{
+                  background: "#fdeaea",
+                  border: "1px solid #f5c2c7",
+                  color: "#b94a48",
+                  padding: "0.75rem 1rem",
+                  borderRadius: 8,
+                  marginBottom: 18,
+                }}
+              >
                 {error}
               </section>
             )}
@@ -167,24 +182,55 @@ export default function CreateMilestonePage() {
               />
               {/* Due date input field */}
               <label className={styles.label}>Due Date</label>
-              <span style={{position:'relative',display:'block'}}>
+              <span style={{ position: "relative", display: "block" }}>
                 <input
                   type="date"
                   className={styles.dateInput}
                   value={dueDate} // State for the due date
                   onChange={(e) => setDueDate(e.target.value)} // Update state on change
                   required
-                  style={{paddingLeft:'2.2rem'}}
                 />
-                {/* Calendar icon inside the date input */}
-                <Calendar size={16} style={{position:'absolute',left:'0.65rem',top:'50%',transform:'translateY(-50%)',color:'#b1b5bb'}} />
               </span>
+              {/* Choose the status of the project */}
+              <label className={styles.label}>Status</label>
+
+              <select
+                className={styles.status}
+                required
+                onChange={(e) => setStatus(e.target.value)}
+              >
+                <option value=""></option>
+                <option value="science">Not Started</option>
+                <option value="health-science">In Progress</option>
+                <option value="commerce">Completed</option>
+              </select>
+              {/* Choose the collaborators to work on a milestone */}
+              {/* WAITJNG FOR ENDPOINT */}
+              <label className={styles.label}>Assign Collaborators</label>
+
+              <select
+                className={styles.status}
+                required
+                onChange={(e) => setCollaborators(e.target.value)}
+              >
+                <option value=""></option>
+                <option value="science">Not Started</option>
+                <option value="health-science">In Progress</option>
+                <option value="commerce">Completed</option>
+              </select>
+
               {/* Row of action buttons: cancel and submit */}
               <section className={styles.buttonRow}>
                 {/* Cancel button navigates back to milestones */}
-                <Link href="/milestones" className={styles.cancelBtn}>Cancel</Link>
+                <Link href="/milestones" className={styles.cancelBtn}>
+                  Cancel
+                </Link>
                 {/* Submit button creates the milestone; disabled while submitting */}
-                <button type="submit" className={styles.createBtn} disabled={submitting}>
+                <button
+                  type="submit"
+                  className={styles.createBtn}
+                  disabled={submitting}
+                >
                   {submitting ? "Creating..." : "Create Milestone"}
                 </button>
               </section>
@@ -195,5 +241,3 @@ export default function CreateMilestonePage() {
     </main>
   );
 }
-
-

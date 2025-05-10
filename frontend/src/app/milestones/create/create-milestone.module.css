@@ -14,7 +14,7 @@
   background: #fff;
   border: 1px solid #e6e8eb;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(44,62,80,0.03);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.192);
   max-width: 540px;
   width: 100%;
   padding: 2.5rem 2.5rem 2rem 2.5rem;
@@ -24,14 +24,14 @@
   font-size: 1.35rem;
   font-weight: 700;
   margin-bottom: 2rem;
-  color: #222;
+  color: #000000;
 }
 
 .label {
   font-size: 1.04rem;
   font-weight: 600;
-  color: #51545c;
-  margin-bottom: 0.25rem;
+  color: #000000;
+  margin-bottom: 0.5rem;
 }
 
 .input,
@@ -43,14 +43,14 @@
   padding: 0.65rem 1rem;
   margin-bottom: 1.4rem;
   font-size: 1rem;
-  color: #23272f;
+  color: #000000;
   background: #fafbfc;
   transition: border 0.2s;
 }
 .input:focus,
 .textarea:focus,
 .dateInput:focus {
-  border-color: #b4b9c1;
+  border-color: #000000;
   outline: none;
 }
 
@@ -68,7 +68,7 @@
 
 .cancelBtn {
   background: #fff;
-  color: #23272f;
+  color: #000000;
   border: 1px solid #e6e8eb;
   border-radius: 6px;
   padding: 0.5rem 1.15rem;
@@ -83,7 +83,7 @@
 }
 
 .createBtn {
-  background: #182952;
+  background: #000000;
   color: #fff;
   border: none;
   border-radius: 6px;
@@ -94,7 +94,7 @@
   transition: background 0.18s;
 }
 .createBtn:hover {
-  background: #0f1830;
+  background: #000000;
 }
 
 .backRow {
@@ -116,4 +116,28 @@
 }
 .backArrow:hover {
   color: #111;
+}
+.status {
+  padding: 0.5rem 1rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #fafbfc;
+  font-size: 1rem;
+  color: #333;
+  outline: none;
+  transition: border-color 0.3s ease;
+  width: 100%;
+  display: block;
+  cursor: pointer;
+  padding: 0.65rem 1rem;
+  margin-bottom: 1.4rem;
+}
+
+.status:focus {
+  border-color: #000000;
+}
+
+.status option {
+  background-color: #fff;
+  color: #000;
 }

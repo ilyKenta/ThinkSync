@@ -34,7 +34,7 @@
   background: #fff;
   border: 1px solid #e6e8eb;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(44,62,80,0.03);
+  box-shadow: 0 2px 8px rgba(44, 62, 80, 0.03);
   max-width: 650px;
   width: 100%;
   padding: 2.5rem 2.5rem 2rem 2.5rem;
@@ -54,29 +54,26 @@
 }
 
 .label {
-  font-size: 1.04rem;
+  display: block;
+  font-size: 1.3rem;
   font-weight: 600;
-  color: #51545c;
+  color: #000000;
   margin-bottom: 0.25rem;
 }
 
 .description {
-  color: #23272f;
+  color: #6c6f75;
   margin-bottom: 2.2rem;
   line-height: 1.7;
+  font-weight: 500;
+  font-size: 1.03rem;
 }
 
 .dueDateRow {
-  display: flex;
   align-items: center;
   color: #6c6f75;
   font-size: 1.03rem;
   font-weight: 500;
-}
-
-.dueDateLabel {
-  font-weight: 600;
-  margin-right: 0.5rem;
 }
 
 .dueDateIcon {
