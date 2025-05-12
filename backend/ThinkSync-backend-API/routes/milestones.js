@@ -43,16 +43,64 @@ router.get('/', async (req, res) => {
         }
         // Get all projects for this user
         const projects = await db.executeQuery(
-            `SELECT project_ID, title FROM projects WHERE owner_ID = ?`,
+            `SELECT project_ID, title, owner_ID FROM projects WHERE owner_ID = ?`,
             [userId]
         );
-        // For each project, get its milestones
+        // For each project, get its milestones and collaborators
         for (const project of projects) {
+            // Get milestones
             const milestones = await db.executeQuery(
                 `SELECT * FROM milestones WHERE project_ID = ? ORDER BY expected_completion_date ASC`,
                 [project.project_ID]
             );
             project.milestones = milestones;
+
+            // Get owner information
+            const owner = await db.executeQuery(
+                `SELECT user_ID, fname, sname FROM users WHERE user_ID = ?`,
+                [project.owner_ID]
+            );
+            
+            if (!owner.length) {
+                return res.status(500).json({ error: 'Owner information not found' });
+            }
+
+            // Get collaborator information
+            const collaborators = await db.executeQuery(
+                `SELECT DISTINCT u.user_ID, u.fname, u.sname 
+                 FROM project_collaborations pc 
+                 JOIN users u ON pc.user_ID = u.user_ID 
+                 WHERE pc.project_ID = ?`,
+                [project.project_ID]
+            );
+
+            // Create a Set to track unique user IDs
+            const uniqueUserIds = new Set();
+            
+            // Start with the owner
+            const ownerInfo = {
+                user_ID: owner[0].user_ID,
+                first_name: owner[0].fname,
+                last_name: owner[0].sname,
+                is_owner: true
+            };
+            uniqueUserIds.add(ownerInfo.user_ID);
+
+            // Filter collaborators to ensure no duplicates
+            const uniqueCollaborators = collaborators
+                .filter(collab => !uniqueUserIds.has(collab.user_ID))
+                .map(collab => {
+                    uniqueUserIds.add(collab.user_ID);
+                    return {
+                        user_ID: collab.user_ID,
+                        first_name: collab.fname,
+                        last_name: collab.sname,
+                        is_owner: false
+                    };
+                });
+
+            // Combine owner and unique collaborators
+            project.collaborators = [ownerInfo, ...uniqueCollaborators];
         }
 
         // Fetch all milestones for all projects owned by the user for status summary
