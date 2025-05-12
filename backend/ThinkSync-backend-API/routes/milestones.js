@@ -2,6 +2,13 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const { getUserIdFromToken, extractToken } = require('../utils/auth');
+const PDFDocument = require('pdfkit');
+const { ChartJSNodeCanvas } = require('chartjs-node-canvas');
+const { Chart, registerables } = require('chart.js');
+Chart.register(...registerables);
+
+// Register additional plugins
+require('chartjs-plugin-datalabels');
 
 // Helper to check researcher role
 async function checkResearcherRole(userId) {
@@ -290,6 +297,505 @@ router.delete('/:projectId/:milestoneId', async (req, res) => {
             res.status(500).json({ error: 'A server error occurred' });
         } else {
             res.status(401).json({ error: error.message || 'Failed to delete milestone' });
+        }
+    }
+});
+
+// Generate PDF report of all projects and milestones
+router.get('/report', async (req, res) => {
+    let doc = null;
+    try {
+        const token = extractToken(req);
+        const userId = await getUserIdFromToken(token);
+        if (!(await checkResearcherRole(userId))) {
+            return res.status(403).json({ error: 'Unauthorized: User is not a researcher' });
+        }
+
+        // Get all projects for this user
+        const projects = await db.executeQuery(
+            `SELECT project_ID, title, owner_ID FROM projects WHERE owner_ID = ?`,
+            [userId]
+        );
+
+        // Create a new PDF document
+        doc = new PDFDocument({
+            size: 'A4',
+            margin: 50
+        });
+        
+        // Set response headers
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename=projects-report.pdf');
+        
+        // Pipe the PDF to the response
+        doc.pipe(res);
+
+        // Add title
+        doc.fontSize(24)
+           .text('Projects and Milestones Report', { align: 'center' })
+           .moveDown(2);
+
+        // Collect all milestone statuses for the overall pie chart
+        const allMilestones = [];
+        const projectData = [];
+
+        // For each project, get its milestones and collaborators
+        for (const project of projects) {
+            try {
+                // Get milestones with all fields
+                const milestones = await db.executeQuery(
+                    `SELECT milestone_ID, title, description, status, expected_completion_date, assigned_user_ID 
+                     FROM milestones 
+                     WHERE project_ID = ? 
+                     ORDER BY expected_completion_date ASC`,
+                    [project.project_ID]
+                );
+
+                // Get owner information
+                const owner = await db.executeQuery(
+                    `SELECT user_ID, fname, sname FROM users WHERE user_ID = ?`,
+                    [project.owner_ID]
+                );
+
+                if (!owner.length) {
+                    console.error(`Owner information not found for project ${project.project_ID}`);
+                    continue;
+                }
+
+                // Get collaborator information
+                const collaborators = await db.executeQuery(
+                    `SELECT DISTINCT u.user_ID, u.fname, u.sname 
+                     FROM project_collaborations pc 
+                     JOIN users u ON pc.user_ID = u.user_ID 
+                     WHERE pc.project_ID = ?`,
+                    [project.project_ID]
+                );
+
+                // Create a Set to track unique user IDs
+                const uniqueUserIds = new Set();
+                
+                // Start with the owner
+                const ownerInfo = {
+                    user_ID: owner[0].user_ID,
+                    first_name: owner[0].fname,
+                    last_name: owner[0].sname,
+                    is_owner: true
+                };
+                uniqueUserIds.add(ownerInfo.user_ID);
+
+                // Filter collaborators to ensure no duplicates
+                const uniqueCollaborators = collaborators
+                    .filter(collab => !uniqueUserIds.has(collab.user_ID))
+                    .map(collab => {
+                        uniqueUserIds.add(collab.user_ID);
+                        return {
+                            user_ID: collab.user_ID,
+                            first_name: collab.fname,
+                            last_name: collab.sname,
+                            is_owner: false
+                        };
+                    });
+
+                // Add milestones to overall collection
+                milestones.forEach(m => {
+                    const status = m.status || 'Not Started';
+                    allMilestones.push(status);
+                });
+
+                projectData.push({
+                    title: project.title,
+                    owner: ownerInfo,
+                    collaborators: uniqueCollaborators,
+                    milestones: milestones
+                });
+            } catch (error) {
+                console.error(`Error processing project ${project.project_ID}:`, error);
+                continue; // Skip this project and continue with others
+            }
+        }
+
+        // Calculate overall statistics
+        const overallStatusCounts = {
+            'Not Started': 0,
+            'In Progress': 0,
+            'Completed': 0
+        };
+        allMilestones.forEach(status => {
+            overallStatusCounts[status]++;
+        });
+
+        try {
+            // Add overall statistics section
+            doc.fontSize(18)
+               .text('Overall Milestone Statistics', { align: 'center' })
+               .moveDown();
+
+            // Create pie chart
+            const width = 800;  // Decreased from 1200
+            const height = 800; // Decreased from 1200
+            const chartJSNodeCanvas = new ChartJSNodeCanvas({ 
+                width, 
+                height,
+                backgroundColour: 'white',
+                type: 'png',
+                plugins: {
+                    modern: ['chartjs-plugin-datalabels']
+                }
+            });
+            
+            const configuration = {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(overallStatusCounts),
+                    datasets: [{
+                        data: Object.values(overallStatusCounts),
+                        backgroundColor: [
+                            '#FF6384', // Not Started - Red
+                            '#36A2EB', // In Progress - Blue
+                            '#4BC0C0'  // Completed - Teal
+                        ],
+                        borderWidth: 3,
+                        borderColor: 'white',
+                        hoverBorderWidth: 4,
+                        hoverBorderColor: '#666666'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: {
+                        animateScale: true,
+                        animateRotate: true
+                    },
+                    plugins: {
+                        datalabels: {
+                            color: '#fff',
+                            font: {
+                                weight: 'bold',
+                                size: 24  // Increased from 16
+                            },
+                            formatter: (value, ctx) => {
+                                const total = ctx.dataset.data.reduce((acc, data) => acc + data, 0);
+                                const percentage = Math.round((value * 100) / total);
+                                return `${percentage}%`;
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Overall Milestone Status Distribution',
+                            font: {
+                                size: 36,  // Increased from 28
+                                weight: 'bold',
+                                family: 'Arial'
+                            },
+                            padding: 40,  // Increased padding
+                            color: '#333333'
+                        },
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                font: {
+                                    size: 24,  // Increased from 18
+                                    family: 'Arial',
+                                    weight: 'bold'  // Added bold weight
+                                },
+                                padding: 30,  // Increased padding
+                                usePointStyle: true,
+                                pointStyle: 'circle'
+                            }
+                        }
+                    }
+                }
+            };
+
+            // Generate chart image with higher quality
+            const image = await chartJSNodeCanvas.renderToBuffer(configuration);
+            
+            // Center the graph horizontally
+            const pageWidth = 595.28; // A4 width in points
+            const graphWidth = 400;
+            const graphX = (pageWidth - graphWidth) / 2;
+            doc.image(image, {
+                fit: [400, 400],
+                align: 'center',
+                x: graphX
+            });
+            
+            doc.moveDown();
+        } catch (error) {
+            console.error('Error generating chart:', error);
+            doc.fontSize(14)
+               .text('Error generating chart. Please try again.', { align: 'center' })
+               .moveDown();
+        }
+
+        // Add overall statistics table
+        doc.fontSize(14)
+           .text('Status Breakdown:', { underline: true })
+           .moveDown(0.5);
+
+        // Create table for statistics
+        const statsTableTop = doc.y;
+        const statsTableLeft = 50;
+        const statsColWidth = 150;
+        const statsRowHeight = 30;
+
+        // Draw table border
+        doc.rect(statsTableLeft, statsTableTop, 450, statsRowHeight * 4)
+           .stroke('#cccccc');
+
+        // Table headers
+        doc.fontSize(12)
+           .fillColor('#000000')
+           .text('Status', statsTableLeft + 10, statsTableTop + 10)
+           .text('Count', statsTableLeft + statsColWidth + 10, statsTableTop + 10)
+           .text('Percentage', statsTableLeft + (statsColWidth * 2) + 10, statsTableTop + 10);
+
+        // Draw header separator
+        doc.moveTo(statsTableLeft, statsTableTop + statsRowHeight)
+           .lineTo(statsTableLeft + 450, statsTableTop + statsRowHeight)
+           .stroke();
+
+        // Table rows
+        Object.entries(overallStatusCounts).forEach(([status, count], index) => {
+            const y = statsTableTop + (statsRowHeight * (index + 1));
+            const percentage = allMilestones.length > 0 ? (count / allMilestones.length) * 100 : 0;
+            
+            // Draw row separator
+            doc.moveTo(statsTableLeft, y)
+               .lineTo(statsTableLeft + 450, y)
+               .stroke();
+
+            doc.text(status, statsTableLeft + 10, y + 10)
+               .text(count.toString(), statsTableLeft + statsColWidth + 10, y + 10)
+               .text(`${percentage.toFixed(1)}%`, statsTableLeft + (statsColWidth * 2) + 10, y + 10);
+        });
+
+        doc.moveDown(3);
+
+        // Add project details
+        doc.fontSize(18)
+           .text('Project Details', 50, doc.y, { width: 495, align: 'center' })
+           .moveDown(2);
+
+        // For each project
+        for (const project of projectData) {
+            try {
+                // Add project title with background
+                doc.rect(50, doc.y, 495, 30)
+                   .fill('#f0f0f0');
+                
+                doc.fontSize(16)
+                   .fillColor('#000000')
+                   .text(project.title, 60, doc.y + 10)
+                   .moveDown(2);
+
+                // Add project team section
+                doc.fontSize(14)
+                   .text('Project Team:', 60, doc.y, { underline: true })
+                   .moveDown(0.5);
+
+                // Create table for project team
+                const teamTableTop = doc.y;
+                const teamTableLeft = 60;
+                const teamColWidth = 150;
+                const teamRowHeight = 30;
+
+                // Check if we need a new page for the team table
+                if (doc.y > 700) {
+                    doc.addPage();
+                    doc.fontSize(14)
+                       .text('Project Team:', 60, doc.y, { underline: true })
+                       .moveDown(0.5);
+                    teamTableTop = doc.y;
+                }
+
+                // Draw table border
+                doc.rect(teamTableLeft, teamTableTop, 475, teamRowHeight * (project.collaborators.length + 2))
+                   .stroke('#cccccc');
+
+                // Table headers
+                doc.fontSize(12)
+                   .fillColor('#000000')
+                   .text('Role', teamTableLeft + 10, teamTableTop + 10)
+                   .text('Name', teamTableLeft + teamColWidth + 10, teamTableTop + 10);
+
+                // Draw header separator
+                doc.moveTo(teamTableLeft, teamTableTop + teamRowHeight)
+                   .lineTo(teamTableLeft + 475, teamTableTop + teamRowHeight)
+                   .stroke();
+
+                // Add owner row
+                const ownerY = teamTableTop + teamRowHeight;
+                doc.moveTo(teamTableLeft, ownerY)
+                   .lineTo(teamTableLeft + 475, ownerY)
+                   .stroke();
+                doc.text('Owner', teamTableLeft + 10, ownerY + 10)
+                   .text(`${project.owner.first_name} ${project.owner.last_name}`, teamTableLeft + teamColWidth + 10, ownerY + 10);
+
+                // Add collaborator rows with page break handling
+                let currentY = ownerY + teamRowHeight;
+                project.collaborators.forEach((collab, index) => {
+                    // Check if we need a new page
+                    if (currentY > 700) {
+                        doc.addPage();
+                        // Redraw headers on new page
+                        doc.fontSize(14)
+                           .text('Project Team:', 60, doc.y, { underline: true })
+                           .moveDown(0.5);
+                        doc.fontSize(12)
+                           .fillColor('#000000')
+                           .text('Role', teamTableLeft + 10, doc.y + 10)
+                           .text('Name', teamTableLeft + teamColWidth + 10, doc.y + 10);
+                        doc.moveTo(teamTableLeft, doc.y + 30)
+                           .lineTo(teamTableLeft + 475, doc.y + 30)
+                           .stroke();
+                        currentY = doc.y + 30;
+                    }
+
+                    doc.moveTo(teamTableLeft, currentY)
+                       .lineTo(teamTableLeft + 475, currentY)
+                       .stroke();
+                    doc.text('Collaborator', teamTableLeft + 10, currentY + 10)
+                       .text(`${collab.first_name} ${collab.last_name}`, teamTableLeft + teamColWidth + 10, currentY + 10);
+                    currentY += teamRowHeight;
+                });
+
+                doc.moveDown(2);
+
+                // Add milestones section
+                doc.fontSize(14)
+                   .text('Milestones:', 60, doc.y, { underline: true })
+                   .moveDown(1);
+
+                if (project.milestones && project.milestones.length > 0) {
+                    // Table setup for milestones
+                    const tableTop = doc.y;
+                    const tableLeft = 60;
+                    const colWidth = 95; // 475/5 columns
+                    const rowHeight = 30;
+                    const headers = ['Title', 'Status', 'Description', 'Expected Date', 'Assigned To'];
+
+                    // Check if we need a new page for the milestones table
+                    if (doc.y > 700) {
+                        doc.addPage();
+                        doc.fontSize(14)
+                           .text('Milestones:', 60, doc.y, { underline: true })
+                           .moveDown(1);
+                    }
+
+                    // Draw table headers
+                    doc.fontSize(12)
+                       .fillColor('#000000');
+                    
+                    // Draw all headers on the same line
+                    const headerY = doc.y;
+                    headers.forEach((header, i) => {
+                        doc.text(header, tableLeft + (colWidth * i), headerY);
+                    });
+
+                    // Draw header underline
+                    doc.moveTo(tableLeft, headerY + 20)
+                       .lineTo(tableLeft + 475, headerY + 20)
+                       .stroke();
+
+                    // Process each milestone
+                    let currentMilestoneY = headerY + 30;
+                    for (const milestone of project.milestones) {
+                        try {
+                            // Check if we need a new page
+                            if (currentMilestoneY > 700) {
+                                doc.addPage();
+                                // Redraw headers on new page
+                                doc.fontSize(14)
+                                   .text('Milestones:', 60, doc.y, { underline: true })
+                                   .moveDown(1);
+                                doc.fontSize(12)
+                                   .fillColor('#000000');
+                                
+                                // Draw all headers on the same line
+                                const newHeaderY = doc.y;
+                                headers.forEach((header, i) => {
+                                    doc.text(header, tableLeft + (colWidth * i), newHeaderY);
+                                });
+                                doc.moveTo(tableLeft, newHeaderY + 20)
+                                   .lineTo(tableLeft + 475, newHeaderY + 20)
+                                   .stroke();
+                                currentMilestoneY = newHeaderY + 30;
+                            }
+
+                            // Get assigned user name if exists
+                            let assignedUserName = 'Not Assigned';
+                            if (milestone.assigned_user_ID) {
+                                const assignedUser = await db.executeQuery(
+                                    `SELECT fname, sname FROM users WHERE user_ID = ?`,
+                                    [milestone.assigned_user_ID]
+                                );
+                                if (assignedUser.length > 0) {
+                                    assignedUserName = `${assignedUser[0].fname} ${assignedUser[0].sname}`;
+                                }
+                            }
+
+                            // Format date if exists
+                            let formattedDate = 'Not Set';
+                            if (milestone.expected_completion_date) {
+                                const date = new Date(milestone.expected_completion_date);
+                                formattedDate = date.toLocaleDateString();
+                            }
+
+                            // Draw table row
+                            doc.fontSize(10) // Smaller font for table content
+                               .text(milestone.title, tableLeft, currentMilestoneY, { width: colWidth, align: 'left' })
+                               .text(milestone.status || 'Not Started', tableLeft + colWidth, currentMilestoneY, { width: colWidth, align: 'left' })
+                               .text(milestone.description || 'No Description', tableLeft + (colWidth * 2), currentMilestoneY, { width: colWidth, align: 'left' })
+                               .text(formattedDate, tableLeft + (colWidth * 3), currentMilestoneY, { width: colWidth, align: 'left' })
+                               .text(assignedUserName, tableLeft + (colWidth * 4), currentMilestoneY, { width: colWidth, align: 'left' });
+
+                            // Draw row separator
+                            doc.moveTo(tableLeft, currentMilestoneY + 20)
+                               .lineTo(tableLeft + 475, currentMilestoneY + 20)
+                               .stroke();
+
+                            currentMilestoneY += rowHeight;
+                            doc.moveDown(1);
+                        } catch (error) {
+                            console.error(`Error processing milestone ${milestone.milestone_ID}:`, error);
+                            continue;
+                        }
+                    }
+                } else {
+                    doc.fontSize(12)
+                       .fillColor('#000000')
+                       .text('No milestones found for this project.', 60, doc.y)
+                       .moveDown(2);
+                }
+
+                // Add page break between projects, but not after the last project
+                if (project !== projectData[projectData.length - 1]) {
+                    doc.addPage();
+                }
+            } catch (error) {
+                console.error(`Error processing project ${project.title}:`, error);
+                continue; // Skip this project and continue with others
+            }
+        }
+
+        // Finalize the PDF
+        doc.end();
+    } catch (error) {
+        console.error('Error generating PDF report:', error);
+        
+        // If headers haven't been sent yet, send error response
+        if (!res.headersSent) {
+            res.status(500).json({ 
+                error: 'Failed to generate report',
+                details: error.message 
+            });
+        }
+        
+        // If PDF document was created, end it
+        if (doc) {
+            doc.end();
         }
     }
 });

@@ -88,7 +88,7 @@ async function getUserIdFromToken(token) {
         console.error('Error getting user ID from token:', error.message);
         throw error;
     }
-    // return '65fc38ee-5415-49f4-96ee-4a1643a69923';
+    //return '65fc38ee-5415-49f4-96ee-4a1643a69923';
 }
 
 // Helper function to extract token from Authorization header
