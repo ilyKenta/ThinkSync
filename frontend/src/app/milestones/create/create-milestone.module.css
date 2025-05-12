@@ -83,7 +83,7 @@
 }
 
 .createBtn {
-  background: #182952;
+  background: #000;
   color: #fff;
   border: none;
   border-radius: 6px;
@@ -94,7 +94,7 @@
   transition: background 0.18s;
 }
 .createBtn:hover {
-  background: #0f1830;
+  background: #000;
 }
 
 .backRow {
