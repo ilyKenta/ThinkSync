@@ -1,18 +1,18 @@
-// This directive tells Next.js to treat this file as a Client Component
+
 "use client";
 
-// Import React and React hooks for state management and side effects
+
 import React, { useState, useEffect } from "react";
-// Import useRouter for navigation to milestone detail pages
+
 import { useRouter } from "next/navigation";
-// Import icon components for UI
+
 import { Calendar, ArrowLeft } from "lucide-react";
-// Import Link for client-side navigation
+
 import Link from "next/link";
-// Import CSS module for styling
+
 import styles from "./Milestones.module.css";
 
-// TypeScript interface for a Milestone object
+
 interface Milestone {
   id: string;
   title: string;
@@ -24,14 +24,14 @@ interface Milestone {
   assigned_user_ID: string;
 }
 
-// TypeScript interface for a Project object
+
 interface Project {
   project_ID: string;
   title: string;
 }
 
-// Main component for the milestones page
 export default function MilestonesPage() {
+
   // Get the router object for navigation
   const router = useRouter();
   // State to hold the list of all milestones
@@ -42,6 +42,7 @@ export default function MilestonesPage() {
   const [error, setError] = useState<string | null>(null);
 
   // useEffect runs on mount to fetch milestones
+
   useEffect(() => {
     // Fetch all milestones from mock data
     const fetchMilestones = async () => {
@@ -114,11 +115,14 @@ export default function MilestonesPage() {
       }
     };
 
+
     // Call the async function to fetch milestones
+
     fetchMilestones();
   }, []);
 
   // Group milestones by project
+
   // Group milestones by their project name for display
   const groupedMilestones = milestones.reduce<Record<string, Milestone[]>>(
     (acc, milestone) => {
@@ -133,6 +137,7 @@ export default function MilestonesPage() {
 
   // Show loading message if data is still being fetched
   // Show loading message if data is still being fetched
+
   if (loading) {
     return (
       <main>
@@ -141,8 +146,10 @@ export default function MilestonesPage() {
     );
   }
 
+
   // Show error message if there was an error fetching data
   // Show error message if there was an error fetching data
+
   if (error) {
     return (
       <main>
@@ -151,23 +158,26 @@ export default function MilestonesPage() {
     );
   }
 
-  // Main milestones page rendering
+ 
   return (
-    // Main wrapper for the milestones page, applies background styles
+
     <main className={styles.milestonesBg}>
-      {/* Section to constrain width and center content */}
+      {/* */}
       <section className={styles.maxWidth}>
-        {/* Header row containing the back button, page title, and create milestone button */}
+        {}
         <header className={styles.headerRow}>
+
           {/* Flex row: back arrow and page title */}
           <span style={{ display: "flex", alignItems: "center" }}>
+
             {/* Link to go back to the researcher dashboard */}
             <Link href="/researcher-dashboard" style={{ marginRight: 12 }}>
               <ArrowLeft size={22} />
             </Link>
-            {/* Main page title */}
+            {}
             <span className={styles.pageTitle}>Project Milestones</span>
           </span>
+
           {/* Button to navigate to the create milestone page */}
           <Link
             href="/milestones/create"
@@ -178,10 +188,11 @@ export default function MilestonesPage() {
               +
             </span>{" "}
             Create Milestone
+
           </Link>
         </header>
 
-        {/* If there are no milestones, show a friendly empty state message */}
+        {}
         {Object.entries(groupedMilestones).length === 0 ? (
           <section
             style={{
@@ -196,7 +207,7 @@ export default function MilestonesPage() {
             </p>
           </section>
         ) : (
-          // Otherwise, render each project's milestones as a card containing a table
+          
           <>
             {/* Iterate over each project group */}
             {Object.entries(groupedMilestones).map(
@@ -214,6 +225,7 @@ export default function MilestonesPage() {
                         <th>Due Date</th>
                         <th>Assignee</th>
                         <th>Status</th>
+
                       </tr>
                     </thead>
                     <tbody>
