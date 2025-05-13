@@ -195,14 +195,22 @@ export default function CreateMilestonePage() {
               <label className={styles.label}>Status</label>
 
               <select
-                className={styles.status}
+                className={`${styles.status} ${
+                  status === "Completed"
+                    ? styles.completed
+                    : status === "inProgress"
+                    ? styles.inProgress
+                    : status === "notStarted"
+                    ? styles.notStarted
+                    : ""
+                }`}
                 required
                 onChange={(e) => setStatus(e.target.value)}
               >
                 <option value=""></option>
-                <option value="science">Not Started</option>
-                <option value="health-science">In Progress</option>
-                <option value="commerce">Completed</option>
+                <option value="notStarted">Not Started</option>
+                <option value="inProgress">In Progress</option>
+                <option value="Completed">Completed</option>
               </select>
               {/* Choose the collaborators to work on a milestone */}
               {/* WAITJNG FOR ENDPOINT */}

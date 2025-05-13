@@ -41,6 +41,8 @@ export default function MilestoneDetailsPage({
   const [loading, setLoading] = useState(true);
   // State to track any error that occurs
   const [error, setError] = useState<string | null>(null);
+  //sstate to open the edit form
+  const [showEditForm, setShowEditForm] = useState(false);
 
   // useEffect runs on mount and when the id changes
   useEffect(() => {
@@ -215,13 +217,120 @@ export default function MilestoneDetailsPage({
               <Calendar size={18} className={styles.dueDateIcon} />
               <span>{new Date(milestone.dueDate).toLocaleDateString()}</span>
             </section>
-
-            <section className={styles.description}>
+            {/* Status of the project with background changing depending on the status */}
+            <section
+              className={`${styles.status} ${
+                milestone.status === "Completed"
+                  ? styles.completed
+                  : milestone.status === "In Progress"
+                  ? styles.inProgress
+                  : milestone.status === "notStarted"
+                  ? styles.notStarted
+                  : styles.missing
+              }`}
+            >
               {milestone.status || "Missing Status"}
             </section>
+            <button
+              onClick={() => setShowEditForm(true)}
+              className={styles.editButton}
+            >
+              Edit
+            </button>
           </section>
         </section>
       </section>
+      {/* edit form */}
+      {showEditForm && (
+        <section className={styles.overlay}>
+          <section className={styles.modal}>
+            <section className={styles.centerForm}>
+              <form
+                className={styles.cardForm}
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  // TODO: Save the updated milestone here
+                  setShowEditForm(false);
+                }}
+              >
+                <h1 className={styles.formTitle}>Edit {milestone.title}</h1>
+                <label className={styles.label}>Title</label>
+                <input
+                  type="text"
+                  className={styles.input}
+                  value={milestone.title}
+                  onChange={(e) =>
+                    setMilestone({ ...milestone, title: e.target.value })
+                  }
+                />
+
+                <label className={styles.label}>Description</label>
+                <textarea
+                  className={styles.input}
+                  value={milestone.description}
+                  onChange={(e) =>
+                    setMilestone({ ...milestone, description: e.target.value })
+                  }
+                />
+
+                <label className={styles.label}>Due Date</label>
+                <input
+                  type="date"
+                  className={styles.input}
+                  value={milestone.dueDate}
+                  onChange={(e) =>
+                    setMilestone({ ...milestone, dueDate: e.target.value })
+                  }
+                />
+
+                <label className={styles.label}>Status</label>
+                <select
+                  className={styles.input}
+                  value={milestone.status}
+                  onChange={(e) =>
+                    setMilestone({ ...milestone, status: e.target.value })
+                  }
+                >
+                  <option value=""></option>
+                  <option value="notStarted">Not Started</option>
+                  <option value="inProgress">In Progress</option>
+                  <option value="Completed">Completed</option>
+                </select>
+                {/* NEED TO FIX SELECTION */}
+                <label className={styles.label}>Assign Collaborators</label>
+                <select
+                  className={styles.input}
+                  value={milestone.assigned_user_ID}
+                  onChange={(e) =>
+                    setMilestone({
+                      ...milestone,
+                      assigned_user_ID: e.target.value,
+                    })
+                  }
+                >
+                  <option value=""></option>
+                  <option value="notStarted">Not Started</option>
+                  <option value="inProgress">In Progress</option>
+                  <option value="Completed">Completed</option>
+                </select>
+
+                <div className={styles.buttonRow}>
+                  <button
+                    type="button"
+                    className={styles.cancelBtn}
+                    onClick={() => setShowEditForm(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button type="submit" className={styles.saveBtn}>
+                    Save Changes
+                  </button>
+                </div>
+              </form>
+            </section>
+          </section>
+        </section>
+      )}
     </main>
   );
 }

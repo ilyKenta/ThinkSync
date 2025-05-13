@@ -101,10 +101,8 @@ export default function MilestonesPage() {
             projectId: String(project.project_ID),
             projectName: project.title,
             dueDate: milestone.expected_completion_date,
-            assignCollab: milestone.assigned_user_ID,
-            currentStatus: milestone.status,
-            assigned_user_ID: "user123",
-            status: "Completed",
+            assigned_user_ID: milestone.assigned_user_ID,
+            status: milestone.status,
           }))
         );
         setMilestones(mockMilestones);
@@ -214,6 +212,8 @@ export default function MilestonesPage() {
                         <th>Title</th>
                         <th>Description</th>
                         <th>Due Date</th>
+                        <th>Assignee</th>
+                        <th>Status</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -242,6 +242,20 @@ export default function MilestonesPage() {
                               />
                               {new Date(milestone.dueDate).toLocaleDateString()}
                             </span>
+                          </td>
+                          <td>{milestone.assigned_user_ID}</td>
+                          <td
+                            className={`${styles.milestoneStatus} ${
+                              milestone.status === "Completed"
+                                ? styles.completed
+                                : milestone.status === "In Progress"
+                                ? styles.inProgress
+                                : milestone.status === "Not Started"
+                                ? styles.notStarted
+                                : ""
+                            }`}
+                          >
+                            {milestone.status}
                           </td>
                         </tr>
                       ))}
