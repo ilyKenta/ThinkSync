@@ -1,0 +1,177 @@
+.container {
+  display: flex;
+  min-height: 100vh; /* Ensure the container takes at least the full viewport height */
+  width: 100%;
+  padding: 0;
+}
+
+.sidebar {
+  width: 280px; /* Slightly wider sidebar */
+  background-color: var(--primary-color);
+  padding: 25px; /* Add a bit more padding */
+  border-right: 1px solid #ddd; /* Lighter border */
+  box-shadow: 10px 10px 10px var(--shadows-color)
+}
+.sidebar h2 {
+  margin-top: 0px;
+  font-size: 30px;
+  margin-bottom: 0px; 
+}
+
+.sidebar h3 {
+  border-top:1px solid #000000 ;
+  padding-top: 10px;
+  font-size: 1rem;
+  margin-top: 3px;
+  margin-bottom: 10px;
+  /*color: #777;*/
+  font-weight: var(--font-weight-semibold);
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+}
+
+
+.sidebar li button {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  padding: 10px 10px;
+  border-radius: var(--button-radius);
+  transition: background-color 0.3s ease;
+}
+
+.sidebar li:nth-child(1) {
+ 
+  /*color: #555;*/
+  cursor: pointer;
+  transition: color 0.3s ease;
+  border-radius: var(--button-radius);
+  background-color: var(--field-hover-color);
+}
+
+.sidebar li  {
+  /*color: #555;*/
+  cursor: pointer;
+  transition: color 0.3s ease;
+  border-radius: var(--button-radius);
+}
+
+.sidebar li button:hover {
+
+  background-color: var(--field-hover-color);
+}
+
+.milestonesBg {
+  min-height: 100vh;
+  width: 100%; /* ✅ Take full width of remaining container space */
+  background: #fafbfc;
+  padding: 40px 0 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.maxWidth {
+  width: 100%;
+  max-width: 950px;
+  margin: 0 auto;
+}
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+}
+.pageTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-left: 10px;
+  letter-spacing: 0.01em;
+}
+.createBtn {
+  background: #111;
+  color: #fff;
+  padding: 10px 22px;
+  border-radius: 20px;
+  font-weight: 500;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  border: none;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.createBtn:hover {
+  background: #222;
+}
+.card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  margin-bottom: 28px;
+  padding: 0 0 16px 0;
+}
+.projectTitle {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 24px 0 12px 0;
+  padding-left: 32px;
+}
+.milestoneTable {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.milestoneTable th {
+  text-align: left;
+  font-size: 0.97rem;
+  color: #757575;
+  font-weight: 400;
+  padding: 0 0 8px 32px;
+  text-transform: none;
+  letter-spacing: 0.01em;
+}
+.milestoneTable th:last-child,
+.milestoneTable td:last-child {
+  padding-right: 32px;
+}
+.milestoneTable td {
+  padding: 14px 0 14px 32px;
+  font-size: 1rem;
+  vertical-align: middle;
+  border-bottom: 1px solid #f1f1f1;
+}
+.milestoneTable tr:last-child td {
+  border-bottom: none;
+}
+.milestoneTitle {
+  font-weight: 600;
+}
+.dueDate {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #111;
+  font-size: 1rem;
+}
+
+.chartContainer {
+  max-width: 500px;
+  margin: 2rem auto;
+}
+
+.chartTitle {
+  text-align: center;
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+}
+
