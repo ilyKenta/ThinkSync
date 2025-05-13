@@ -308,4 +308,113 @@ describe('Reviewer Routes', () => {
             expect(response.body.error).toBe('Failed to fetch review');
         });
     });
+
+    describe('Authentication Middleware', () => {
+        it('should return 401 when no token is provided', async () => {
+            // Clear all mocks to ensure no default behavior
+            jest.clearAllMocks();
+            extractToken.mockReturnValue(null);
+
+            const response = await request(app)
+                .get('/api/reviewer/proposals')
+                .set('Authorization', '');
+
+            expect(response.status).toBe(401);
+            expect(response.body).toEqual({ error: 'Authentication failed' });
+        });
+
+        it('should return 401 when token is invalid', async () => {
+            // Mock getUserIdFromToken to throw an error
+            getUserIdFromToken.mockRejectedValue(new Error('Invalid token'));
+
+            const response = await request(app)
+                .get('/api/reviewer/proposals')
+                .set('Authorization', 'Bearer invalid-token');
+
+            expect(response.status).toBe(401);
+            expect(response.body).toEqual({ error: 'Authentication failed' });
+        });
+
+        it('should return 401 when token format is invalid', async () => {
+            // Mock getUserIdFromToken to throw specific error
+            getUserIdFromToken.mockRejectedValue(new Error('Invalid token format'));
+
+            const response = await request(app)
+                .get('/api/reviewer/proposals')
+                .set('Authorization', 'InvalidFormat');
+
+            expect(response.status).toBe(401);
+            expect(response.body).toEqual({ error: 'Invalid token format' });
+        });
+
+        it('should return 401 when token has expired', async () => {
+            // Mock getUserIdFromToken to throw specific error
+            getUserIdFromToken.mockRejectedValue(new Error('Token has expired'));
+
+            const response = await request(app)
+                .get('/api/reviewer/proposals')
+                .set('Authorization', 'Bearer expired-token');
+
+            expect(response.status).toBe(401);
+            expect(response.body).toEqual({ error: 'Token has expired' });
+        });
+
+        it('should return 403 when user is not a reviewer', async () => {
+            // Mock successful token validation
+            getUserIdFromToken.mockResolvedValue('user123');
+            
+            // Mock database query to return non-reviewer role
+            db.executeQuery.mockResolvedValue([
+                { role_name: 'researcher' }
+            ]);
+
+            const response = await request(app)
+                .get('/api/reviewer/proposals')
+                .set('Authorization', 'Bearer valid-token');
+
+            expect(response.status).toBe(403);
+            expect(response.body).toEqual({ error: 'Unauthorized: User is not a reviewer' });
+        });
+
+        it('should return 403 when user has no roles', async () => {
+            // Mock successful token validation
+            getUserIdFromToken.mockResolvedValue('user123');
+            
+            // Mock database query to return empty roles
+            db.executeQuery.mockResolvedValue([]);
+
+            const response = await request(app)
+                .get('/api/reviewer/proposals')
+                .set('Authorization', 'Bearer valid-token');
+
+            expect(response.status).toBe(403);
+            expect(response.body).toEqual({ error: 'Unauthorized: User is not a reviewer' });
+        });
+
+        it('should pass middleware when user is a reviewer', async () => {
+            // Clear all mocks to ensure no default behavior
+            jest.clearAllMocks();
+            
+            // Mock successful token validation
+            extractToken.mockReturnValue('valid-token');
+            getUserIdFromToken.mockResolvedValue('user123');
+            
+            // Mock database query to return reviewer role
+            db.executeQuery
+                .mockResolvedValueOnce([{ role_name: 'reviewer' }]) // First call for role check
+                .mockResolvedValueOnce([]); // Second call for proposals
+
+            const response = await request(app)
+                .get('/api/reviewer/proposals')
+                .set('Authorization', 'Bearer valid-token');
+
+            expect(response.status).toBe(200);
+            expect(response.body).toEqual({ proposals: [] });
+            
+            // Verify the mocks were called correctly
+            expect(extractToken).toHaveBeenCalled();
+            expect(getUserIdFromToken).toHaveBeenCalledWith('valid-token');
+            expect(db.executeQuery).toHaveBeenCalledTimes(2);
+        });
+    });
 }); 

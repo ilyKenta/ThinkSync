@@ -123,6 +123,234 @@ describe('Admin Routes', () => {
       expect(response.status).toBe(400);
       expect(response.body).toEqual({ error: 'Invalid role specified' });
     });
+
+    it('should handle migration from researcher to reviewer', async () => {
+      const oldData = {
+        res_area: 'AI',
+        qualification: 'PhD',
+        current_proj: 'Project X'
+      };
+
+      db.executeQuery
+        .mockResolvedValueOnce([{ role_name: 'admin' }]) // isAdmin
+        .mockResolvedValueOnce([{ role_name: 'researcher' }]) // current role
+        .mockResolvedValueOnce([]) // remove roles
+        .mockResolvedValueOnce([oldData]) // get old data
+        .mockResolvedValueOnce([]) // delete from old table
+        .mockResolvedValueOnce([]) // delete from new table
+        .mockResolvedValueOnce([]) // insert into new table
+        .mockResolvedValueOnce([]); // add new role
+
+      const response = await request(app)
+        .put('/api/admin/users/2/role')
+        .set('Authorization', `Bearer ${mockToken}`)
+        .send({ newRole: 'reviewer' });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ message: 'User role updated successfully' });
+    });
+
+    it('should handle migration from reviewer to researcher', async () => {
+      const oldData = {
+        res_area: 'AI',
+        qualification: 'PhD',
+        current_proj: 'Project X'
+      };
+
+      db.executeQuery
+        .mockResolvedValueOnce([{ role_name: 'admin' }]) // isAdmin
+        .mockResolvedValueOnce([{ role_name: 'reviewer' }]) // current role
+        .mockResolvedValueOnce([]) // remove roles
+        .mockResolvedValueOnce([oldData]) // get old data
+        .mockResolvedValueOnce([]) // delete from old table
+        .mockResolvedValueOnce([]) // delete from new table
+        .mockResolvedValueOnce([]) // insert into new table
+        .mockResolvedValueOnce([]); // add new role
+
+      const response = await request(app)
+        .put('/api/admin/users/2/role')
+        .set('Authorization', `Bearer ${mockToken}`)
+        .send({ newRole: 'researcher' });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ message: 'User role updated successfully' });
+    });
+
+    it('should handle server error during role update', async () => {
+      db.executeQuery
+        .mockResolvedValueOnce([{ role_name: 'admin' }]) // isAdmin
+        .mockRejectedValueOnce(new Error('Database error')); // Error during role update
+
+      const response = await request(app)
+        .put('/api/admin/users/2/role')
+        .set('Authorization', `Bearer ${mockToken}`)
+        .send({ newRole: 'reviewer' });
+
+      expect(response.status).toBe(500);
+      expect(response.body).toEqual({ error: 'Server error' });
+    });
+
+    it('should return 400 when newRole is missing', async () => {
+      db.executeQuery.mockResolvedValueOnce([{ role_name: 'admin' }]); // isAdmin
+      const response = await request(app)
+        .put('/api/admin/users/2/role')
+        .set('Authorization', `Bearer ${mockToken}`)
+        .send({});
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({ error: 'Missing required fields' });
+    });
+
+    it('should migrate user data if old table has data (researcher to reviewer)', async () => {
+      const oldData = {
+        res_area: 'AI',
+        qualification: 'PhD',
+        current_proj: 'Project X'
+      };
+      db.executeQuery
+        .mockResolvedValueOnce([{ role_name: 'admin' }]) // isAdmin
+        .mockResolvedValueOnce([{ role_name: 'researcher' }]) // current role
+        .mockResolvedValueOnce([]) // remove roles
+        .mockResolvedValueOnce([oldData]) // get old data from researcher
+        .mockResolvedValueOnce([]) // delete from researcher
+        .mockResolvedValueOnce([]) // delete from reviewer
+        .mockResolvedValueOnce([]) // insert into reviewer
+        .mockResolvedValueOnce([]); // add new role
+      const response = await request(app)
+        .put('/api/admin/users/2/role')
+        .set('Authorization', `Bearer ${mockToken}`)
+        .send({ newRole: 'reviewer' });
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ message: 'User role updated successfully' });
+    });
+
+    it('should migrate user data if old table has data (reviewer to researcher)', async () => {
+      const oldData = {
+        res_area: 'AI',
+        qualification: 'PhD',
+        current_proj: 'Project X'
+      };
+      db.executeQuery
+        .mockResolvedValueOnce([{ role_name: 'admin' }]) // isAdmin
+        .mockResolvedValueOnce([{ role_name: 'reviewer' }]) // current role
+        .mockResolvedValueOnce([]) // remove roles
+        .mockResolvedValueOnce([oldData]) // get old data from reviewer
+        .mockResolvedValueOnce([]) // delete from reviewer
+        .mockResolvedValueOnce([]) // delete from researcher
+        .mockResolvedValueOnce([]) // insert into researcher
+        .mockResolvedValueOnce([]); // add new role
+      const response = await request(app)
+        .put('/api/admin/users/2/role')
+        .set('Authorization', `Bearer ${mockToken}`)
+        .send({ newRole: 'researcher' });
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ message: 'User role updated successfully' });
+    });
+
+    it('should handle migration with empty data from old table', async () => {
+      db.executeQuery
+        .mockResolvedValueOnce([{ role_name: 'admin' }]) // isAdmin
+        .mockResolvedValueOnce([{ role_name: 'researcher' }]) // current role
+        .mockResolvedValueOnce([]) // remove roles
+        .mockResolvedValueOnce([]) // get old data returns empty
+        .mockResolvedValueOnce([]) // delete from researcher
+        .mockResolvedValueOnce([]) // delete from reviewer
+        .mockResolvedValueOnce([]) // insert empty data into reviewer
+        .mockResolvedValueOnce([]); // add new role
+
+      const response = await request(app)
+        .put('/api/admin/users/2/role')
+        .set('Authorization', `Bearer ${mockToken}`)
+        .send({ newRole: 'reviewer' });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ message: 'User role updated successfully' });
+    });
+
+    it('should handle migration from researcher to reviewer with partial data', async () => {
+      const oldData = {
+        res_area: 'AI',
+        qualification: null,
+        current_proj: ''
+      };
+      db.executeQuery
+        .mockResolvedValueOnce([{ role_name: 'admin' }]) // isAdmin
+        .mockResolvedValueOnce([{ role_name: 'researcher' }]) // current role
+        .mockResolvedValueOnce([]) // remove roles
+        .mockResolvedValueOnce([oldData]) // get old data with partial fields
+        .mockResolvedValueOnce([]) // delete from researcher
+        .mockResolvedValueOnce([]) // delete from reviewer
+        .mockResolvedValueOnce([]) // insert partial data into reviewer
+        .mockResolvedValueOnce([]); // add new role
+
+      const response = await request(app)
+        .put('/api/admin/users/2/role')
+        .set('Authorization', `Bearer ${mockToken}`)
+        .send({ newRole: 'reviewer' });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ message: 'User role updated successfully' });
+    });
+
+    it('should handle migration from reviewer to researcher with partial data', async () => {
+      const oldData = {
+        res_area: '',
+        qualification: 'PhD',
+        current_proj: null
+      };
+      db.executeQuery
+        .mockResolvedValueOnce([{ role_name: 'admin' }]) // isAdmin
+        .mockResolvedValueOnce([{ role_name: 'reviewer' }]) // current role
+        .mockResolvedValueOnce([]) // remove roles
+        .mockResolvedValueOnce([oldData]) // get old data with partial fields
+        .mockResolvedValueOnce([]) // delete from reviewer
+        .mockResolvedValueOnce([]) // delete from researcher
+        .mockResolvedValueOnce([]) // insert partial data into researcher
+        .mockResolvedValueOnce([]); // add new role
+
+      const response = await request(app)
+        .put('/api/admin/users/2/role')
+        .set('Authorization', `Bearer ${mockToken}`)
+        .send({ newRole: 'researcher' });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ message: 'User role updated successfully' });
+    });
+
+    it('should return 400 when reviewerId is missing in assign-reviewer', async () => {
+      db.executeQuery.mockResolvedValueOnce([{ role_name: 'admin' }]); // isAdmin
+
+      const response = await request(app)
+        .post('/api/admin/projects/1/assign-reviewer')
+        .set('Authorization', `Bearer ${mockToken}`)
+        .send({});
+
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({ error: 'Reviewer ID is required' });
+    });
+
+    it('should return 400 when reviewerId is null in assign-reviewer', async () => {
+      db.executeQuery.mockResolvedValueOnce([{ role_name: 'admin' }]); // isAdmin
+
+      const response = await request(app)
+        .post('/api/admin/projects/1/assign-reviewer')
+        .set('Authorization', `Bearer ${mockToken}`)
+        .send({ reviewerId: null });
+
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({ error: 'Reviewer ID is required' });
+    });
+
+    it('should return 400 when reviewerId is undefined in assign-reviewer', async () => {
+      db.executeQuery.mockResolvedValueOnce([{ role_name: 'admin' }]); // isAdmin
+
+      const response = await request(app)
+        .post('/api/admin/projects/1/assign-reviewer')
+        .set('Authorization', `Bearer ${mockToken}`)
+        .send({ reviewerId: undefined });
+
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({ error: 'Reviewer ID is required' });
+    });
   });
 
   describe('GET /projects/pending', () => {
@@ -271,6 +499,125 @@ describe('Admin Routes', () => {
 
       expect(response.status).toBe(400);
       expect(response.body).toEqual({ error: 'Reviewer is already assigned to this project' });
+    });
+
+    it('should handle server error during reviewer assignment', async () => {
+      db.executeQuery
+        .mockResolvedValueOnce([{ role_name: 'admin' }]) // isAdmin
+        .mockRejectedValueOnce(new Error('Database error')); // Error during assignment
+
+      const response = await request(app)
+        .post('/api/admin/projects/1/assign-reviewer')
+        .set('Authorization', `Bearer ${mockToken}`)
+        .send({ reviewerId: '2' });
+
+      expect(response.status).toBe(500);
+      expect(response.body).toEqual({ error: 'Server error' });
+    });
+
+    it('should handle authentication error during reviewer assignment', async () => {
+      jest.clearAllMocks();
+
+      const auth = require('../../utils/auth');
+      auth.extractToken.mockReturnValue('invalid-token');
+      auth.getUserIdFromToken.mockResolvedValue('admin-user-id');
+
+      // isAdmin check passes
+      db.executeQuery
+        .mockResolvedValueOnce([{ role_name: 'admin' }]) // isAdmin
+        // The *next* call (project check) throws the auth error
+        .mockRejectedValueOnce(new Error('Invalid authorization format'));
+
+      const response = await request(app)
+        .post('/api/admin/projects/1/assign-reviewer')
+        .set('Authorization', 'Bearer invalid-token')
+        .send({ reviewerId: '2' });
+
+      expect(response.status).toBe(401);
+      expect(response.body).toEqual({ error: 'Invalid authorization format' });
+    });
+
+    it('should return 400 when reviewerId is missing', async () => {
+      db.executeQuery.mockResolvedValueOnce([{ role_name: 'admin' }]); // isAdmin
+      const response = await request(app)
+        .post('/api/admin/projects/1/assign-reviewer')
+        .set('Authorization', `Bearer ${mockToken}`)
+        .send({});
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({ error: 'Reviewer ID is required' });
+    });
+
+    it('should return 404 when project not found or not pending review', async () => {
+      db.executeQuery
+        .mockResolvedValueOnce([{ role_name: 'admin' }]) // isAdmin
+        .mockResolvedValueOnce([]); // project not found
+      const response = await request(app)
+        .post('/api/admin/projects/1/assign-reviewer')
+        .set('Authorization', `Bearer ${mockToken}`)
+        .send({ reviewerId: '2' });
+      expect(response.status).toBe(404);
+      expect(response.body).toEqual({ error: 'Project not found or not pending review' });
+    });
+  });
+
+  describe('isAdmin Middleware', () => {
+    it('should return 401 when token is missing', async () => {
+      // Clear all mocks to ensure no default behavior
+      jest.clearAllMocks();
+      // Mock extractToken to return null
+      require('../../utils/auth').extractToken.mockReturnValue(null);
+      // Mock getUserIdFromToken to throw specific error
+      require('../../utils/auth').getUserIdFromToken.mockRejectedValue(new Error('Access token is required'));
+
+      const response = await request(app)
+        .get('/api/admin/users');
+
+      expect(response.status).toBe(401);
+      expect(response.body).toEqual({ error: 'Access token is required' });
+    });
+
+    it('should return 401 when token format is invalid', async () => {
+      require('../../utils/auth').getUserIdFromToken.mockRejectedValue(new Error('Invalid token format'));
+
+      const response = await request(app)
+        .get('/api/admin/users')
+        .set('Authorization', 'InvalidFormat');
+
+      expect(response.status).toBe(401);
+      expect(response.body).toEqual({ error: 'Invalid token format' });
+    });
+
+    it('should return 401 when token is invalid', async () => {
+      require('../../utils/auth').getUserIdFromToken.mockRejectedValue(new Error('Token invalid'));
+
+      const response = await request(app)
+        .get('/api/admin/users')
+        .set('Authorization', 'Bearer invalid-token');
+
+      expect(response.status).toBe(401);
+      expect(response.body).toEqual({ error: 'Token invalid' });
+    });
+
+    it('should return 401 when token has expired', async () => {
+      require('../../utils/auth').getUserIdFromToken.mockRejectedValue(new Error('Token has expired'));
+
+      const response = await request(app)
+        .get('/api/admin/users')
+        .set('Authorization', 'Bearer expired-token');
+
+      expect(response.status).toBe(401);
+      expect(response.body).toEqual({ error: 'Token has expired' });
+    });
+
+    it('should return 500 on server error', async () => {
+      db.executeQuery.mockRejectedValue(new Error('Database error'));
+
+      const response = await request(app)
+        .get('/api/admin/users')
+        .set('Authorization', `Bearer ${mockToken}`);
+
+      expect(response.status).toBe(500);
+      expect(response.body).toEqual({ error: 'Server error' });
     });
   });
 }); 
