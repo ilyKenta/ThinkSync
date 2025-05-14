@@ -15,10 +15,10 @@ import {
 } from "react-icons/fa";
 import Sidebar from "../sent-sidebar/sidebar";
 import InboxSidebar from "../inbox-sidebar/inb_sidebar";
-// import useAuth from "../useAuth";
+ import useAuth from "../useAuth";
 
 const ResearcherDashboard = () => {
-  // useAuth();
+   useAuth();
   const router = useRouter();
   const [hasResearcherRole, setHasResearcherRole] = useState<boolean | null>(
     null
@@ -267,6 +267,18 @@ const ResearcherDashboard = () => {
                   {unreadCount > 99 ? "99+" : unreadCount}
                 </span>
               )}
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab("shared");
+                router.push("/milestones");
+              }}
+              className={activeTab === "milestones" ? styles.activeTab : ""}
+            >
+              Milestones
             </button>
           </li>
         </ul>

@@ -10,6 +10,7 @@ import { Calendar, ArrowLeft } from "lucide-react";
 
 import Link from "next/link";
 
+
 import styles from "./Milestones.module.css";
 
 interface Milestone {
@@ -42,6 +43,7 @@ export default function MilestonesPage() {
   >([]);
 
   const [error, setError] = useState<string | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     // Fetch all milestones from mock data
@@ -160,7 +162,7 @@ export default function MilestonesPage() {
     <main className={styles.container}>
       <nav className={styles.sidebar}>
         <h2>ThinkSync</h2>
-        <h3>DASHBOARD</h3>
+        <h3>MILESTONES</h3>
 
         <ul>
           <li>
@@ -168,23 +170,68 @@ export default function MilestonesPage() {
               type="button"
               onClick={() => {
                 setActiveTab("my");
-                router.push("/milestones");
+                router.push("/researcher-dashboard");
               }}
-              className={activeTab === "my" ? styles.active : ""}
+              className={activeTab === "my" ? styles.activeTab : ""}
             >
-              Milestones
+              My Projects
             </button>
           </li>
           <li>
             <button
               type="button"
               onClick={() => {
-                setActiveTab("my");
-                router.push("/researcher-dashboard");
+                setActiveTab("shared");
+                router.push("/Shared_projects");
               }}
-              className={activeTab === "my" ? styles.active : ""}
+              className={activeTab === "shared" ? styles.activeTab : ""}
             >
-              Dashboard
+              Shared Projects
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab("messager");
+                router.push("/messager");
+              }}
+              className={activeTab === "messager" ? styles.activeTab : ""}
+            >
+              Messager
+              {unreadCount > 0 && (
+                <span
+                  style={{
+                    display: "inline-block",
+                    marginLeft: 8,
+                    minWidth: 20,
+                    height: 20,
+                    borderRadius: "50%",
+                    background: "red",
+                    color: "white",
+                    fontWeight: 600,
+                    fontSize: 12,
+                    textAlign: "center",
+                    lineHeight: "20px",
+                    padding: "0 6px",
+                    verticalAlign: "middle",
+                  }}
+                >
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              )}
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab("shared");
+                router.push("/milestones");
+              }}
+              className={activeTab === "milestones" ? styles.activeTab : ""}
+            >
+              Milestones
             </button>
           </li>
         </ul>

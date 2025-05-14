@@ -50,7 +50,7 @@
   transition: background-color 0.3s ease;
 }
 
-.sidebar li:nth-child(1) {
+.sidebar li:nth-child(4) {
  
   /*color: #555;*/
   cursor: pointer;
