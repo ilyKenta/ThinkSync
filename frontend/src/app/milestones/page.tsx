@@ -4,6 +4,9 @@
 
 import React, { useState, useEffect } from "react";
 
+import { PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
+
+
 import { useRouter } from "next/navigation";
 
 import { Calendar, ArrowLeft } from "lucide-react";
@@ -20,8 +23,10 @@ interface Milestone {
   projectId: string;
   projectName: string;
   dueDate: string;
+
   status: string;
   assigned_user_ID: string;
+
 }
 
 
@@ -32,21 +37,24 @@ interface Project {
 
 export default function MilestonesPage() {
 
-  // Get the router object for navigation
+   // Get the router object for navigation
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState('shared');
   // State to hold the list of all milestones
   const [milestones, setMilestones] = useState<Milestone[]>([]);
-  // State to track if the data is still loading
+   
   const [loading, setLoading] = useState(true);
-  // State to track any error that occurs
+  const [statusSummary, setStatusSummary] = useState<{ status: string; count: number; percentage: number; }[]>([]);
+
+    
   const [error, setError] = useState<string | null>(null);
 
-  // useEffect runs on mount to fetch milestones
-
   useEffect(() => {
-    // Fetch all milestones from mock data
+        // Fetch all milestones from mock data
     const fetchMilestones = async () => {
       try {
+
+
         // This will be replaced with actual API call later
         // const response = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/milestones`, {
         //   headers: {
@@ -54,129 +62,162 @@ export default function MilestonesPage() {
         //   }
         // });
 
+        
         // Mock data for now (from user)
-        // Mock data simulating a response from an API
+                // Mock data simulating a response from an API
         const mockData = {
-          projects: [
+          "projects": [
             {
-              project_ID: 1,
-              title: "AI for Healthcare",
-              milestones: [
+              "project_ID": 1,
+              "title": "AI for Healthcare",
+              "milestones": [
                 {
-                  milestone_ID: 10,
-                  project_ID: 1,
-                  title: "Literature Review",
-                  description: "Review existing AI models.",
-                  expected_completion_date: "2024-07-01",
-                  assigned_user_ID: "user123",
-                  status: "Completed",
-                  created_at: "2024-05-01T10:00:00.000Z",
-                  updated_at: "2024-06-01T10:00:00.000Z",
+                  "milestone_ID": 10,
+                  "project_ID": 1,
+                  "title": "Literature Review",
+                  "description": "Review existing AI models.",
+                  "expected_completion_date": "2024-07-01",
+                  "assigned_user_ID": "user123",
+                  "status": "Completed",
+                  "created_at": "2024-05-01T10:00:00.000Z",
+                  "updated_at": "2024-06-01T10:00:00.000Z"
                 },
                 {
-                  milestone_ID: 11,
-                  project_ID: 1,
-                  title: "Data Collection",
-                  description: "Collect patient data.",
-                  expected_completion_date: "2024-08-01",
-                  assigned_user_ID: "user124",
-                  status: "In Progress",
-                  created_at: "2024-06-01T10:00:00.000Z",
-                  updated_at: "2024-06-15T10:00:00.000Z",
-                },
-              ],
+                  "milestone_ID": 11,
+                  "project_ID": 1,
+                  "title": "Data Collection",
+                  "description": "Collect patient data.",
+                  "expected_completion_date": "2024-08-01",
+                  "assigned_user_ID": "user124",
+                  "status": "In Progress",
+                  "created_at": "2024-06-01T10:00:00.000Z",
+                  "updated_at": "2024-06-15T10:00:00.000Z"
+                }
+              ]
             },
             {
-              project_ID: 2,
-              title: "Robotics Lab",
-              milestones: [],
-            },
-          ],
+              "project_ID": 2,
+              "title": "Robotics Lab",
+              "milestones": []
+            }
+          ]
         };
         // Flatten milestones from all projects and map to the Milestone interface
-        const mockMilestones = mockData.projects.flatMap((project) =>
-          (project.milestones || []).map((milestone) => ({
+        const mockMilestones = mockData.projects.flatMap(project =>
+          (project.milestones || []).map(milestone => ({
+
             id: String(milestone.milestone_ID),
             title: milestone.title,
             description: milestone.description,
             projectId: String(project.project_ID),
             projectName: project.title,
+
             dueDate: milestone.expected_completion_date,
             assigned_user_ID: milestone.assigned_user_ID,
             status: milestone.status,
+
           }))
         );
         setMilestones(mockMilestones);
         setLoading(false);
       } catch (err) {
+
         setError(err instanceof Error ? err.message : "An error occurred");
         console.error("Error fetching milestones:", err);
+
         setLoading(false);
       }
     };
 
 
-    // Call the async function to fetch milestones
-
+        // async function to fetch milestones
     fetchMilestones();
+
+    const summary = [
+      { status: "Completed", count: 3, percentage: 50 },
+      { status: "In Progress", count: 2, percentage: 50 },
+      { status: "Not Started", count: 5, percentage: 0 },
+    ];
+    setStatusSummary(summary);
+    
   }, []);
 
   // Group milestones by project
+  const groupedMilestones = milestones.reduce<Record<string, Milestone[]>>((acc, milestone) => {
+    if (!acc[milestone.projectName]) {
+      acc[milestone.projectName] = [];
+    }
+    acc[milestone.projectName].push(milestone);
+    return acc;
+  }, {});
 
-  // Group milestones by their project name for display
-  const groupedMilestones = milestones.reduce<Record<string, Milestone[]>>(
-    (acc, milestone) => {
-      if (!acc[milestone.projectName]) {
-        acc[milestone.projectName] = [];
-      }
-      acc[milestone.projectName].push(milestone);
-      return acc;
-    },
-    {}
-  );
-
-  // Show loading message if data is still being fetched
-  // Show loading message if data is still being fetched
-
+  
   if (loading) {
-    return (
-      <main>
-        <section>Loading milestones...</section>
-      </main>
-    );
+    return <main><section>Loading milestones...</section></main>;
   }
 
-
-  // Show error message if there was an error fetching data
-  // Show error message if there was an error fetching data
-
+ 
   if (error) {
-    return (
-      <main>
-        <section>Error: {error}</section>
-      </main>
-    );
+    return <main><section>Error: {error}</section></main>;
+
   }
 
  
   return (
 
-    <main className={styles.milestonesBg}>
+    <main className={styles.container}>
+      <nav className={styles.sidebar}>
+        <h2>ThinkSync</h2>
+        <h3>DASHBOARD</h3>
+
+        <ul>
+          <li>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab("my");
+                router.push("/milestones");
+              }}
+              className={activeTab === "my" ? styles.active : ""}
+            >
+              Milestones
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab("my");
+                router.push("/researcher-dashboard");
+              }}
+              className={activeTab === "my" ? styles.active : ""}
+            >
+              Dashboard
+            </button>
+          </li>
+          
+        </ul>
+      </nav>
+
+      <section className={styles.milestonesBg}>
       {/* */}
       <section className={styles.maxWidth}>
         {}
         <header className={styles.headerRow}>
+
 
           {/* Flex row: back arrow and page title */}
           <span style={{ display: "flex", alignItems: "center" }}>
 
             {/* Link to go back to the researcher dashboard */}
             <Link href="/researcher-dashboard" style={{ marginRight: 12 }}>
+
               <ArrowLeft size={22} />
             </Link>
             {}
             <span className={styles.pageTitle}>Project Milestones</span>
           </span>
+
 
           {/* Button to navigate to the create milestone page */}
           <Link
@@ -189,11 +230,13 @@ export default function MilestonesPage() {
             </span>{" "}
             Create Milestone
 
+
           </Link>
         </header>
 
         {}
         {Object.entries(groupedMilestones).length === 0 ? (
+
           <section
             style={{
               textAlign: "center",
@@ -205,10 +248,12 @@ export default function MilestonesPage() {
             <p className="text-gray-500">
               No milestones found. Create your first milestone!
             </p>
+
           </section>
         ) : (
           
           <>
+
             {/* Iterate over each project group */}
             {Object.entries(groupedMilestones).map(
               ([projectName, projectMilestones]) => (
@@ -278,6 +323,35 @@ export default function MilestonesPage() {
             )}
           </>
         )}
+      </section>
+        <section className={styles.chartContainer}>
+        <h3 className={styles.chartTitle}>Milestone Progress Overview</h3>
+        <PieChart width={400} height={300}>
+          <Pie
+            data={statusSummary}
+            dataKey="count"
+            nameKey="status"
+            cx="50%"
+            cy="50%"
+            outerRadius={80}
+            label
+          >
+            {statusSummary.map((entry, index) => (
+              <Cell
+                key={`cell-${index}`}
+                fill={
+                  entry.status === "Completed"
+                    ? "#4CAF50"
+                    : entry.status === "In Progress"
+                    ? "#2196F3"
+                    : "#FF9800"
+                }
+              />
+            ))}
+          </Pie>
+          <Tooltip />
+          <Legend />
+        </PieChart>
       </section>
     </main>
   );

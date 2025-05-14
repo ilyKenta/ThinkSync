@@ -1,5 +1,79 @@
+
+.container {
+  display: flex;
+  min-height: 100vh; /* Ensure the container takes at least the full viewport height */
+  width: 100%;
+  padding: 0;
+}
+
+.sidebar {
+  width: 280px; /* Slightly wider sidebar */
+  background-color: var(--primary-color);
+  padding: 25px; /* Add a bit more padding */
+  border-right: 1px solid #ddd; /* Lighter border */
+  box-shadow: 10px 10px 10px var(--shadows-color)
+}
+.sidebar h2 {
+  margin-top: 0px;
+  font-size: 30px;
+  margin-bottom: 0px; 
+}
+
+.sidebar h3 {
+  border-top:1px solid #000000 ;
+  padding-top: 10px;
+  font-size: 1rem;
+  margin-top: 3px;
+  margin-bottom: 10px;
+  /*color: #777;*/
+  font-weight: var(--font-weight-semibold);
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+}
+
+
+.sidebar li button {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  padding: 10px 10px;
+  border-radius: var(--button-radius);
+  transition: background-color 0.3s ease;
+}
+
+.sidebar li:nth-child(1) {
+ 
+  /*color: #555;*/
+  cursor: pointer;
+  transition: color 0.3s ease;
+  border-radius: var(--button-radius);
+  background-color: var(--field-hover-color);
+}
+
+.sidebar li  {
+  /*color: #555;*/
+  cursor: pointer;
+  transition: color 0.3s ease;
+  border-radius: var(--button-radius);
+}
+
+.sidebar li button:hover {
+
+  background-color: var(--field-hover-color);
+}
+
 .milestonesBg {
   min-height: 100vh;
+  width: 100%; /* ✅ Take full width of remaining container space */
   background: #fafbfc;
   padding: 40px 0 0 0;
   display: flex;
@@ -33,7 +107,7 @@
   display: flex;
   align-items: center;
   border: none;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
   cursor: pointer;
   transition: background 0.15s;
 }
@@ -90,6 +164,7 @@
   color: #111;
   font-size: 1rem;
 }
+
 .milestoneStatus {
   padding: 0.5rem;
   align-items: center;
@@ -106,3 +181,17 @@
   background-color: rgb(238, 225, 202);
   color: black;
 }
+
+
+.chartContainer {
+  max-width: 500px;
+  margin: 2rem auto;
+}
+
+.chartTitle {
+  text-align: center;
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+

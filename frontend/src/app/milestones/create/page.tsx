@@ -20,6 +20,7 @@ interface Project {
 // create milestone page
 export default function CreateMilestonePage() {
 
+
   // Get the router object for navigation after form submission
   const router = useRouter();
 
@@ -42,6 +43,7 @@ export default function CreateMilestonePage() {
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState("");
   const [collaborators, setCollaborators] = useState("");
+
 
 
     //  fetch projects 
@@ -92,14 +94,17 @@ export default function CreateMilestonePage() {
           title: p.title
         }));
 
+
         setProjects(mockProjects);
         setLoading(false);
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");
         console.error("Error fetching projects:", err);
+
         setLoading(false);
       }
     };
+
 
     // Call the async function to fetch projects
     fetchProjects();
@@ -127,6 +132,7 @@ export default function CreateMilestonePage() {
       //   body: JSON.stringify({ title, description, projectId, dueDate })
       // });
 
+
       // Simulate successful API call
 
       // Simulate a successful API call with a delay
@@ -141,9 +147,11 @@ export default function CreateMilestonePage() {
         err instanceof Error ? err.message : "Failed to create milestone"
       );
       console.error("Error creating milestone:", err);
+
       setSubmitting(false);
     }
   };
+
 
 
   // Show loading message if data is still being fetched
@@ -155,6 +163,7 @@ export default function CreateMilestonePage() {
         <section>Loading projects...</section>
       </main>
     );
+
   }
 
   // Main create milestone page rendering
@@ -179,6 +188,7 @@ export default function CreateMilestonePage() {
             <h1 className={styles.formTitle}>Create New Milestone</h1>
             {}
             {error && (
+
               <section
                 style={{
                   background: "#fdeaea",
@@ -189,6 +199,7 @@ export default function CreateMilestonePage() {
                   marginBottom: 18,
                 }}
               >
+
                 {error}
               </section>
             )}
@@ -227,13 +238,16 @@ export default function CreateMilestonePage() {
               />
               {}
               <label className={styles.label}>Due Date</label>
+
               <span style={{ position: "relative", display: "block" }}>
+
                 <input
                   type="date"
                   className={styles.dateInput}
                   value={dueDate} // State for the due date
                   onChange={(e) => setDueDate(e.target.value)} 
                   required
+
                 />
 
               </span>
@@ -286,6 +300,7 @@ export default function CreateMilestonePage() {
                   disabled={submitting}
                 >
 
+
                   {submitting ? "Creating..." : "Create Milestone"}
                 </button>
               </section>
@@ -296,3 +311,4 @@ export default function CreateMilestonePage() {
     </main>
   );
 }
+
