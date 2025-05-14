@@ -1,104 +1,209 @@
+/* Layout */
+.container {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 280px;
+  background-color: var(--primary-color);
+  padding: 25px;
+  border-right: 1px solid #ddd;
+  box-shadow: 10px 10px 10px var(--shadows-color);
+}
+
+.sidebar h2 {
+  margin-top: 0;
+  font-size: 30px;
+}
+
+.sidebar h3 {
+  border-top: 1px solid #000;
+  padding-top: 10px;
+  font-size: 1rem;
+  margin-top: 3px;
+  margin-bottom: 10px;
+  font-weight: var(--font-weight-semibold);
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+}
+
+.sidebar li button {
+  background: none;
+  border: none;
+  padding: 10px;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  border-radius: var(--button-radius);
+  width: 100%;
+  text-align: left;
+}
+
+.sidebar li button.activeTab {
+  background-color: #d3d3d3 !important;
+  font-weight: bold;
+}
+
+/* Main content */
 .mainContent {
-    flex-grow: 1;
-    padding: 25px;
-    background-color: #f9f9f9;
-  }
-  
-  .heading {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #000000;
-    margin-bottom: 2rem;
-    padding: 0 20px;
-  }
-  
-  .createButton {
-    background-color: var(--secondary-color);
-    color: var(--primary-color);
-    border: none;
-    padding: 12px 28px;
-    border-radius: var(--button-radius);
-    cursor: pointer;
-    font-size: 1.5rem;
-    transition: background-color 0.3s ease;
-  }
-  
-  .createButton:hover {
-    background-color: #333;
-  }
-  
-  .cardContainer {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 20px;
-    padding: 1rem;
-  }
-  
-  .card {
-    background-color: var(--primary-color);
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 10px;
-    text-align: left;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
-    cursor: pointer;
-  }
-  
-  .cardContent {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-  }
-  
-  .cardContent span {
-    margin-top: 1rem;
-    font-size: 1.1rem;
-    font-weight: var(--font-weight-medium);
-    color: #333;
-    margin-bottom: 5px;
-  }
-  
-  .cardContent p {
-    font-size: 0.9rem;
-    color: #777;
-  }
-  
-  .cardContent time {
-    font-size: 0.95rem;
-    color: #555;
-    margin-top: 0.5rem;
-  }
-  
-  .cardFooter {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding-top: 10px;
-  }
-  
-  .buttonContainer {
-    display: flex;
-    gap: 10px;
-  }
-  
-  .editButton,
-  .trashButton {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 6px;
-    border-radius: 50%;
-    color: #222;
-    font-size: 18px;
-    transition: background-color 0.2s, color 0.2s;
-  }
-  
-  .editButton:hover {
-    background-color: #eee;
-  }
-  
-  .trashButton:hover {
-    background-color: rgba(255, 0, 0, 0.1);
-  }
-  
+  flex-grow: 1;
+  padding: 25px;
+  background-color: #f9f9f9;
+}
+
+.heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #000;
+  margin-bottom: 2rem;
+  padding: 0 20px;
+}
+
+/* Card grid */
+.cardContainer {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 24px;
+  padding: 1rem;
+}
+
+.card {
+  background-color: var(--primary-color);
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.card h3 {
+  margin-top: 0;
+}
+
+.breakdownTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  font-size: 0.95rem;
+}
+
+.breakdownTable th,
+.breakdownTable td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: left;
+}
+
+.breakdownTable input,
+.breakdownTable select {
+  width: 100%;
+  padding: 4px;
+  box-sizing: border-box;
+}
+
+/* Pie chart */
+.pieContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 20px 0;
+  height: 250px;
+}
+
+/* Footer buttons */
+.cardFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.editButton,
+.trashButton,
+.initButton {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.editButton {
+  background-color: #e0e0e0;
+  color: #222;
+}
+
+.trashButton {
+  background-color: #ffc2c2;
+  color: #000;
+}
+
+.initButton {
+  background-color: #0088fe;
+  color: white;
+  transition: background-color 0.2s ease;
+}
+
+.initButton:hover {
+  background-color: #006edc;
+}
+
+/* Status tags */
+.statusActive {
+  color: green;
+  font-weight: 600;
+}
+
+.statusPlanned {
+  color: gray;
+  font-weight: 600;
+}
+
+.statusInactive {
+  color: red;
+  font-weight: 600;
+}
+
+/* Modal editor */
+.editModal {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+.editModal input,
+.editModal select {
+  display: block;
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 6px;
+  font-size: 0.95rem;
+}
+
+.modalButtons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.modalButtons button {
+  padding: 6px 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 4px;
+  border: none;
+  background-color: #333;
+  color: white;
+}
+
+.modalButtons button:hover {
+  background-color: #000;
+}
