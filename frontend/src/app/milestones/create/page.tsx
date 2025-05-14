@@ -1,6 +1,4 @@
-
 "use client";
-
 
 import React, { useState, useEffect } from "react";
 
@@ -11,16 +9,17 @@ import styles from "./create-milestone.module.css";
 
 import Link from "next/link";
 
-
 interface Project {
   project_ID: string;
   title: string;
 }
+interface Collaborator {
+  user_ID: string;
+  name: string;
+}
 
 // create milestone page
 export default function CreateMilestonePage() {
-
-
   // Get the router object for navigation after form submission
   const router = useRouter();
 
@@ -44,56 +43,90 @@ export default function CreateMilestonePage() {
   const [status, setStatus] = useState("");
   const [collaborators, setCollaborators] = useState("");
 
+  const [collaboratorList, setCollaboratorList] = useState<Collaborator[]>([]);
 
-
-    //  fetch projects 
+  //  fetch projects
   useEffect(() => {
+    // FETCHING COLLABORATORS
+
+    //     const fetchCollaborators = async () => {
+    //     try {
+    //       const res = await fetch("/api/milestones/");
+    //       const data = await res.json();
+
+    //       const allCollaborators = new Map();
+
+    //       data.forEach(project => {
+    //         project.collaborators.forEach(collab => {
+    //           if (!allCollaborators.has(collab.user_ID)) {
+    //             allCollaborators.set(collab.user_ID, {
+    //               user_ID: collab.user_ID,
+    //               name: `${collab.first_name} ${collab.last_name}`
+    //             });
+    //           }
+    //         });
+    //       });
+
+    //       setCollaboratorList(Array.from(allCollaborators.values()));
+    //     } catch (err) {
+    //       console.error("Failed to load collaborators:", err);
+    //     }
+    //   };
+
+    //   fetchCollaborators();
+    // }, []);
     const fetchProjects = async () => {
       try {
         // Mock data for now (from user)
         // Mock data simulating a response from an API
+        const mockCollaborators = [
+          { user_ID: "user123", name: "Alice Johnson" },
+          { user_ID: "user124", name: "Bob Smith" },
+          { user_ID: "user125", name: "Charlie Lee" },
+        ];
+
+        setCollaboratorList(mockCollaborators);
         const mockData = {
-          "projects": [
+          projects: [
             {
-              "project_ID": 1,
-              "title": "AI for Healthcare",
-              "milestones": [
+              project_ID: 1,
+              title: "AI for Healthcare",
+              milestones: [
                 {
-                  "milestone_ID": 10,
-                  "project_ID": 1,
-                  "title": "Literature Review",
-                  "description": "Review existing AI models.",
-                  "expected_completion_date": "2024-07-01",
-                  "assigned_user_ID": "user123",
-                  "status": "Completed",
-                  "created_at": "2024-05-01T10:00:00.000Z",
-                  "updated_at": "2024-06-01T10:00:00.000Z"
+                  milestone_ID: 10,
+                  project_ID: 1,
+                  title: "Literature Review",
+                  description: "Review existing AI models.",
+                  expected_completion_date: "2024-07-01",
+                  assigned_user_ID: "user123",
+                  status: "Completed",
+                  created_at: "2024-05-01T10:00:00.000Z",
+                  updated_at: "2024-06-01T10:00:00.000Z",
                 },
                 {
-                  "milestone_ID": 11,
-                  "project_ID": 1,
-                  "title": "Data Collection",
-                  "description": "Collect patient data.",
-                  "expected_completion_date": "2024-08-01",
-                  "assigned_user_ID": "user124",
-                  "status": "In Progress",
-                  "created_at": "2024-06-01T10:00:00.000Z",
-                  "updated_at": "2024-06-15T10:00:00.000Z"
-                }
-              ]
+                  milestone_ID: 11,
+                  project_ID: 1,
+                  title: "Data Collection",
+                  description: "Collect patient data.",
+                  expected_completion_date: "2024-08-01",
+                  assigned_user_ID: "user124",
+                  status: "In Progress",
+                  created_at: "2024-06-01T10:00:00.000Z",
+                  updated_at: "2024-06-15T10:00:00.000Z",
+                },
+              ],
             },
             {
-              "project_ID": 2,
-              "title": "Robotics Lab",
-              "milestones": []
-            }
-          ]
+              project_ID: 2,
+              title: "Robotics Lab",
+              milestones: [],
+            },
+          ],
         };
-        const mockProjects = mockData.projects.map(p => ({
+        const mockProjects = mockData.projects.map((p) => ({
           project_ID: String(p.project_ID),
-          title: p.title
+          title: p.title,
         }));
-
 
         setProjects(mockProjects);
         setLoading(false);
@@ -105,11 +138,9 @@ export default function CreateMilestonePage() {
       }
     };
 
-
     // Call the async function to fetch projects
     fetchProjects();
   }, []);
-
 
   // Handle form submission for creating a milestone
   const handleSubmit = async (e: React.FormEvent) => {
@@ -118,7 +149,6 @@ export default function CreateMilestonePage() {
     // Set submitting state to true to disable the button
 
     setSubmitting(true);
-
 
     try {
       // This will be replaced with actual API call later
@@ -132,7 +162,6 @@ export default function CreateMilestonePage() {
       //   body: JSON.stringify({ title, description, projectId, dueDate })
       // });
 
-
       // Simulate successful API call
 
       // Simulate a successful API call with a delay
@@ -141,7 +170,6 @@ export default function CreateMilestonePage() {
       // Navigate back to milestones page
       // Navigate back to the milestones page after creation
       router.push("/milestones");
-
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to create milestone"
@@ -152,8 +180,6 @@ export default function CreateMilestonePage() {
     }
   };
 
-
-
   // Show loading message if data is still being fetched
   // Show loading message if data is still being fetched
 
@@ -163,7 +189,6 @@ export default function CreateMilestonePage() {
         <section>Loading projects...</section>
       </main>
     );
-
   }
 
   // Main create milestone page rendering
@@ -188,7 +213,6 @@ export default function CreateMilestonePage() {
             <h1 className={styles.formTitle}>Create New Milestone</h1>
             {}
             {error && (
-
               <section
                 style={{
                   background: "#fdeaea",
@@ -199,7 +223,6 @@ export default function CreateMilestonePage() {
                   marginBottom: 18,
                 }}
               >
-
                 {error}
               </section>
             )}
@@ -210,19 +233,23 @@ export default function CreateMilestonePage() {
               <select
                 className={styles.input}
                 value={projectId}
-                onChange={e => setProjectId(e.target.value)}
+                onChange={(e) => setProjectId(e.target.value)}
                 required
               >
-                <option value="" disabled>Select a project</option>
-                {projects.map(project => (
-                  <option key={project.project_ID} value={project.project_ID}>{project.title}</option>
+                <option value="" disabled>
+                  Select a project
+                </option>
+                {projects.map((project) => (
+                  <option key={project.project_ID} value={project.project_ID}>
+                    {project.title}
+                  </option>
                 ))}
               </select>
               <label className={styles.label}>Title</label>
               <input
                 type="text"
                 className={styles.input}
-                value={title} 
+                value={title}
                 onChange={(e) => setTitle(e.target.value)} // Update state on change
                 placeholder="Milestone title"
                 required
@@ -231,8 +258,8 @@ export default function CreateMilestonePage() {
               <label className={styles.label}>Description</label>
               <textarea
                 className={styles.textarea}
-                value={description} 
-                onChange={(e) => setDescription(e.target.value)} 
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
                 placeholder="Describe this milestone"
                 required
               />
@@ -240,16 +267,13 @@ export default function CreateMilestonePage() {
               <label className={styles.label}>Due Date</label>
 
               <span style={{ position: "relative", display: "block" }}>
-
                 <input
                   type="date"
                   className={styles.dateInput}
                   value={dueDate} // State for the due date
-                  onChange={(e) => setDueDate(e.target.value)} 
+                  onChange={(e) => setDueDate(e.target.value)}
                   required
-
                 />
-
               </span>
               {/* Choose the status of the project */}
               <label className={styles.label}>Status</label>
@@ -273,7 +297,7 @@ export default function CreateMilestonePage() {
                 <option value="Completed">Completed</option>
               </select>
               {/* Choose the collaborators to work on a milestone */}
-              {/* WAITJNG FOR ENDPOINT */}
+
               <label className={styles.label}>Assign Collaborators</label>
 
               <select
@@ -282,9 +306,11 @@ export default function CreateMilestonePage() {
                 onChange={(e) => setCollaborators(e.target.value)}
               >
                 <option value=""></option>
-                <option value="science">Not Started</option>
-                <option value="health-science">In Progress</option>
-                <option value="commerce">Completed</option>
+                {collaboratorList.map((collab) => (
+                  <option key={collab.user_ID} value={collab.user_ID}>
+                    {collab.name}
+                  </option>
+                ))}
               </select>
 
               {/* Row of action buttons: cancel and submit */}
@@ -299,8 +325,6 @@ export default function CreateMilestonePage() {
                   className={styles.createBtn}
                   disabled={submitting}
                 >
-
-
                   {submitting ? "Creating..." : "Create Milestone"}
                 </button>
               </section>
@@ -311,4 +335,3 @@ export default function CreateMilestonePage() {
     </main>
   );
 }
-

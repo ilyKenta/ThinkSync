@@ -24,6 +24,10 @@ interface Milestone {
   status: string;
   assigned_user_ID: string;
 }
+interface Collaborator {
+  user_ID: string;
+  name: string;
+}
 
 // Main component for the milestone details page
 export default function MilestoneDetailsPage({
@@ -44,20 +48,28 @@ export default function MilestoneDetailsPage({
   const [error, setError] = useState<string | null>(null);
   //sstate to open the edit form
   const [showEditForm, setShowEditForm] = useState(false);
+  const [collaborators, setCollaborators] = useState("");
+
+  const [collaboratorList, setCollaboratorList] = useState<Collaborator[]>([]);
 
   // useEffect runs on mount and when the id changes
   useEffect(() => {
+    const mockCollaborators = [
+      { user_ID: "user123", name: "Alice Johnson" },
+      { user_ID: "user124", name: "Bob Smith" },
+      { user_ID: "user125", name: "Charlie Lee" },
+    ];
+
+    setCollaboratorList(mockCollaborators);
     // Fetch milestone details from mock data
     const fetchMilestoneDetails = async () => {
       try {
-
         // This will be replaced with actual API call later
         // const response = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/milestones/${id}`, {
         //   headers: {
         //     'Authorization': `Bearer ${token}`
         //   }
         // });
-
 
         // Mock data for now (from user)
         // Mock data simulating a response from an API
@@ -98,11 +110,11 @@ export default function MilestoneDetailsPage({
             },
           ],
         };
+
         // Flatten milestones from all projects into a single array of milestone objects
         const allMilestones = mockData.projects.flatMap((project) =>
           // For each project, map its milestones to a common format
           (project.milestones || []).map((milestone) => ({
-
             id: String(milestone.milestone_ID), // Convert milestone ID to string
             title: milestone.title, // Milestone title
             description: milestone.description, // Milestone description
@@ -114,27 +126,26 @@ export default function MilestoneDetailsPage({
             status: milestone.status,
           }))
         );
+
         // Find the milestone object that matches the ID from the URL params
         const found = allMilestones.find((m) => m.id === id);
         console.log("Found milestone:", found);
         // If no milestone is found, throw an error to show 'Milestone not found'
         if (!found) {
           throw new Error("Milestone not found");
-
         }
         // Set the found milestone object in state so it can be rendered
         setMilestone(found);
         // Set loading to false to indicate data is ready
+
         setLoading(false);
       } catch (err) {
-
         setError(err instanceof Error ? err.message : "An error occurred");
         console.error("Error fetching milestone details:", err);
 
         setLoading(false);
       }
     };
-
 
     // Call the async function to fetch milestone details
 
@@ -150,7 +161,6 @@ export default function MilestoneDetailsPage({
         <section>Loading milestone details...</section>
       </main>
     );
-
   }
 
   // Show error message if there was an error or milestone not found
@@ -158,7 +168,6 @@ export default function MilestoneDetailsPage({
     // If there is an error or the milestone is not found, show an error message and back button
     return (
       <main>
-
         <section style={{ padding: "2rem" }}>
           {/* Header with back button to milestones list */}
           <header style={{ marginBottom: "1.5rem" }}>
@@ -187,7 +196,6 @@ export default function MilestoneDetailsPage({
             }}
           >
             {error || "Milestone not found"}
-
           </section>
         </section>
       </main>
@@ -315,18 +323,15 @@ export default function MilestoneDetailsPage({
                 <label className={styles.label}>Assign Collaborators</label>
                 <select
                   className={styles.input}
-                  value={milestone.assigned_user_ID}
-                  onChange={(e) =>
-                    setMilestone({
-                      ...milestone,
-                      assigned_user_ID: e.target.value,
-                    })
-                  }
+                  required
+                  onChange={(e) => setCollaborators(e.target.value)}
                 >
                   <option value=""></option>
-                  <option value="notStarted">Not Started</option>
-                  <option value="inProgress">In Progress</option>
-                  <option value="Completed">Completed</option>
+                  {collaboratorList.map((collab) => (
+                    <option key={collab.user_ID} value={collab.user_ID}>
+                      {collab.name}
+                    </option>
+                  ))}
                 </select>
 
                 <div className={styles.buttonRow}>
@@ -349,4 +354,3 @@ export default function MilestoneDetailsPage({
     </main>
   );
 }
-
