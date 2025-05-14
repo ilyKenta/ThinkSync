@@ -3,7 +3,9 @@
 
 
 import React, { useState, useEffect } from "react";
+
 import { PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
+
 
 import { useRouter } from "next/navigation";
 
@@ -21,6 +23,10 @@ interface Milestone {
   projectId: string;
   projectName: string;
   dueDate: string;
+
+  status: string;
+  assigned_user_ID: string;
+
 }
 
 
@@ -30,10 +36,11 @@ interface Project {
 }
 
 export default function MilestonesPage() {
-   
+
+   // Get the router object for navigation
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('shared');
-  
+  // State to hold the list of all milestones
   const [milestones, setMilestones] = useState<Milestone[]>([]);
    
   const [loading, setLoading] = useState(true);
@@ -47,12 +54,14 @@ export default function MilestonesPage() {
     const fetchMilestones = async () => {
       try {
 
+
         // This will be replaced with actual API call later
         // const response = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/milestones`, {
         //   headers: {
         //     'Authorization': `Bearer ${token}`
         //   }
         // });
+
         
         // Mock data for now (from user)
                 // Mock data simulating a response from an API
@@ -96,22 +105,30 @@ export default function MilestonesPage() {
         // Flatten milestones from all projects and map to the Milestone interface
         const mockMilestones = mockData.projects.flatMap(project =>
           (project.milestones || []).map(milestone => ({
+
             id: String(milestone.milestone_ID),
             title: milestone.title,
             description: milestone.description,
             projectId: String(project.project_ID),
             projectName: project.title,
-            dueDate: milestone.expected_completion_date
+
+            dueDate: milestone.expected_completion_date,
+            assigned_user_ID: milestone.assigned_user_ID,
+            status: milestone.status,
+
           }))
         );
         setMilestones(mockMilestones);
         setLoading(false);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
-        console.error('Error fetching milestones:', err);
+
+        setError(err instanceof Error ? err.message : "An error occurred");
+        console.error("Error fetching milestones:", err);
+
         setLoading(false);
       }
     };
+
 
         // async function to fetch milestones
     fetchMilestones();
@@ -142,10 +159,12 @@ export default function MilestonesPage() {
  
   if (error) {
     return <main><section>Error: {error}</section></main>;
+
   }
 
  
   return (
+
     <main className={styles.container}>
       <nav className={styles.sidebar}>
         <h2>ThinkSync</h2>
@@ -185,75 +204,127 @@ export default function MilestonesPage() {
       <section className={styles.maxWidth}>
         {}
         <header className={styles.headerRow}>
-          {}
-          <span style={{display:'flex',alignItems:'center'}}>
+
+
+          {/* Flex row: back arrow and page title */}
+          <span style={{ display: "flex", alignItems: "center" }}>
+
             {/* Link to go back to the researcher dashboard */}
-            <Link href="/researcher-dashboard" style={{marginRight:12}}>
+            <Link href="/researcher-dashboard" style={{ marginRight: 12 }}>
+
               <ArrowLeft size={22} />
             </Link>
             {}
             <span className={styles.pageTitle}>Project Milestones</span>
           </span>
-          {}
-          <Link href="/milestones/create" className={styles.createBtn} data-testid="create-milestone-button">
-            <span style={{fontSize:'1.35em',marginRight:8,marginTop:-2}}>+</span> Create Milestone
+
+
+          {/* Button to navigate to the create milestone page */}
+          <Link
+            href="/milestones/create"
+            className={styles.createBtn}
+            data-testid="create-milestone-button"
+          >
+            <span style={{ fontSize: "1.35em", marginRight: 8, marginTop: -2 }}>
+              +
+            </span>{" "}
+            Create Milestone
+
+
           </Link>
         </header>
 
         {}
         {Object.entries(groupedMilestones).length === 0 ? (
-          <section style={{textAlign:'center',padding:'2rem',border:'1px solid #eee',borderRadius:8}}>
-            <p className="text-gray-500">No milestones found. Create your first milestone!</p>
+
+          <section
+            style={{
+              textAlign: "center",
+              padding: "2rem",
+              border: "1px solid #eee",
+              borderRadius: 8,
+            }}
+          >
+            <p className="text-gray-500">
+              No milestones found. Create your first milestone!
+            </p>
+
           </section>
         ) : (
           
           <>
-            {}
-            {Object.entries(groupedMilestones).map(([projectName, projectMilestones]) => (
-              
-              <section key={projectName} className={styles.card}>
-                {}
-                <h2 className={styles.projectTitle}>{projectName}</h2>
-                {}
-                <table className={styles.milestoneTable}>
-                  <thead>
-                    <tr>
-                      <th>Title</th>
-                      <th>Description</th>
-                      <th>Due Date</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {}
-                    {projectMilestones.map((milestone, idx) => (
-                      <tr
-                        key={milestone.id} // Unique key for React
-                        
-                        onClick={() => router.push(`/milestones/${milestone.id}`)}
-                        style={{ cursor: 'pointer' }}
-                      >
-                        {}
-                        <td className={styles.milestoneTitle}>{milestone.title}</td>
-                        {}
-                        <td>{milestone.description}</td>
-                        {}
-                        <td>
-                          <span className={styles.dueDate}>
-                            <Calendar size={16} style={{marginRight:4,marginBottom:-2}} />
-                            {new Date(milestone.dueDate).toLocaleDateString()}
-                          </span>
-                        </td>
+
+            {/* Iterate over each project group */}
+            {Object.entries(groupedMilestones).map(
+              ([projectName, projectMilestones]) => (
+                // Card section for each project
+                <section key={projectName} className={styles.card}>
+                  {/* Project name as a heading */}
+                  <h2 className={styles.projectTitle}>{projectName}</h2>
+                  {/* Table of milestones for this project */}
+                  <table className={styles.milestoneTable}>
+                    <thead>
+                      <tr>
+                        <th>Title</th>
+                        <th>Description</th>
+                        <th>Due Date</th>
+                        <th>Assignee</th>
+                        <th>Status</th>
+
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </section>
-            ))}
+                    </thead>
+                    <tbody>
+                      {/* Render each milestone as a clickable row */}
+                      {projectMilestones.map((milestone, idx) => (
+                        <tr
+                          key={milestone.id} // Unique key for React
+                          // When row is clicked, navigate to the milestone details page
+                          onClick={() =>
+                            router.push(`/milestones/${milestone.id}`)
+                          }
+                          style={{ cursor: "pointer" }}
+                        >
+                          {/* Milestone title */}
+                          <td className={styles.milestoneTitle}>
+                            {milestone.title}
+                          </td>
+                          {/* Milestone description */}
+                          <td>{milestone.description}</td>
+                          {/* Due date with calendar icon */}
+                          <td>
+                            <span className={styles.dueDate}>
+                              <Calendar
+                                size={16}
+                                style={{ marginRight: 4, marginBottom: -2 }}
+                              />
+                              {new Date(milestone.dueDate).toLocaleDateString()}
+                            </span>
+                          </td>
+                          <td>{milestone.assigned_user_ID}</td>
+                          <td
+                            className={`${styles.milestoneStatus} ${
+                              milestone.status === "Completed"
+                                ? styles.completed
+                                : milestone.status === "In Progress"
+                                ? styles.inProgress
+                                : milestone.status === "Not Started"
+                                ? styles.notStarted
+                                : ""
+                            }`}
+                          >
+                            {milestone.status}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </section>
+              )
+            )}
           </>
         )}
       </section>
-
-      <section className={styles.chartContainer}>
+        <section className={styles.chartContainer}>
         <h3 className={styles.chartTitle}>Milestone Progress Overview</h3>
         <PieChart width={400} height={300}>
           <Pie
@@ -282,17 +353,6 @@ export default function MilestonesPage() {
           <Legend />
         </PieChart>
       </section>
-
-    </section>
-
-
     </main>
-
-
-
-
-    
   );
 }
-
-

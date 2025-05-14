@@ -34,51 +34,185 @@
   background: #fff;
   border: 1px solid #e6e8eb;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(44,62,80,0.03);
+
+  box-shadow: 0 2px 8px rgba(44, 62, 80, 0.03);
   max-width: 650px;
   width: 100%;
   padding: 2.5rem 2.5rem 2rem 2.5rem;
+  align-items: center;
 }
 
 .title {
-  font-size: 1.6rem;
+  font-size: 2rem;
   font-weight: 700;
-  margin-bottom: 0.25rem;
+  margin-bottom: 1rem;
   color: #222;
 }
+
+
+  
 
 .projectName {
   font-size: 1rem;
   color: #7a7f87;
-  margin-bottom: 1.5rem;
+
+  margin-bottom: 0.5rem;
 }
 
 .label {
-  font-size: 1.04rem;
+  display: block;
+  font-size: 1.3rem;
   font-weight: 600;
-  color: #51545c;
+  color: #000000;
   margin-bottom: 0.25rem;
+  margin-top: 1.5rem;
 }
 
 .description {
-  color: #23272f;
+  color: #6c6f75;
   margin-bottom: 2.2rem;
   line-height: 1.7;
+  font-weight: 500;
+  font-size: 1.03rem;
 }
 
 .dueDateRow {
-  display: flex;
-  align-items: center;
-  color: #6c6f75;
-  font-size: 1.03rem;
-  font-weight: 500;
+
+  margin-bottom: 1.5rem;
 }
 
-.dueDateLabel {
-  font-weight: 600;
-  margin-right: 0.5rem;
-}
+
 
 .dueDateIcon {
   margin-right: 0.4rem;
 }
+.status {
+  max-width: 8rem;
+  height: 1.7rem;
+  padding: 0 1rem; /* added horizontal padding */
+  display: flex; /* center content */
+  align-items: center;
+  justify-content: center;
+  color: #000000; /* default text color */
+  border-radius: 0.3rem;
+  font-size: 1.2rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 1rem;
+}
+.notStarted {
+  background-color: rgba(255, 186, 186, 0.596);
+  color: black;
+}
+
+.inProgress {
+  background-color: rgb(238, 225, 202);
+  color: black;
+}
+
+.completed {
+  background-color: rgb(209, 236, 209);
+  color: black;
+}
+.editButton {
+  margin-top: 1rem;
+  background-color: #000000;
+  color: white;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.45);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  align-items: center; /* vertically centers it */
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal {
+  background: white;
+  border-radius: 12px;
+  max-width: 540px;
+
+  width: 90%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+.centerForm {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+.cardForm {
+  background: #fff;
+  border: 1px solid #e6e8eb;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.192);
+  max-width: 540px;
+  width: 100%;
+  padding: 2.5rem 2.5rem 2rem 2.5rem;
+}
+.formTitle {
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  color: #000000;
+}
+.label {
+  font-size: 1.04rem;
+  font-weight: 600;
+  color: #000000;
+  margin-bottom: 0.5rem;
+}
+.input {
+  width: 100%;
+  border: 1px solid #e6e8eb;
+  border-radius: 7px;
+  padding: 0.65rem 1rem;
+  margin-bottom: 1.4rem;
+  font-size: 1rem;
+  color: #000000;
+  background: #fafbfc;
+  transition: border 0.2s;
+}
+.buttonRow {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 1.2rem;
+}
+.cancelBtn {
+  background: #fff;
+  color: #000000;
+  border: 1px solid #e6e8eb;
+  border-radius: 6px;
+  padding: 0.5rem 1.15rem;
+  font-size: 1rem;
+  margin-right: 1rem;
+  cursor: pointer;
+  transition: background 0.18s, border 0.18s;
+}
+
+.saveBtn {
+  background: #000000;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1.15rem;
+  font-size: 1rem;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.18s;
+}
+

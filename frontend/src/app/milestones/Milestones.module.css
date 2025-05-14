@@ -1,3 +1,4 @@
+
 .container {
   display: flex;
   min-height: 100vh; /* Ensure the container takes at least the full viewport height */
@@ -164,6 +165,24 @@
   font-size: 1rem;
 }
 
+.milestoneStatus {
+  padding: 0.5rem;
+  align-items: center;
+}
+.completed {
+  background-color: rgb(209, 236, 209);
+}
+.notStarted {
+  background-color: rgb(202, 161, 161);
+  color: black;
+}
+
+.inProgress {
+  background-color: rgb(238, 225, 202);
+  color: black;
+}
+
+
 .chartContainer {
   max-width: 500px;
   margin: 2rem auto;
@@ -174,4 +193,5 @@
   font-size: 1.25rem;
   margin-bottom: 1rem;
 }
+
 

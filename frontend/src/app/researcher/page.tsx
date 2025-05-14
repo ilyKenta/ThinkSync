@@ -3,7 +3,7 @@
 import styles from "./page.module.css";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import useAuth from '../useAuth';
+import useAuth from "../useAuth";
 
 export default function ResearcherSignupPage() {
   const router = useRouter();
@@ -15,7 +15,6 @@ export default function ResearcherSignupPage() {
   const [res_area, setResArea] = useState("");
   const [qualification, setQualification] = useState("");
   const [current_proj, setCurrentProj] = useState("");
-
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,18 +36,21 @@ export default function ResearcherSignupPage() {
     console.log(payload);
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/auth/researcher`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/auth/researcher`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        }
+      );
 
       const data = await res.json();
 
       if (res.ok) {
-        router.push('/researcher-dashboard');
+        router.push("/researcher-dashboard");
         console.log(data);
       } else {
         alert(`Error: ${data.error}`);
@@ -110,7 +112,13 @@ export default function ResearcherSignupPage() {
           </select>
 
           <label htmlFor="academicRole">Current academic role</label>
-          <select name="academicRole" id="academicRole" className="drop-down" required onChange={(e) => handleChangeRole(e.target.value)}>
+          <select
+            name="academicRole"
+            id="academicRole"
+            className="drop-down"
+            required
+            onChange={(e) => handleChangeRole(e.target.value)}
+          >
             <option value=""></option>
             <option value="lecturer">Lecturer</option>
             <option value="student">Student</option>
