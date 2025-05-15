@@ -138,7 +138,7 @@ export default function CreateMilestonePage() {
   if (loading && !error) {
     return (
       <main>
-        <section>Loading projects...</section>
+        <article>Loading projects...</article>
       </main>
     );
   }
@@ -148,24 +148,22 @@ export default function CreateMilestonePage() {
     // Main wrapper for the create milestone page
     <main className={styles.createMilestoneBg}>
       {/* Section to constrain width and center content */}
-      <section className="container mx-auto px-4 py-8">
+      <article className="container mx-auto px-4 py-8">
         {/* Header row with back button */}
         <header className={styles.backRow}>
           {/* Link to go back to the milestones list */}
           <Link href="/milestones" className={styles.backArrow}>
             <ArrowLeft size={20} />
           </Link>
-          <span>Back</span>
+          <strong>Back</strong>
         </header>
         {/* Center the form vertically and horizontally */}
         <section className={styles.centerForm}>
-          {}
-          <section className={styles.formCard}>
-            {}
+          <article className={styles.formCard}>
             <h1 className={styles.formTitle}>Create New Milestone</h1>
-            {}
+
             {error && (
-              <section
+              <aside
                 style={{
                   background: "#fdeaea",
                   border: "1px solid #f5c2c7",
@@ -176,11 +174,10 @@ export default function CreateMilestonePage() {
                 }}
               >
                 {error}
-              </section>
+              </aside>
             )}
-            {}
+
             <form onSubmit={handleSubmit}>
-              {}
               <label className={styles.label}>Project</label>
               <select
                 className={styles.input}
@@ -197,16 +194,17 @@ export default function CreateMilestonePage() {
                   </option>
                 ))}
               </select>
+
               <label className={styles.label}>Title</label>
               <input
                 type="text"
                 className={styles.input}
                 value={title}
-                onChange={(e) => setTitle(e.target.value)} // Update state on change
+                onChange={(e) => setTitle(e.target.value)}
                 placeholder="Milestone title"
                 required
               />
-              {}
+
               <label className={styles.label}>Description</label>
               <textarea
                 className={styles.textarea}
@@ -215,21 +213,19 @@ export default function CreateMilestonePage() {
                 placeholder="Describe this milestone"
                 required
               />
-              {}
-              <label className={styles.label}>Due Date</label>
 
-              <span style={{ position: "relative", display: "block" }}>
+              <label className={styles.label}>Due Date</label>
+              <figure style={{ position: "relative", display: "block" }}>
                 <input
                   type="date"
                   className={styles.dateInput}
-                  value={dueDate} // State for the due date
+                  value={dueDate}
                   onChange={(e) => setDueDate(e.target.value)}
                   required
                 />
-              </span>
-              {/* Choose the status of the project */}
-              <label className={styles.label}>Status</label>
+              </figure>
 
+              <label className={styles.label}>Status</label>
               <select
                 className={`${styles.status} ${
                   status === "Completed"
@@ -248,14 +244,13 @@ export default function CreateMilestonePage() {
                 <option value="In Progress">In Progress</option>
                 <option value="Completed">Completed</option>
               </select>
-              {/* Choose the collaborators to work on a milestone */}
 
               <label className={styles.label}>Assign Collaborators</label>
               <select
                 className={styles.status}
                 required
                 onChange={(e) => setCollaborators(e.target.value)}
-                disabled={!projectId} // Disable if no project selected
+                disabled={!projectId}
               >
                 <option value="">Select a collaborator</option>
                 {selectedProjectCollaborators.map((collab) => (
@@ -265,13 +260,10 @@ export default function CreateMilestonePage() {
                 ))}
               </select>
 
-              {/* Row of action buttons: cancel and submit */}
-              <section className={styles.buttonRow}>
-                {/* Cancel button navigates back to milestones */}
+              <nav className={styles.buttonRow}>
                 <Link href="/milestones" className={styles.cancelBtn}>
                   Cancel
                 </Link>
-                {/* Submit button creates the milestone; disabled while submitting */}
                 <button
                   type="submit"
                   className={styles.createBtn}
@@ -279,11 +271,11 @@ export default function CreateMilestonePage() {
                 >
                   {submitting ? "Creating..." : "Create Milestone"}
                 </button>
-              </section>
+              </nav>
             </form>
-          </section>
+          </article>
         </section>
-      </section>
+      </article>
     </main>
   );
 }

@@ -204,134 +204,8 @@ router.post('/:projectId', async (req, res) => {
     }
 });
 
-// Get details for a specific milestone
-router.get('/:milestoneId', async (req, res) => {
-    try {
-        const token = extractToken(req);
-        const userId = await getUserIdFromToken(token);
-        if (!(await checkResearcherRole(userId))) {
-            return res.status(403).json({ error: 'Unauthorized: User is not a researcher' });
-        }
-        const { milestoneId } = req.params;
-        const milestones = await db.executeQuery(
-            `SELECT m.*, p.title as project_title, 
-                    u.fname as assigned_user_fname, u.sname as assigned_user_sname
-             FROM milestones m 
-             JOIN projects p ON m.project_ID = p.project_ID 
-             LEFT JOIN users u ON m.assigned_user_ID = u.user_ID
-             WHERE m.milestone_ID = ?`,
-            [milestoneId]
-        );
-        if (!milestones.length) return res.status(404).json({ error: 'Milestone not found' });
-
-        // Get project collaborators
-        const projectId = milestones[0].project_ID;
-        const collaborators = await db.executeQuery(
-            `SELECT DISTINCT u.user_ID, u.fname, u.sname 
-             FROM (
-                 SELECT owner_ID as user_ID FROM projects WHERE project_ID = ?
-                 UNION
-                 SELECT user_ID FROM project_collaborations WHERE project_ID = ?
-             ) as project_users
-             JOIN users u ON project_users.user_ID = u.user_ID`,
-            [projectId, projectId]
-        );
-
-        res.json({ 
-            milestone: milestones[0],
-            collaborators: collaborators.map(c => ({
-                user_ID: c.user_ID,
-                name: `${c.fname} ${c.sname}`
-            }))
-        });
-    } catch (error) {
-        if (error.code && typeof error.code === 'string' && error.code.startsWith('ER_')) {
-            res.status(500).json({ error: 'A server error occurred' });
-        } else {
-            res.status(401).json({ error: error.message || 'Failed to fetch milestone' });
-        }
-    }
-});
-
-// Update a milestone
-router.put('/:projectId/:milestoneId', async (req, res) => {
-    try {
-        const token = extractToken(req);
-        const userId = await getUserIdFromToken(token);
-        if (!(await checkResearcherRole(userId))) {
-            return res.status(403).json({ error: 'Unauthorized: User is not a researcher' });
-        }
-        const { milestoneId, projectId } = req.params;
-        const { title, description, expected_completion_date, assigned_user_ID, status } = req.body;
-
-        // Validate fields
-        const validationError = validateMilestoneFields({ title, description, expected_completion_date, status });
-        if (validationError) return res.status(400).json({ error: validationError });
-
-        // If assigned_user_ID is provided, check if it exists and is a collaborator or owner
-        let assignedIdToUse = assigned_user_ID || null;
-        if (assigned_user_ID) {
-            // Check if user exists
-            const userCheck = await db.executeQuery(
-                `SELECT user_ID FROM users WHERE user_ID = ?`,
-                [assigned_user_ID]
-            );
-            if (!userCheck.length) {
-                return res.status(400).json({ error: 'assigned_user_ID does not exist' });
-            }
-            // Check if user is owner or collaborator
-            const collabCheck = await db.executeQuery(
-                `SELECT owner_ID as user_ID FROM projects WHERE project_ID = ? AND owner_ID = ?
-                 UNION
-                 SELECT user_ID FROM project_collaborations WHERE project_ID = ? AND user_ID = ?`,
-                [projectId, assigned_user_ID, projectId, assigned_user_ID]
-            );
-            if (!collabCheck.length) {
-                return res.status(400).json({ error: 'assigned_user_ID is not a collaborator or owner of the project' });
-            }
-        }
-
-        const result = await db.executeQuery(
-            `UPDATE milestones SET title=?, description=?, expected_completion_date=?, assigned_user_ID=?, status=?, updated_at=NOW() WHERE milestone_ID=?`,
-            [title, description, expected_completion_date, assignedIdToUse, status, milestoneId]
-        );
-        if (result.affectedRows === 0) return res.status(404).json({ error: 'Milestone not found' });
-        res.json({ message: 'Milestone updated' });
-    } catch (error) {
-        if (error.code && typeof error.code === 'string' && error.code.startsWith('ER_')) {
-            res.status(500).json({ error: 'A server error occurred' });
-        } else {
-            res.status(401).json({ error: error.message || 'Failed to update milestone' });
-        }
-    }
-});
-
-// Delete a milestone
-router.delete('/:projectId/:milestoneId', async (req, res) => {
-    try {
-        const token = extractToken(req);
-        const userId = await getUserIdFromToken(token);
-        if (!(await checkResearcherRole(userId))) {
-            return res.status(403).json({ error: 'Unauthorized: User is not a researcher' });
-        }
-        const { milestoneId } = req.params;
-        const result = await db.executeQuery(
-            `DELETE FROM milestones WHERE milestone_ID = ?`,
-            [milestoneId]
-        );
-        if (result.affectedRows === 0) return res.status(404).json({ error: 'Milestone not found' });
-        res.json({ message: 'Milestone deleted' });
-    } catch (error) {
-        if (error.code && typeof error.code === 'string' && error.code.startsWith('ER_')) {
-            res.status(500).json({ error: 'A server error occurred' });
-        } else {
-            res.status(401).json({ error: error.message || 'Failed to delete milestone' });
-        }
-    }
-});
-
 // Generate PDF report of all projects and milestones
-router.get('/report', async (req, res) => {
+router.get('/report/generate', async (req, res) => {
     let doc = null;
     try {
         const token = extractToken(req);
@@ -825,6 +699,132 @@ router.get('/report', async (req, res) => {
         // If PDF document was created, end it
         if (doc) {
             doc.end();
+        }
+    }
+});
+
+// Get details for a specific milestone
+router.get('/:milestoneId', async (req, res) => {
+    try {
+        const token = extractToken(req);
+        const userId = await getUserIdFromToken(token);
+        if (!(await checkResearcherRole(userId))) {
+            return res.status(403).json({ error: 'Unauthorized: User is not a researcher' });
+        }
+        const { milestoneId } = req.params;
+        const milestones = await db.executeQuery(
+            `SELECT m.*, p.title as project_title, 
+                    u.fname as assigned_user_fname, u.sname as assigned_user_sname
+             FROM milestones m 
+             JOIN projects p ON m.project_ID = p.project_ID 
+             LEFT JOIN users u ON m.assigned_user_ID = u.user_ID
+             WHERE m.milestone_ID = ?`,
+            [milestoneId]
+        );
+        if (!milestones.length) return res.status(404).json({ error: 'Milestone not found' });
+
+        // Get project collaborators
+        const projectId = milestones[0].project_ID;
+        const collaborators = await db.executeQuery(
+            `SELECT DISTINCT u.user_ID, u.fname, u.sname 
+             FROM (
+                 SELECT owner_ID as user_ID FROM projects WHERE project_ID = ?
+                 UNION
+                 SELECT user_ID FROM project_collaborations WHERE project_ID = ?
+             ) as project_users
+             JOIN users u ON project_users.user_ID = u.user_ID`,
+            [projectId, projectId]
+        );
+
+        res.json({ 
+            milestone: milestones[0],
+            collaborators: collaborators.map(c => ({
+                user_ID: c.user_ID,
+                name: `${c.fname} ${c.sname}`
+            }))
+        });
+    } catch (error) {
+        if (error.code && typeof error.code === 'string' && error.code.startsWith('ER_')) {
+            res.status(500).json({ error: 'A server error occurred' });
+        } else {
+            res.status(401).json({ error: error.message || 'Failed to fetch milestone' });
+        }
+    }
+});
+
+// Update a milestone
+router.put('/:projectId/:milestoneId', async (req, res) => {
+    try {
+        const token = extractToken(req);
+        const userId = await getUserIdFromToken(token);
+        if (!(await checkResearcherRole(userId))) {
+            return res.status(403).json({ error: 'Unauthorized: User is not a researcher' });
+        }
+        const { milestoneId, projectId } = req.params;
+        const { title, description, expected_completion_date, assigned_user_ID, status } = req.body;
+
+        // Validate fields
+        const validationError = validateMilestoneFields({ title, description, expected_completion_date, status });
+        if (validationError) return res.status(400).json({ error: validationError });
+
+        // If assigned_user_ID is provided, check if it exists and is a collaborator or owner
+        let assignedIdToUse = assigned_user_ID || null;
+        if (assigned_user_ID) {
+            // Check if user exists
+            const userCheck = await db.executeQuery(
+                `SELECT user_ID FROM users WHERE user_ID = ?`,
+                [assigned_user_ID]
+            );
+            if (!userCheck.length) {
+                return res.status(400).json({ error: 'assigned_user_ID does not exist' });
+            }
+            // Check if user is owner or collaborator
+            const collabCheck = await db.executeQuery(
+                `SELECT owner_ID as user_ID FROM projects WHERE project_ID = ? AND owner_ID = ?
+                 UNION
+                 SELECT user_ID FROM project_collaborations WHERE project_ID = ? AND user_ID = ?`,
+                [projectId, assigned_user_ID, projectId, assigned_user_ID]
+            );
+            if (!collabCheck.length) {
+                return res.status(400).json({ error: 'assigned_user_ID is not a collaborator or owner of the project' });
+            }
+        }
+
+        const result = await db.executeQuery(
+            `UPDATE milestones SET title=?, description=?, expected_completion_date=?, assigned_user_ID=?, status=?, updated_at=NOW() WHERE milestone_ID=?`,
+            [title, description, expected_completion_date, assignedIdToUse, status, milestoneId]
+        );
+        if (result.affectedRows === 0) return res.status(404).json({ error: 'Milestone not found' });
+        res.json({ message: 'Milestone updated' });
+    } catch (error) {
+        if (error.code && typeof error.code === 'string' && error.code.startsWith('ER_')) {
+            res.status(500).json({ error: 'A server error occurred' });
+        } else {
+            res.status(401).json({ error: error.message || 'Failed to update milestone' });
+        }
+    }
+});
+
+// Delete a milestone
+router.delete('/:projectId/:milestoneId', async (req, res) => {
+    try {
+        const token = extractToken(req);
+        const userId = await getUserIdFromToken(token);
+        if (!(await checkResearcherRole(userId))) {
+            return res.status(403).json({ error: 'Unauthorized: User is not a researcher' });
+        }
+        const { milestoneId } = req.params;
+        const result = await db.executeQuery(
+            `DELETE FROM milestones WHERE milestone_ID = ?`,
+            [milestoneId]
+        );
+        if (result.affectedRows === 0) return res.status(404).json({ error: 'Milestone not found' });
+        res.json({ message: 'Milestone deleted' });
+    } catch (error) {
+        if (error.code && typeof error.code === 'string' && error.code.startsWith('ER_')) {
+            res.status(500).json({ error: 'A server error occurred' });
+        } else {
+            res.status(401).json({ error: error.message || 'Failed to delete milestone' });
         }
     }
 });

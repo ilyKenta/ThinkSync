@@ -161,7 +161,7 @@ export default function MilestonesPage() {
             >
               Messager
               {unreadCount > 0 && (
-                <span
+                <mark
                   style={{
                     display: "inline-block",
                     marginLeft: 8,
@@ -179,7 +179,7 @@ export default function MilestonesPage() {
                   }}
                 >
                   {unreadCount > 99 ? "99+" : unreadCount}
-                </span>
+                </mark>
               )}
             </button>
           </li>
@@ -199,54 +199,46 @@ export default function MilestonesPage() {
       </nav>
 
       <section className={styles.milestonesBg}>
-        {/* */}
         <section className={styles.maxWidth}>
-          {}
           <header className={styles.headerRow}>
-            {/* Flex row: back arrow and page title */}
-            <span style={{ display: "flex", alignItems: "center" }}>
-              {/* Link to go back to the researcher dashboard */}
+            <figure style={{ display: "flex", alignItems: "center" }}>
               <Link href="/researcher-dashboard" style={{ marginRight: 12 }}>
                 <ArrowLeft size={22} />
               </Link>
-              {}
-              <span className={styles.pageTitle}>Project Milestones</span>
-            </span>
+              <figcaption className={styles.pageTitle}>Project Milestones</figcaption>
+            </figure>
 
-            {/* Button container for create and download buttons */}
-            <div style={{ display: 'flex', gap: '12px' }}>
-              {/* Button to download PDF report */}
+            <nav style={{ display: 'flex', gap: '12px', listStyle: 'none', padding: 0, margin: 0 }}>
               <button
                 onClick={async () => {
                   try {
                     const token = localStorage.getItem('jwt');
-                    const response = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/milestones/generate-report`, {
+                    console.log('Attempting to download report...');
+                    const response = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/milestones/report/generate`, {
                       headers: {
                         'Authorization': `Bearer ${token}`
                       }
                     });
                     
                     if (!response.ok) {
-                      throw new Error('Failed to generate report');
+                      const errorData = await response.text();
+                      console.error('Server response:', response.status, errorData);
+                      throw new Error(`Failed to generate report: ${response.status} ${errorData}`);
                     }
 
-                    // Get the blob from the response
                     const blob = await response.blob();
+                    console.log('Received blob:', blob.type, blob.size);
                     
-                    // Create a URL for the blob
                     const url = window.URL.createObjectURL(blob);
                     
-                    // Create a temporary link element
                     const link = document.createElement('a');
                     link.href = url;
                     link.download = 'milestones-report.pdf';
                     
-                    // Append to body, click, and remove
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
                     
-                    // Clean up the URL
                     window.URL.revokeObjectURL(url);
                   } catch (err) {
                     console.error('Error downloading report:', err);
@@ -256,29 +248,23 @@ export default function MilestonesPage() {
                 className={styles.createBtn}
                 style={{ backgroundColor: '#4a90e2' }}
               >
-                <span style={{ marginRight: 8 }}>📊</span>
+                <strong style={{ marginRight: 8, fontStyle: 'normal' }}>📊</strong>
                 Download Report
               </button>
 
-              {/* Button to navigate to the create milestone page */}
               <Link
                 href="/milestones/create"
                 className={styles.createBtn}
                 data-testid="create-milestone-button"
               >
-                <span
-                  style={{ fontSize: "1.35em", marginRight: 8, marginTop: -2 }}
-                >
-                  +
-                </span>{" "}
+                <strong style={{ fontSize: "1.35em", marginRight: 8, marginTop: -2, fontStyle: 'normal' }}>+</strong>
                 Create Milestone
               </Link>
-            </div>
+            </nav>
           </header>
 
-          {}
           {Object.entries(groupedMilestones).length === 0 ? (
-            <section
+            <article
               style={{
                 textAlign: "center",
                 padding: "2rem",
@@ -289,17 +275,13 @@ export default function MilestonesPage() {
               <p className="text-gray-500">
                 No milestones found. Create your first milestone!
               </p>
-            </section>
+            </article>
           ) : (
             <>
-              {/* Iterate over each project group */}
               {Object.entries(groupedMilestones).map(
                 ([projectName, projectMilestones]) => (
-                  // Card section for each project
-                  <section key={projectName} className={styles.card}>
-                    {/* Project name as a heading */}
+                  <article key={projectName} className={styles.card}>
                     <h2 className={styles.projectTitle}>{projectName}</h2>
-                    {/* Table of milestones for this project */}
                     <table className={styles.milestoneTable}>
                       <thead>
                         <tr>
@@ -311,25 +293,20 @@ export default function MilestonesPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {/* Render each milestone as a clickable row */}
                         {projectMilestones.map((milestone, idx) => (
                           <tr
-                            key={milestone.id} // Unique key for React
-                            // When row is clicked, navigate to the milestone details page
+                            key={milestone.id}
                             onClick={() =>
                               router.push(`/milestones/${milestone.id}`)
                             }
                             style={{ cursor: "pointer" }}
                           >
-                            {/* Milestone title */}
                             <td className={styles.milestoneTitle}>
                               {milestone.title}
                             </td>
-                            {/* Milestone description */}
                             <td>{milestone.description}</td>
-                            {/* Due date with calendar icon */}
                             <td>
-                              <span className={styles.dueDate}>
+                              <time className={styles.dueDate}>
                                 <Calendar
                                   size={16}
                                   style={{ marginRight: 4, marginBottom: -2 }}
@@ -337,7 +314,7 @@ export default function MilestonesPage() {
                                 {new Date(
                                   milestone.dueDate
                                 ).toLocaleDateString()}
-                              </span>
+                              </time>
                             </td>
                             <td>
                               {milestone.assigned_user_fname && milestone.assigned_user_sname
@@ -361,13 +338,13 @@ export default function MilestonesPage() {
                         ))}
                       </tbody>
                     </table>
-                  </section>
+                  </article>
                 )
               )}
             </>
           )}
         </section>
-        <section className={styles.chartContainer}>
+        <aside className={styles.chartContainer}>
           <h3 className={styles.chartTitle}>Milestone Progress Overview</h3>
           <PieChart width={400} height={300}>
             <Pie
@@ -395,7 +372,7 @@ export default function MilestonesPage() {
             <Tooltip />
             <Legend />
           </PieChart>
-        </section>
+        </aside>
       </section>
     </main>
   );

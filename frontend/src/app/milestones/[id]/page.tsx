@@ -50,6 +50,9 @@ export default function MilestoneDetailsPage({
   const [error, setError] = useState<string | null>(null);
   //sstate to open the edit form
   const [showEditForm, setShowEditForm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
 
   const [submitting, setSubmitting] = useState(false);
@@ -158,24 +161,50 @@ export default function MilestoneDetailsPage({
     }
   };
 
+  // Handle milestone deletion
+  const handleDelete = async () => {
+    if (!milestone) return;
+    
+    setDeleting(true);
+    setDeleteError(null);
+
+    try {
+      const token = localStorage.getItem('jwt');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/milestones/${milestone.projectId}/${milestone.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to delete milestone');
+      }
+
+      router.push('/milestones');
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : "Failed to delete milestone");
+      console.error("Error deleting milestone:", err);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   // Show loading message if data is still being fetched
   if (loading) {
-    // If milestone data is still loading, show a loading message
-
     return (
       <main>
-        <section>Loading milestone details...</section>
+        <article>Loading milestone details...</article>
       </main>
     );
   }
 
   // Show error message if there was an error or milestone not found
   if (error || !milestone) {
-    // If there is an error or the milestone is not found, show an error message and back button
     return (
       <main>
-        <section style={{ padding: "2rem" }}>
-          {/* Header with back button to milestones list */}
+        <article style={{ padding: "2rem" }}>
           <header style={{ marginBottom: "1.5rem" }}>
             <Link
               href="/milestones"
@@ -187,12 +216,11 @@ export default function MilestoneDetailsPage({
               }}
             >
               <ArrowLeft size={20} style={{ marginRight: 8 }} />
-              <span>Back to Milestones</span>
+              <strong>Back to Milestones</strong>
             </Link>
           </header>
-          {/* Error message section */}
 
-          <section
+          <aside
             style={{
               background: "#fdeaea",
               border: "1px solid #f5c2c7",
@@ -202,54 +230,47 @@ export default function MilestoneDetailsPage({
             }}
           >
             {error || "Milestone not found"}
-          </section>
-        </section>
+          </aside>
+        </article>
       </main>
     );
   }
 
-  // Main milestone details page rendering
   return (
-    // Main wrapper for the milestone details page, applies background styles
     <main className={styles.milestoneDetailsBg}>
-      {/* Section to constrain width and center content */}
-      <section className="container mx-auto px-4 py-8">
-        {/* Header row with back button and title */}
+      <article className="container mx-auto px-4 py-8">
         <header className={styles.headerRow}>
-          {/* Link to go back to the milestones list */}
           <Link href="/milestones" className={styles.backArrow}>
             <ArrowLeft size={22} />
           </Link>
-          <span>Milestone Details</span>
+          <h1>Milestone Details</h1>
         </header>
-        {/* Centered card for milestone details */}
-        <section className={styles.centerCard}>
-          {/* Card-like section for milestone info */}
-          <section className={styles.card}>
-            {/* Milestone title as heading */}
-            <h1 className={styles.title}>{milestone.title}</h1>
 
-            <h2 className={styles.projectName}>
+        <section className={styles.centerCard}>
+          <article className={styles.card}>
+            <h2 className={styles.title}>{milestone.title}</h2>
+
+            <h3 className={styles.projectName}>
               Project: {milestone.projectName}
-            </h2>
-            <h2 className={styles.projectName}>
+            </h3>
+            <h3 className={styles.projectName}>
               Assigned To: {milestone.assigned_user_fname && milestone.assigned_user_sname 
                 ? `${milestone.assigned_user_fname} ${milestone.assigned_user_sname}`
                 : "Not Assigned"}
-            </h2>
-            {/* Description label and text */}
+            </h3>
+
             <label className={styles.label}>Description</label>
-            <section className={styles.description}>
+            <article className={styles.description}>
               {milestone.description}
-            </section>
-            {/* Due date row with icon and formatted date */}
-            <section className={styles.dueDateRow}>
-              <span className={styles.label}>Due Date</span>
+            </article>
+
+            <article className={styles.dueDateRow}>
+              <strong className={styles.label}>Due Date</strong>
               <Calendar size={18} className={styles.dueDateIcon} />
-              <span>{new Date(milestone.dueDate).toLocaleDateString()}</span>
-            </section>
-            {/* Status of the project with background changing depending on the status */}
-            <section
+              <time>{new Date(milestone.dueDate).toLocaleDateString()}</time>
+            </article>
+
+            <aside
               className={`${styles.status} ${
                 milestone.status === "Completed"
                   ? styles.completed
@@ -261,28 +282,38 @@ export default function MilestoneDetailsPage({
               }`}
             >
               {milestone.status || "Missing Status"}
-            </section>
-            <button
-              onClick={() => setShowEditForm(true)}
-              className={styles.editButton}
-            >
-              Edit
-            </button>
-          </section>
+            </aside>
+
+            <nav className={styles.buttonRow} style={{ marginTop: '1.5rem', gap: '1rem', justifyContent: 'flex-start' }}>
+              <button
+                onClick={() => setShowEditForm(true)}
+                className={styles.editButton}
+              >
+                Edit
+              </button>
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className={styles.editButton}
+                style={{ backgroundColor: '#dc3545' }}
+              >
+                Delete
+              </button>
+            </nav>
+          </article>
         </section>
-      </section>
-      {/* edit form */}
+      </article>
+
       {showEditForm && (
-        <section className={styles.overlay}>
-          <section className={styles.modal}>
+        <aside className={styles.overlay}>
+          <article className={styles.modal}>
             <section className={styles.centerForm}>
               <form
                 className={styles.cardForm}
                 onSubmit={handleEditSubmit}
               >
-                <h1 className={styles.formTitle}>Edit {milestone.title}</h1>
+                <h2 className={styles.formTitle}>Edit {milestone.title}</h2>
                 {editError && (
-                  <section
+                  <aside
                     style={{
                       background: "#fdeaea",
                       border: "1px solid #f5c2c7",
@@ -293,8 +324,9 @@ export default function MilestoneDetailsPage({
                     }}
                   >
                     {editError}
-                  </section>
+                  </aside>
                 )}
+
                 <label className={styles.label}>Title</label>
                 <input
                   type="text"
@@ -357,7 +389,7 @@ export default function MilestoneDetailsPage({
                   ))}
                 </select>
 
-                <div className={styles.buttonRow}>
+                <nav className={styles.buttonRow}>
                   <button
                     type="button"
                     className={styles.cancelBtn}
@@ -373,11 +405,66 @@ export default function MilestoneDetailsPage({
                   >
                     {submitting ? "Saving..." : "Save Changes"}
                   </button>
-                </div>
+                </nav>
               </form>
             </section>
-          </section>
-        </section>
+          </article>
+        </aside>
+      )}
+
+      {showDeleteConfirm && (
+        <aside className={styles.overlay}>
+          <article className={styles.modal}>
+            <section className={styles.centerForm}>
+              <form
+                className={styles.cardForm}
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleDelete();
+                }}
+              >
+                <h2 className={styles.formTitle}>Delete Milestone</h2>
+                {deleteError && (
+                  <aside
+                    style={{
+                      background: "#fdeaea",
+                      border: "1px solid #f5c2c7",
+                      color: "#b94a48",
+                      padding: "0.75rem 1rem",
+                      borderRadius: 8,
+                      marginBottom: 18,
+                    }}
+                  >
+                    {deleteError}
+                  </aside>
+                )}
+
+                <p style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
+                  Are you sure you want to delete this milestone? This action cannot be undone.
+                </p>
+
+                <nav className={styles.buttonRow}>
+                  <button
+                    type="button"
+                    className={styles.cancelBtn}
+                    onClick={() => setShowDeleteConfirm(false)}
+                    disabled={deleting}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit" 
+                    className={styles.saveBtn}
+                    style={{ backgroundColor: '#dc3545' }}
+                    disabled={deleting}
+                  >
+                    {deleting ? "Deleting..." : "Delete Milestone"}
+                  </button>
+                </nav>
+              </form>
+            </section>
+          </article>
+        </aside>
       )}
     </main>
   );
