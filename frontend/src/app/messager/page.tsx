@@ -239,6 +239,19 @@ const Page = () => {
             >
               Messager
             </button>
+            
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab("shared");
+                router.push("/milestones");
+              }}
+              className={activeTab === "milestones" ? styles.activeTab : ""}
+            >
+              Milestones
+            </button>
           </li>
         </menu>
       </nav>

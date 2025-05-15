@@ -57,7 +57,11 @@ router.get('/', async (req, res) => {
         for (const project of projects) {
             // Get milestones
             const milestones = await db.executeQuery(
-                `SELECT * FROM milestones WHERE project_ID = ? ORDER BY expected_completion_date ASC`,
+                `SELECT m.*, u.fname as assigned_user_fname, u.sname as assigned_user_sname 
+                 FROM milestones m 
+                 LEFT JOIN users u ON m.assigned_user_ID = u.user_ID 
+                 WHERE m.project_ID = ? 
+                 ORDER BY m.expected_completion_date ASC`,
                 [project.project_ID]
             );
             project.milestones = milestones;
@@ -175,7 +179,7 @@ router.post('/:projectId', async (req, res) => {
             }
             // Check if user is owner or collaborator
             const collabCheck = await db.executeQuery(
-                `SELECT owner_ID FROM projects WHERE project_ID = ? AND owner_ID = ?
+                `SELECT owner_ID as user_ID FROM projects WHERE project_ID = ? AND owner_ID = ?
                  UNION
                  SELECT user_ID FROM project_collaborations WHERE project_ID = ? AND user_ID = ?`,
                 [projectId, assigned_user_ID, projectId, assigned_user_ID]
@@ -201,7 +205,7 @@ router.post('/:projectId', async (req, res) => {
 });
 
 // Get details for a specific milestone
-router.get('/:projectId/:milestoneId', async (req, res) => {
+router.get('/:milestoneId', async (req, res) => {
     try {
         const token = extractToken(req);
         const userId = await getUserIdFromToken(token);
@@ -210,11 +214,36 @@ router.get('/:projectId/:milestoneId', async (req, res) => {
         }
         const { milestoneId } = req.params;
         const milestones = await db.executeQuery(
-            `SELECT * FROM milestones WHERE milestone_ID = ?`,
+            `SELECT m.*, p.title as project_title, 
+                    u.fname as assigned_user_fname, u.sname as assigned_user_sname
+             FROM milestones m 
+             JOIN projects p ON m.project_ID = p.project_ID 
+             LEFT JOIN users u ON m.assigned_user_ID = u.user_ID
+             WHERE m.milestone_ID = ?`,
             [milestoneId]
         );
         if (!milestones.length) return res.status(404).json({ error: 'Milestone not found' });
-        res.json({ milestone: milestones[0] });
+
+        // Get project collaborators
+        const projectId = milestones[0].project_ID;
+        const collaborators = await db.executeQuery(
+            `SELECT DISTINCT u.user_ID, u.fname, u.sname 
+             FROM (
+                 SELECT owner_ID as user_ID FROM projects WHERE project_ID = ?
+                 UNION
+                 SELECT user_ID FROM project_collaborations WHERE project_ID = ?
+             ) as project_users
+             JOIN users u ON project_users.user_ID = u.user_ID`,
+            [projectId, projectId]
+        );
+
+        res.json({ 
+            milestone: milestones[0],
+            collaborators: collaborators.map(c => ({
+                user_ID: c.user_ID,
+                name: `${c.fname} ${c.sname}`
+            }))
+        });
     } catch (error) {
         if (error.code && typeof error.code === 'string' && error.code.startsWith('ER_')) {
             res.status(500).json({ error: 'A server error occurred' });
@@ -252,7 +281,7 @@ router.put('/:projectId/:milestoneId', async (req, res) => {
             }
             // Check if user is owner or collaborator
             const collabCheck = await db.executeQuery(
-                `SELECT user_ID FROM projects WHERE project_ID = ? AND owner_ID = ?
+                `SELECT owner_ID as user_ID FROM projects WHERE project_ID = ? AND owner_ID = ?
                  UNION
                  SELECT user_ID FROM project_collaborations WHERE project_ID = ? AND user_ID = ?`,
                 [projectId, assigned_user_ID, projectId, assigned_user_ID]
