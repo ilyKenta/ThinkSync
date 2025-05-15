@@ -129,7 +129,7 @@ const Page = () => {
             >
               Messager
               {unreadCount > 0 && (
-                <span style={{
+                <mark style={{
                   display: 'inline-block',
                   marginLeft: 8,
                   minWidth: 20,
@@ -145,8 +145,32 @@ const Page = () => {
                   verticalAlign: 'middle',
                 }}>
                   {unreadCount > 99 ? '99+' : unreadCount}
-                </span>
+                </mark>
               )}
+            </button>
+          </li>
+          <li>
+            <button 
+              type="button" 
+              onClick={() => {
+                setActiveTab('milestones');
+                router.push("/milestones");
+              }}
+              className={activeTab === 'milestones' ? styles.active : ''}
+            >
+              Milestones
+            </button>
+          </li>
+          <li>
+            <button 
+              type="button" 
+              onClick={() => {
+                setActiveTab('funding');
+                router.push("/funding-dashboard");
+              }}
+              className={activeTab === 'funding' ? styles.active : ''}
+            >
+              Funding
             </button>
           </li>
         </ul>

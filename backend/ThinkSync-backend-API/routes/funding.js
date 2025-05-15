@@ -20,16 +20,27 @@ async function checkResearcherRole(userId) {
 }
 
 // Helper for funding field validation
-function validateFundingFields({ total_awarded, grant_status }) {
+function validateFundingFields({ total_awarded, grant_status, grant_end_date }) {
     if (total_awarded === undefined || total_awarded === null) {
         return 'total_awarded is required';
     }
     if (typeof total_awarded !== 'number' || total_awarded < 0) {
         return 'total_awarded must be a non-negative number';
     }
-    const allowedStatuses = ['active', 'inactive', 'pending'];
+    const allowedStatuses = ['active', 'completed', 'expired', 'cancelled'];
     if (grant_status !== undefined && grant_status !== null && !allowedStatuses.includes(grant_status)) {
         return `grant_status must be one of: ${allowedStatuses.join(', ')}`;
+    }
+    if (grant_end_date !== undefined && grant_end_date !== null && grant_end_date !== '') {
+        // Validate YYYY-MM-DD
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(grant_end_date)) {
+            return 'grant_end_date must be in YYYY-MM-DD format or null';
+        }
+        // Optionally, check if it's a valid date
+        const d = new Date(grant_end_date);
+        if (isNaN(d.getTime())) {
+            return 'grant_end_date must be a valid date';
+        }
     }
     return null;
 }
@@ -43,10 +54,10 @@ router.post('/:projectId', async (req, res) => {
             return res.status(403).json({ error: 'Unauthorized: User is not a researcher' });
         }
         const { projectId } = req.params;
-        const { total_awarded, grant_status } = req.body;
+        const { total_awarded, grant_status, grant_end_date } = req.body;
 
         // Validate fields
-        const validationError = validateFundingFields({ total_awarded, grant_status });
+        const validationError = validateFundingFields({ total_awarded, grant_status, grant_end_date });
         if (validationError) return res.status(400).json({ error: validationError });
 
         // Check if project has funding available
@@ -68,8 +79,8 @@ router.post('/:projectId', async (req, res) => {
         }
         // Insert funding
         const result = await db.executeQuery(
-            `INSERT INTO funding (project_ID, total_awarded, grant_status) VALUES (?, ?, ?)`,
-            [projectId, total_awarded, grant_status || 'active']
+            `INSERT INTO funding (project_ID, total_awarded, grant_status, grant_end_date) VALUES (?, ?, ?, ?)`,
+            [projectId, total_awarded, grant_status || 'active', grant_end_date || null]
         );
         res.status(201).json({ message: 'Funding initialized', funding_ID: result.insertId });
     } catch (error) {
@@ -103,6 +114,8 @@ router.get('/', async (req, res) => {
             );
             if (fundingArr.length) {
                 project.funding = fundingArr[0];
+                // Ensure grant_end_date is always present (even if null)
+                if (!('grant_end_date' in project.funding)) project.funding.grant_end_date = null;
                 const categories = await db.executeQuery(
                     `SELECT * FROM funding_categories WHERE funding_ID = ?`,
                     [project.funding.funding_ID]
@@ -128,7 +141,6 @@ router.get('/', async (req, res) => {
                 project.categories = project.categories.map(cat => {
                     // Convert amount_spent and amount_allocated to numbers
                     cat.amount_spent = parseFloat(cat.amount_spent) || 0;
-                    cat.amount_allocated = parseFloat(cat.amount_allocated) || 0;
                     
                     // Calculate percentage
                     cat.percentage = project.funding.total_awarded > 0 
@@ -162,10 +174,10 @@ router.put('/:projectId', async (req, res) => {
             return res.status(403).json({ error: 'Unauthorized: User is not a researcher' });
         }
         const { projectId } = req.params;
-        const { total_awarded, grant_status } = req.body;
+        const { total_awarded, grant_status, grant_end_date } = req.body;
 
         // Validate fields
-        const validationError = validateFundingFields({ total_awarded, grant_status });
+        const validationError = validateFundingFields({ total_awarded, grant_status, grant_end_date });
         if (validationError) return res.status(400).json({ error: validationError });
 
         const fundingArr = await db.executeQuery(
@@ -175,8 +187,8 @@ router.put('/:projectId', async (req, res) => {
         if (!fundingArr.length) return res.status(404).json({ error: 'Funding not found' });
         const fundingId = fundingArr[0].funding_ID;
         await db.executeQuery(
-            `UPDATE funding SET total_awarded=?, grant_status=? WHERE funding_ID=?`,
-            [total_awarded, grant_status, fundingId]
+            `UPDATE funding SET total_awarded=?, grant_status=?, grant_end_date=? WHERE funding_ID=?`,
+            [total_awarded, grant_status, grant_end_date || null, fundingId]
         );
         res.json({ message: 'Funding updated' });
     } catch (error) {
@@ -226,22 +238,17 @@ router.post('/:projectId/categories', async (req, res) => {
             return res.status(403).json({ error: 'Unauthorized: User is not a researcher' });
         }
         const { projectId } = req.params;
-        const { category, description, amount_allocated, amount_spent } = req.body;
+        const { category, description, amount_spent } = req.body;
 
         // Validate required fields
         if (!category || typeof category !== 'string' || !category.trim()) {
             return res.status(400).json({ error: 'Category is required and must be a non-empty string' });
         }
-        if (amount_allocated === undefined || amount_allocated === null) {
-            return res.status(400).json({ error: 'amount_allocated is required' });
+        if (amount_spent === undefined || amount_spent === null) {
+            return res.status(400).json({ error: 'amount_spent is required' });
         }
-        if (typeof amount_allocated !== 'number' || amount_allocated < 0) {
-            return res.status(400).json({ error: 'amount_allocated must be a non-negative number' });
-        }
-        if (amount_spent !== undefined && amount_spent !== null) {
-            if (typeof amount_spent !== 'number' || amount_spent < 0) {
-                return res.status(400).json({ error: 'amount_spent must be a non-negative number' });
-            }
+        if (typeof amount_spent !== 'number' || amount_spent < 0) {
+            return res.status(400).json({ error: 'amount_spent must be a non-negative number' });
         }
 
         const fundingArr = await db.executeQuery(
@@ -251,9 +258,9 @@ router.post('/:projectId/categories', async (req, res) => {
         if (!fundingArr.length) return res.status(404).json({ error: 'Funding not found' });
         const fundingId = fundingArr[0].funding_ID;
         const result = await db.executeQuery(
-            `INSERT INTO funding_categories (funding_ID, category, description, amount_allocated, amount_spent)
-             VALUES (?, ?, ?, ?, ?)`,
-            [fundingId, category, description || null, amount_allocated, amount_spent || 0.00]
+            `INSERT INTO funding_categories (funding_ID, category, description, amount_spent)
+             VALUES (?, ?, ?, ?)`,
+            [fundingId, category, description || null, amount_spent || 0.00]
         );
         res.status(201).json({ message: 'Funding category created', category_ID: result.insertId });
     } catch (error) {
@@ -274,27 +281,22 @@ router.put('/:projectId/categories/:categoryId', async (req, res) => {
             return res.status(403).json({ error: 'Unauthorized: User is not a researcher' });
         }
         const { categoryId } = req.params;
-        const { category, description, amount_allocated, amount_spent } = req.body;
+        const { category, description, amount_spent } = req.body;
 
         // Validate required fields
         if (!category || typeof category !== 'string' || !category.trim()) {
             return res.status(400).json({ error: 'Category is required and must be a non-empty string' });
         }
-        if (amount_allocated === undefined || amount_allocated === null) {
-            return res.status(400).json({ error: 'amount_allocated is required' });
+        if (amount_spent === undefined || amount_spent === null) {
+            return res.status(400).json({ error: 'amount_spent is required' });
         }
-        if (typeof amount_allocated !== 'number' || amount_allocated < 0) {
-            return res.status(400).json({ error: 'amount_allocated must be a non-negative number' });
-        }
-        if (amount_spent !== undefined && amount_spent !== null) {
-            if (typeof amount_spent !== 'number' || amount_spent < 0) {
-                return res.status(400).json({ error: 'amount_spent must be a non-negative number' });
-            }
+        if (typeof amount_spent !== 'number' || amount_spent < 0) {
+            return res.status(400).json({ error: 'amount_spent must be a non-negative number' });
         }
 
         const result = await db.executeQuery(
-            `UPDATE funding_categories SET category=?, description=?, amount_allocated=?, amount_spent=? WHERE category_ID=?`,
-            [category, description, amount_allocated, amount_spent, categoryId]
+            `UPDATE funding_categories SET category=?, description=?, amount_spent=? WHERE category_ID=?`,
+            [category, description, amount_spent, categoryId]
         );
         if (result.affectedRows === 0) return res.status(404).json({ error: 'Funding category not found' });
         res.json({ message: 'Funding category updated' });
@@ -442,6 +444,25 @@ router.get('/report', async (req, res) => {
 
                 doc.moveDown(2);
 
+                // Aggregate amount_spent by normalized category
+                const normalizeCategory = (catVal) => {
+                    const lower = (catVal || '').trim().toLowerCase();
+                    if (lower === 'personnel') return 'Personnel';
+                    if (lower === 'equipment') return 'Equipment';
+                    if (lower === 'consumables') return 'Consumables';
+                    return 'Other';
+                };
+                const categoryTotals = {};
+                categories.forEach(cat => {
+                    const normalized = normalizeCategory(cat.category);
+                    if (!categoryTotals[normalized]) categoryTotals[normalized] = 0;
+                    categoryTotals[normalized] += parseFloat(cat.amount_spent) || 0;
+                });
+                // Prepare data for pie chart
+                const chartData = Object.entries(categoryTotals).map(([label, value]) => ({ label, value }));
+                // Add remaining amount as a slice
+                chartData.push({ label: 'Remaining', value: amountRemaining });
+
                 // Create pie chart for category breakdown
                 try {
                     const width = 800;  // Increased from 400
@@ -454,18 +475,6 @@ router.get('/report', async (req, res) => {
                         plugins: {
                             modern: ['chartjs-plugin-datalabels']
                         }
-                    });
-
-                    // Prepare data for pie chart
-                    const chartData = categories.map(cat => ({
-                        label: cat.category,
-                        value: parseFloat(cat.amount_spent) || 0
-                    }));
-
-                    // Add remaining amount as a slice
-                    chartData.push({
-                        label: 'Remaining',
-                        value: amountRemaining
                     });
 
                     const configuration = {
@@ -557,9 +566,9 @@ router.get('/report', async (req, res) => {
                     // Create category table
                     let categoryTableTop = doc.y;
                     const categoryTableLeft = 60;
-                    const categoryColWidth = 95; // 475/5 columns
+                    const categoryColWidth = 475 / 3; // 475 is the total table width, 3 columns
                     const categoryRowHeight = 30;
-                    const headers = ['Category', 'Description', 'Allocated', 'Spent', 'Remaining'];
+                    const headers = ['Category', 'Description', 'Spent'];
 
                     // Draw table headers
                     doc.fontSize(12)
@@ -597,17 +606,13 @@ router.get('/report', async (req, res) => {
                             currentY = newHeaderY + 30;
                         }
 
-                        const allocated = parseFloat(category.amount_allocated) || 0;
                         const spent = parseFloat(category.amount_spent) || 0;
-                        const remaining = allocated - spent;
 
                         // Draw table row
                         doc.fontSize(10)
                            .text(category.category, categoryTableLeft, currentY, { width: categoryColWidth, align: 'left' })
                            .text(category.description || 'No Description', categoryTableLeft + categoryColWidth, currentY, { width: categoryColWidth, align: 'left' })
-                           .text(`R${allocated.toFixed(2)}`, categoryTableLeft + (categoryColWidth * 2), currentY, { width: categoryColWidth, align: 'left' })
-                           .text(`R${spent.toFixed(2)}`, categoryTableLeft + (categoryColWidth * 3), currentY, { width: categoryColWidth, align: 'left' })
-                           .text(`R${remaining.toFixed(2)}`, categoryTableLeft + (categoryColWidth * 4), currentY, { width: categoryColWidth, align: 'left' });
+                           .text(`R${spent.toFixed(2)}`, categoryTableLeft + (categoryColWidth * 2), currentY, { width: categoryColWidth, align: 'left' });
 
                         // Draw row separator
                         doc.moveTo(categoryTableLeft, currentY + 20)
@@ -655,4 +660,44 @@ router.get('/report', async (req, res) => {
     }
 });
 
-module.exports = router; 
+// Delete funding for a project (and all its categories)
+router.delete('/:projectId', async (req, res) => {
+    try {
+        const token = extractToken(req);
+        const userId = await getUserIdFromToken(token);
+        if (!(await checkResearcherRole(userId))) {
+            return res.status(403).json({ error: 'Unauthorized: User is not a researcher' });
+        }
+        const { projectId } = req.params;
+
+        // Get funding ID
+        const fundingArr = await db.executeQuery(
+            `SELECT funding_ID FROM funding WHERE project_ID = ?`,
+            [projectId]
+        );
+        if (!fundingArr.length) return res.status(404).json({ error: 'Funding not found' });
+        const fundingId = fundingArr[0].funding_ID;
+
+        // Delete funding categories
+        await db.executeQuery(
+            `DELETE FROM funding_categories WHERE funding_ID = ?`,
+            [fundingId]
+        );
+
+        // Delete funding
+        await db.executeQuery(
+            `DELETE FROM funding WHERE funding_ID = ?`,
+            [fundingId]
+        );
+
+        res.json({ message: 'Funding deleted' });
+    } catch (error) {
+        if (error.code && typeof error.code === 'string' && error.code.startsWith('ER_')) {
+            res.status(500).json({ error: 'A server error occurred' });
+        } else {
+            res.status(401).json({ error: error.message || 'Failed to delete funding' });
+        }
+    }
+});
+
+module.exports = router;

@@ -239,18 +239,29 @@ const Page = () => {
             >
               Messager
             </button>
-            
           </li>
           <li>
             <button
               type="button"
               onClick={() => {
-                setActiveTab("shared");
+                setActiveTab("milestones");
                 router.push("/milestones");
               }}
-              className={activeTab === "milestones" ? styles.activeTab : ""}
+              className={activeTab === "milestones" ? styles.active : ""}
             >
               Milestones
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab("funding");
+                router.push("/funding-dashboard");
+              }}
+              className={activeTab === "funding" ? styles.active : ""}
+            >
+              Funding
             </button>
           </li>
         </menu>

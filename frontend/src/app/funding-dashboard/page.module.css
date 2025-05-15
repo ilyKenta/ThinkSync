@@ -1,0 +1,273 @@
+/* Layout */
+.container {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 280px;
+  background-color: var(--primary-color);
+  padding: 25px;
+  border-right: 1px solid #ddd;
+  box-shadow: 10px 10px 10px var(--shadows-color);
+}
+.sidebar h2 {
+  margin-top: 0px;
+  font-size: 30px;
+  margin-bottom: 0px;
+}
+
+.sidebar h3 {
+  border-top: 1px solid #000000;
+  padding-top: 10px;
+  font-size: 1rem;
+  margin-top: 3px;
+  margin-bottom: 10px;
+  /*color: #777;*/
+  font-weight: var(--font-weight-semibold);
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+}
+
+.sidebar li button {
+  background: none;
+  border: none;
+  padding: 10px 10px;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  border-radius: var(--button-radius);
+  width: 100%;
+  text-align: left;
+}
+
+.sidebar li button.active {
+  background-color: var(--field-hover-color);
+  font-weight: 600;
+}
+
+.sidebar li {
+  /* Remove background from li, only style the button */
+  background: none;
+  padding: 0;
+}
+
+.sidebar li:hover {
+  background-color: var(--field-hover-color);
+}
+
+/* Main content */
+.mainContent {
+  flex-grow: 1;
+  padding: 25px;
+  background-color: #f9f9f9;
+}
+
+.heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #000;
+  margin-bottom: 2rem;
+  padding: 0 20px;
+}
+
+/* Card grid */
+.cardContainer {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 24px;
+  padding: 1rem;
+}
+
+.card {
+  background-color: var(--primary-color);
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.card h3 {
+  margin-top: 0;
+}
+
+.breakdownTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  font-size: 0.95rem;
+}
+
+.breakdownTable th,
+.breakdownTable td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: left;
+}
+
+.breakdownTable input,
+.breakdownTable select {
+  width: 100%;
+  padding: 4px;
+  box-sizing: border-box;
+}
+
+/* Pie chart */
+.pieContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0;
+  margin-top: 32px;
+}
+
+.pieContainer figcaption {
+  margin: 0;
+  padding: 0;
+  line-height: 1;
+  font-weight: bold;
+  font-size: 1.1em;
+  color: #333;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.pieChartWrapper {
+  transform: translateY(-30px);
+}
+
+/* Footer buttons */
+.cardFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.editButton,
+.trashButton,
+.initButton,
+.addButton {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.editButton {
+  background-color: #e0e0e0;
+  color: #222;
+}
+
+.editButton:hover {
+  background-color: #d0d0d0;
+}
+
+.trashButton {
+  background-color: #ffc2c2;
+  color: #000;
+}
+
+.trashButton:hover {
+  background-color: #ffa8a8;
+}
+
+.addButton {
+  background-color: #e0e0e0;
+  color: #222;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 10px 0;
+}
+
+.addButton:hover {
+  background-color: #d0d0d0;
+}
+
+.addButton:active {
+  background-color: #c0c0c0;
+}
+
+/* Status tags */
+.statusActive {
+  color: green;
+  font-weight: 600;
+}
+
+.statusPlanned {
+  color: gray;
+  font-weight: 600;
+}
+
+.statusInactive {
+  color: red;
+  font-weight: 600;
+}
+
+/* Modal editor */
+.editModal {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+.editModal input,
+.editModal select {
+  display: block;
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 6px;
+  font-size: 0.95rem;
+}
+
+.modalButtons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.modalButtons button {
+  padding: 6px 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 4px;
+  border: none;
+  background-color: #333;
+  color: white;
+}
+
+.modalButtons button:hover {
+  background-color: #000;
+}
+
+.createBtn {
+  background: #111;
+  color: #fff;
+  padding: 16px 36px;
+  border-radius: 32px;
+  font-weight: 600;
+  font-size: 1.15rem;
+  display: flex;
+  align-items: center;
+  border: none;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.createBtn:hover {
+  background: #222;
+}

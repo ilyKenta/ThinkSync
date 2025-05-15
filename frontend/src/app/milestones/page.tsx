@@ -187,12 +187,24 @@ export default function MilestonesPage() {
             <button
               type="button"
               onClick={() => {
-                setActiveTab("shared");
+                setActiveTab("milestones");
                 router.push("/milestones");
               }}
               className={activeTab === "milestones" ? styles.activeTab : ""}
             >
               Milestones
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab("funding");
+                router.push("/funding-dashboard");
+              }}
+              className={activeTab === "funding" ? styles.activeTab : ""}
+            >
+              Funding
             </button>
           </li>
         </ul>
