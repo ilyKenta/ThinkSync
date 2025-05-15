@@ -23,6 +23,8 @@ interface Milestone {
 
   status: string;
   assigned_user_ID: string;
+  assigned_user_fname?: string;
+  assigned_user_sname?: string;
 }
 
 interface Project {
@@ -50,66 +52,34 @@ export default function MilestonesPage() {
     const fetchMilestones = async () => {
       try {
         // This will be replaced with actual API call later
-        // const response = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/milestones`, {
-        //   headers: {
-        //     'Authorization': `Bearer ${token}`
-        //   }
-        // });
-
-        // Mock data for now (from user)
-        // Mock data simulating a response from an API
-        const mockData = {
-          projects: [
-            {
-              project_ID: 1,
-              title: "AI for Healthcare",
-              milestones: [
-                {
-                  milestone_ID: 10,
-                  project_ID: 1,
-                  title: "Literature Review",
-                  description: "Review existing AI models.",
-                  expected_completion_date: "2024-07-01",
-                  assigned_user_ID: "user123",
-                  status: "Completed",
-                  created_at: "2024-05-01T10:00:00.000Z",
-                  updated_at: "2024-06-01T10:00:00.000Z",
-                },
-                {
-                  milestone_ID: 11,
-                  project_ID: 1,
-                  title: "Data Collection",
-                  description: "Collect patient data.",
-                  expected_completion_date: "2024-08-01",
-                  assigned_user_ID: "user124",
-                  status: "In Progress",
-                  created_at: "2024-06-01T10:00:00.000Z",
-                  updated_at: "2024-06-15T10:00:00.000Z",
-                },
-              ],
-            },
-            {
-              project_ID: 2,
-              title: "Robotics Lab",
-              milestones: [],
-            },
-          ],
-        };
+        const token = localStorage.getItem('jwt');
+        const response = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/milestones`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const data = await response.json();
         // Flatten milestones from all projects and map to the Milestone interface
-        const mockMilestones = mockData.projects.flatMap((project) =>
-          (project.milestones || []).map((milestone) => ({
+        const milestones = data.projects.flatMap((project: { milestones: any; project_ID: any; title: any; }) =>
+          (project.milestones || []).map((milestone: { milestone_ID: any; title: any; description: any; expected_completion_date: any; assigned_user_ID: any; status: any; assigned_user_fname: any; assigned_user_sname: any; }) => ({
             id: String(milestone.milestone_ID),
             title: milestone.title,
             description: milestone.description,
             projectId: String(project.project_ID),
             projectName: project.title,
-
             dueDate: milestone.expected_completion_date,
             assigned_user_ID: milestone.assigned_user_ID,
+            assigned_user_fname: milestone.assigned_user_fname,
+            assigned_user_sname: milestone.assigned_user_sname,
             status: milestone.status,
           }))
         );
-        setMilestones(mockMilestones);
+
+        const summary = data.summary;
+        setStatusSummary(summary);
+
+
+        setMilestones(milestones);
         setLoading(false);
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");
@@ -118,16 +88,7 @@ export default function MilestonesPage() {
         setLoading(false);
       }
     };
-
-    // async function to fetch milestones
     fetchMilestones();
-
-    const summary = [
-      { status: "Completed", count: 3, percentage: 50 },
-      { status: "In Progress", count: 2, percentage: 50 },
-      { status: "Not Started", count: 5, percentage: 0 },
-    ];
-    setStatusSummary(summary);
   }, []);
 
   // Group milestones by project
@@ -252,19 +213,67 @@ export default function MilestonesPage() {
               <span className={styles.pageTitle}>Project Milestones</span>
             </span>
 
-            {/* Button to navigate to the create milestone page */}
-            <Link
-              href="/milestones/create"
-              className={styles.createBtn}
-              data-testid="create-milestone-button"
-            >
-              <span
-                style={{ fontSize: "1.35em", marginRight: 8, marginTop: -2 }}
+            {/* Button container for create and download buttons */}
+            <div style={{ display: 'flex', gap: '12px' }}>
+              {/* Button to download PDF report */}
+              <button
+                onClick={async () => {
+                  try {
+                    const token = localStorage.getItem('jwt');
+                    const response = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/milestones/generate-report`, {
+                      headers: {
+                        'Authorization': `Bearer ${token}`
+                      }
+                    });
+                    
+                    if (!response.ok) {
+                      throw new Error('Failed to generate report');
+                    }
+
+                    // Get the blob from the response
+                    const blob = await response.blob();
+                    
+                    // Create a URL for the blob
+                    const url = window.URL.createObjectURL(blob);
+                    
+                    // Create a temporary link element
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = 'milestones-report.pdf';
+                    
+                    // Append to body, click, and remove
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    // Clean up the URL
+                    window.URL.revokeObjectURL(url);
+                  } catch (err) {
+                    console.error('Error downloading report:', err);
+                    alert('Failed to download report. Please try again.');
+                  }
+                }}
+                className={styles.createBtn}
+                style={{ backgroundColor: '#4a90e2' }}
               >
-                +
-              </span>{" "}
-              Create Milestone
-            </Link>
+                <span style={{ marginRight: 8 }}>📊</span>
+                Download Report
+              </button>
+
+              {/* Button to navigate to the create milestone page */}
+              <Link
+                href="/milestones/create"
+                className={styles.createBtn}
+                data-testid="create-milestone-button"
+              >
+                <span
+                  style={{ fontSize: "1.35em", marginRight: 8, marginTop: -2 }}
+                >
+                  +
+                </span>{" "}
+                Create Milestone
+              </Link>
+            </div>
           </header>
 
           {}
@@ -330,7 +339,11 @@ export default function MilestonesPage() {
                                 ).toLocaleDateString()}
                               </span>
                             </td>
-                            <td>{milestone.assigned_user_ID}</td>
+                            <td>
+                              {milestone.assigned_user_fname && milestone.assigned_user_sname
+                                ? `${milestone.assigned_user_fname} ${milestone.assigned_user_sname}`
+                                : "Not Assigned"}
+                            </td>
                             <td
                               className={`${styles.milestoneStatus} ${
                                 milestone.status === "Completed"

@@ -22,7 +22,9 @@ interface Milestone {
   dueDate: string;
 
   status: string;
-  assigned_user_ID: string;
+  assigned_user_ID: string | null;
+  assigned_user_fname?: string;
+  assigned_user_sname?: string;
 }
 interface Collaborator {
   user_ID: string;
@@ -48,109 +50,113 @@ export default function MilestoneDetailsPage({
   const [error, setError] = useState<string | null>(null);
   //sstate to open the edit form
   const [showEditForm, setShowEditForm] = useState(false);
-  const [collaborators, setCollaborators] = useState("");
+  const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
 
-  const [collaboratorList, setCollaboratorList] = useState<Collaborator[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
 
   // useEffect runs on mount and when the id changes
   useEffect(() => {
-    const mockCollaborators = [
-      { user_ID: "user123", name: "Alice Johnson" },
-      { user_ID: "user124", name: "Bob Smith" },
-      { user_ID: "user125", name: "Charlie Lee" },
-    ];
-
-    setCollaboratorList(mockCollaborators);
-    // Fetch milestone details from mock data
     const fetchMilestoneDetails = async () => {
       try {
-        // This will be replaced with actual API call later
-        // const response = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/milestones/${id}`, {
-        //   headers: {
-        //     'Authorization': `Bearer ${token}`
-        //   }
-        // });
+        const token = localStorage.getItem('jwt');
+        const response = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/milestones/${id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
 
-        // Mock data for now (from user)
-        // Mock data simulating a response from an API
-        const mockData = {
-          projects: [
-            {
-              project_ID: 1,
-              title: "AI for Healthcare",
-              milestones: [
-                {
-                  milestone_ID: 10,
-                  project_ID: 1,
-                  title: "Literature Review",
-                  description: "Review existing AI models.",
-                  expected_completion_date: "2024-07-01",
-                  assigned_user_ID: "user123",
-                  status: "Completed",
-                  created_at: "2024-05-01T10:00:00.000Z",
-                  updated_at: "2024-06-01T10:00:00.000Z",
-                },
-                {
-                  milestone_ID: 11,
-                  project_ID: 1,
-                  title: "Data Collection",
-                  description: "Collect patient data.",
-                  expected_completion_date: "2024-08-01",
-                  assigned_user_ID: "user124",
-                  status: "In Progress",
-                  created_at: "2024-06-01T10:00:00.000Z",
-                  updated_at: "2024-06-15T10:00:00.000Z",
-                },
-              ],
-            },
-            {
-              project_ID: 2,
-              title: "Robotics Lab",
-              milestones: [],
-            },
-          ],
+        const data = await response.json();
+        console.log(data);
+
+        // Transform the single milestone data to match our interface
+        const milestoneData = {
+          id: String(data.milestone.milestone_ID),
+          title: data.milestone.title,
+          description: data.milestone.description,
+          projectId: String(data.milestone.project_ID),
+          projectName: data.milestone.project_title || 'Unknown Project',
+          dueDate: data.milestone.expected_completion_date,
+          assigned_user_ID: data.milestone.assigned_user_ID,
+          assigned_user_fname: data.milestone.assigned_user_fname,
+          assigned_user_sname: data.milestone.assigned_user_sname,
+          status: data.milestone.status,
         };
 
-        // Flatten milestones from all projects into a single array of milestone objects
-        const allMilestones = mockData.projects.flatMap((project) =>
-          // For each project, map its milestones to a common format
-          (project.milestones || []).map((milestone) => ({
-            id: String(milestone.milestone_ID), // Convert milestone ID to string
-            title: milestone.title, // Milestone title
-            description: milestone.description, // Milestone description
-            projectId: String(project.project_ID), // Project ID as string
-            projectName: project.title, // Project name
-
-            dueDate: milestone.expected_completion_date, // Due date in YYYY-MM-DD
-            assigned_user_ID: milestone.assigned_user_ID,
-            status: milestone.status,
-          }))
-        );
-
-        // Find the milestone object that matches the ID from the URL params
-        const found = allMilestones.find((m) => m.id === id);
-        console.log("Found milestone:", found);
-        // If no milestone is found, throw an error to show 'Milestone not found'
-        if (!found) {
-          throw new Error("Milestone not found");
-        }
-        // Set the found milestone object in state so it can be rendered
-        setMilestone(found);
-        // Set loading to false to indicate data is ready
-
+        setMilestone(milestoneData);
+        setCollaborators(data.collaborators || []);
         setLoading(false);
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");
         console.error("Error fetching milestone details:", err);
-
         setLoading(false);
       }
     };
 
-    // Call the async function to fetch milestone details
-
     fetchMilestoneDetails();
   }, [id]);
+
+  // Handle form submission for updating milestone
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!milestone) return;
+    
+    setSubmitting(true);
+    setEditError(null);
+
+    try {
+      const token = localStorage.getItem('jwt');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/milestones/${milestone.projectId}/${milestone.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          title: milestone.title.trim(),
+          description: milestone.description.trim(),
+          expected_completion_date: milestone.dueDate.split('T')[0],
+          assigned_user_ID: milestone.assigned_user_ID || null,
+          status: milestone.status || 'Not Started'
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to update milestone');
+      }
+
+      // Refresh the milestone data
+      const updatedResponse = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/milestones/${milestone.id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const updatedData = await updatedResponse.json();
+      const updatedMilestone = {
+        id: String(updatedData.milestone.milestone_ID),
+        title: updatedData.milestone.title,
+        description: updatedData.milestone.description,
+        projectId: String(updatedData.milestone.project_ID),
+        projectName: updatedData.milestone.project_title || 'Unknown Project',
+        dueDate: updatedData.milestone.expected_completion_date,
+        assigned_user_ID: updatedData.milestone.assigned_user_ID,
+        assigned_user_fname: updatedData.milestone.assigned_user_fname,
+        assigned_user_sname: updatedData.milestone.assigned_user_sname,
+        status: updatedData.milestone.status,
+      };
+
+      setMilestone(updatedMilestone);
+      setShowEditForm(false);
+    } catch (err) {
+      setEditError(err instanceof Error ? err.message : "Failed to update milestone");
+      console.error("Error updating milestone:", err);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   // Show loading message if data is still being fetched
   if (loading) {
@@ -227,7 +233,9 @@ export default function MilestoneDetailsPage({
               Project: {milestone.projectName}
             </h2>
             <h2 className={styles.projectName}>
-              Collaborator: {milestone.assigned_user_ID || "Not Assigned"}
+              Assigned To: {milestone.assigned_user_fname && milestone.assigned_user_sname 
+                ? `${milestone.assigned_user_fname} ${milestone.assigned_user_sname}`
+                : "Not Assigned"}
             </h2>
             {/* Description label and text */}
             <label className={styles.label}>Description</label>
@@ -270,13 +278,23 @@ export default function MilestoneDetailsPage({
             <section className={styles.centerForm}>
               <form
                 className={styles.cardForm}
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  // TODO: Save the updated milestone here
-                  setShowEditForm(false);
-                }}
+                onSubmit={handleEditSubmit}
               >
                 <h1 className={styles.formTitle}>Edit {milestone.title}</h1>
+                {editError && (
+                  <section
+                    style={{
+                      background: "#fdeaea",
+                      border: "1px solid #f5c2c7",
+                      color: "#b94a48",
+                      padding: "0.75rem 1rem",
+                      borderRadius: 8,
+                      marginBottom: 18,
+                    }}
+                  >
+                    {editError}
+                  </section>
+                )}
                 <label className={styles.label}>Title</label>
                 <input
                   type="text"
@@ -285,6 +303,7 @@ export default function MilestoneDetailsPage({
                   onChange={(e) =>
                     setMilestone({ ...milestone, title: e.target.value })
                   }
+                  required
                 />
 
                 <label className={styles.label}>Description</label>
@@ -294,16 +313,18 @@ export default function MilestoneDetailsPage({
                   onChange={(e) =>
                     setMilestone({ ...milestone, description: e.target.value })
                   }
+                  required
                 />
 
                 <label className={styles.label}>Due Date</label>
                 <input
                   type="date"
                   className={styles.input}
-                  value={milestone.dueDate}
+                  value={milestone.dueDate.split('T')[0]}
                   onChange={(e) =>
                     setMilestone({ ...milestone, dueDate: e.target.value })
                   }
+                  required
                 />
 
                 <label className={styles.label}>Status</label>
@@ -313,21 +334,23 @@ export default function MilestoneDetailsPage({
                   onChange={(e) =>
                     setMilestone({ ...milestone, status: e.target.value })
                   }
+                  required
                 >
-                  <option value=""></option>
-                  <option value="notStarted">Not Started</option>
-                  <option value="inProgress">In Progress</option>
+                  <option value="Not Started">Not Started</option>
+                  <option value="In Progress">In Progress</option>
                   <option value="Completed">Completed</option>
                 </select>
-                {/* NEED TO FIX SELECTION */}
-                <label className={styles.label}>Assign Collaborators</label>
+
+                <label className={styles.label}>Assign To</label>
                 <select
                   className={styles.input}
-                  required
-                  onChange={(e) => setCollaborators(e.target.value)}
+                  value={milestone.assigned_user_ID || ""}
+                  onChange={(e) =>
+                    setMilestone({ ...milestone, assigned_user_ID: e.target.value || null })
+                  }
                 >
-                  <option value=""></option>
-                  {collaboratorList.map((collab) => (
+                  <option value="">Not Assigned</option>
+                  {collaborators.map((collab) => (
                     <option key={collab.user_ID} value={collab.user_ID}>
                       {collab.name}
                     </option>
@@ -339,11 +362,16 @@ export default function MilestoneDetailsPage({
                     type="button"
                     className={styles.cancelBtn}
                     onClick={() => setShowEditForm(false)}
+                    disabled={submitting}
                   >
                     Cancel
                   </button>
-                  <button type="submit" className={styles.saveBtn}>
-                    Save Changes
+                  <button 
+                    type="submit" 
+                    className={styles.saveBtn}
+                    disabled={submitting}
+                  >
+                    {submitting ? "Saving..." : "Save Changes"}
                   </button>
                 </div>
               </form>

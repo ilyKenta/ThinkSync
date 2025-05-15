@@ -12,7 +12,9 @@ import Link from "next/link";
 interface Project {
   project_ID: string;
   title: string;
+  collaborators: Collaborator[];
 }
+
 interface Collaborator {
   user_ID: string;
   name: string;
@@ -38,151 +40,101 @@ export default function CreateMilestonePage() {
   // State to track if the form is being submitted
   const [submitting, setSubmitting] = useState(false);
   // State to track any error that occurs
-
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState("");
   const [collaborators, setCollaborators] = useState("");
-
-  const [collaboratorList, setCollaboratorList] = useState<Collaborator[]>([]);
+  const [selectedProjectCollaborators, setSelectedProjectCollaborators] = useState<Collaborator[]>([]);
 
   //  fetch projects
   useEffect(() => {
-    // FETCHING COLLABORATORS
-
-    //     const fetchCollaborators = async () => {
-    //     try {
-    //       const res = await fetch("/api/milestones/");
-    //       const data = await res.json();
-
-    //       const allCollaborators = new Map();
-
-    //       data.forEach(project => {
-    //         project.collaborators.forEach(collab => {
-    //           if (!allCollaborators.has(collab.user_ID)) {
-    //             allCollaborators.set(collab.user_ID, {
-    //               user_ID: collab.user_ID,
-    //               name: `${collab.first_name} ${collab.last_name}`
-    //             });
-    //           }
-    //         });
-    //       });
-
-    //       setCollaboratorList(Array.from(allCollaborators.values()));
-    //     } catch (err) {
-    //       console.error("Failed to load collaborators:", err);
-    //     }
-    //   };
-
-    //   fetchCollaborators();
-    // }, []);
     const fetchProjects = async () => {
       try {
-        // Mock data for now (from user)
-        // Mock data simulating a response from an API
-        const mockCollaborators = [
-          { user_ID: "user123", name: "Alice Johnson" },
-          { user_ID: "user124", name: "Bob Smith" },
-          { user_ID: "user125", name: "Charlie Lee" },
-        ];
+        const token = localStorage.getItem('jwt');
+        const response = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/milestones`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        const data = await response.json();
+        console.log(data);
 
-        setCollaboratorList(mockCollaborators);
-        const mockData = {
-          projects: [
-            {
-              project_ID: 1,
-              title: "AI for Healthcare",
-              milestones: [
-                {
-                  milestone_ID: 10,
-                  project_ID: 1,
-                  title: "Literature Review",
-                  description: "Review existing AI models.",
-                  expected_completion_date: "2024-07-01",
-                  assigned_user_ID: "user123",
-                  status: "Completed",
-                  created_at: "2024-05-01T10:00:00.000Z",
-                  updated_at: "2024-06-01T10:00:00.000Z",
-                },
-                {
-                  milestone_ID: 11,
-                  project_ID: 1,
-                  title: "Data Collection",
-                  description: "Collect patient data.",
-                  expected_completion_date: "2024-08-01",
-                  assigned_user_ID: "user124",
-                  status: "In Progress",
-                  created_at: "2024-06-01T10:00:00.000Z",
-                  updated_at: "2024-06-15T10:00:00.000Z",
-                },
-              ],
-            },
-            {
-              project_ID: 2,
-              title: "Robotics Lab",
-              milestones: [],
-            },
-          ],
-        };
-        const mockProjects = mockData.projects.map((p) => ({
-          project_ID: String(p.project_ID),
-          title: p.title,
+        // Extract projects with their collaborators
+        const projectsList = data.projects.map((project: any) => ({
+          project_ID: String(project.project_ID),
+          title: project.title,
+          collaborators: project.collaborators.map((collab: any) => ({
+            user_ID: collab.user_ID,
+            name: `${collab.first_name} ${collab.last_name}`
+          }))
         }));
 
-        setProjects(mockProjects);
+        setProjects(projectsList);
         setLoading(false);
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");
         console.error("Error fetching projects:", err);
-
         setLoading(false);
       }
     };
 
-    // Call the async function to fetch projects
     fetchProjects();
   }, []);
 
+  // Update collaborators when project is selected
+  const handleProjectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedProjectId = e.target.value;
+    setProjectId(selectedProjectId);
+    setCollaborators(""); // Reset selected collaborator when project changes
+    
+    if (selectedProjectId) {
+      const selectedProject = projects.find(p => p.project_ID === selectedProjectId);
+      if (selectedProject) {
+        setSelectedProjectCollaborators(selectedProject.collaborators);
+      }
+    } else {
+      setSelectedProjectCollaborators([]);
+    }
+  };
+
   // Handle form submission for creating a milestone
   const handleSubmit = async (e: React.FormEvent) => {
-    // Prevent default form submission behavior
     e.preventDefault();
-    // Set submitting state to true to disable the button
-
     setSubmitting(true);
+    setError(null); // Clear any previous errors
 
     try {
-      // This will be replaced with actual API call later
+      const token = localStorage.getItem('jwt');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/milestones/${projectId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          title: title.trim(),
+          description: description.trim(),
+          expected_completion_date: dueDate,
+          assigned_user_ID: collaborators || null, // Send null if no collaborator selected
+          status: status || 'Not Started' // Default to 'Not Started' if no status selected
+        })
+      });
 
-      // const response = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/milestones`, {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //     'Authorization': `Bearer ${token}`
-      //   },
-      //   body: JSON.stringify({ title, description, projectId, dueDate })
-      // });
+      const data = await response.json();
 
-      // Simulate successful API call
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create milestone');
+      }
 
-      // Simulate a successful API call with a delay
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      // Navigate back to milestones page
-      // Navigate back to the milestones page after creation
       router.push("/milestones");
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to create milestone"
-      );
+      setError(err instanceof Error ? err.message : "Failed to create milestone");
       console.error("Error creating milestone:", err);
-
       setSubmitting(false);
     }
   };
 
   // Show loading message if data is still being fetched
-  // Show loading message if data is still being fetched
-
   if (loading && !error) {
     return (
       <main>
@@ -233,7 +185,7 @@ export default function CreateMilestonePage() {
               <select
                 className={styles.input}
                 value={projectId}
-                onChange={(e) => setProjectId(e.target.value)}
+                onChange={handleProjectChange}
                 required
               >
                 <option value="" disabled>
@@ -282,9 +234,9 @@ export default function CreateMilestonePage() {
                 className={`${styles.status} ${
                   status === "Completed"
                     ? styles.completed
-                    : status === "inProgress"
+                    : status === "In Progress"
                     ? styles.inProgress
-                    : status === "notStarted"
+                    : status === "Not Started"
                     ? styles.notStarted
                     : ""
                 }`}
@@ -292,21 +244,21 @@ export default function CreateMilestonePage() {
                 onChange={(e) => setStatus(e.target.value)}
               >
                 <option value=""></option>
-                <option value="notStarted">Not Started</option>
-                <option value="inProgress">In Progress</option>
+                <option value="Not Started">Not Started</option>
+                <option value="In Progress">In Progress</option>
                 <option value="Completed">Completed</option>
               </select>
               {/* Choose the collaborators to work on a milestone */}
 
               <label className={styles.label}>Assign Collaborators</label>
-
               <select
                 className={styles.status}
                 required
                 onChange={(e) => setCollaborators(e.target.value)}
+                disabled={!projectId} // Disable if no project selected
               >
-                <option value=""></option>
-                {collaboratorList.map((collab) => (
+                <option value="">Select a collaborator</option>
+                {selectedProjectCollaborators.map((collab) => (
                   <option key={collab.user_ID} value={collab.user_ID}>
                     {collab.name}
                   </option>
