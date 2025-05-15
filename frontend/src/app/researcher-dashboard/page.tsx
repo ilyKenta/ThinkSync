@@ -251,6 +251,18 @@ const ResearcherDashboard = () => {
               )}
             </button>
           </li>
+          <li>
+            <button 
+              type="button" 
+              onClick={() => {
+                setActiveTab('shared');
+                router.push("/funding-dashboard");
+              }}
+              className={activeTab === 'funding' ? styles.activeTab : ''}
+            >
+              Funding 
+            </button>
+          </li>
         </ul>
       </nav>
 

@@ -42,6 +42,10 @@ export default function Page() {
   const [editProjectId, setEditProjectId] = useState<string | null>(null);
   const [deleteProjectId, setDeleteProjectId] = useState<string | null>(null);
   const [editData, setEditData] = useState<Project | null>(null);
+  const [activeTab, setActiveTab] = useState('my');
+  const [unreadCount, setUnreadCount] = useState(0);
+  
+  
 
   useEffect(() => {
     const mockData: Project[] = [
@@ -135,13 +139,79 @@ export default function Page() {
     <main className={styles.container}>
       <nav className={styles.sidebar}>
         <h2>ThinkSync</h2>
-        <h3>FUNDING</h3>
+        <h3>DASHBOARD</h3>
+
         <ul>
           <li>
-            <button className={styles.activeTab}>Funding Dashboard</button>
+            <button 
+              type="button" 
+              onClick={() => {
+                setActiveTab('my');
+                router.push("/researcher-dashboard");
+              }}
+              className={activeTab === 'my' ? styles.activeTab : ''}
+            >
+              My Projects
+            </button>
+          </li>
+          <li>
+            <button 
+              type="button" 
+              onClick={() => {
+                setActiveTab('shared');
+                router.push("/Shared_projects");
+              }}
+              className={activeTab === 'shared' ? styles.activeTab : ''}
+            >
+              Shared Projects
+            </button>
+          </li>
+          <li>
+            <button 
+              type="button" 
+              onClick={() => {
+                setActiveTab('messager');
+                router.push("/messager");
+              }}
+              className={activeTab === 'messager' ? styles.activeTab : ''}
+            >
+              Messager
+              {unreadCount > 0 && (
+                <span style={{
+                  display: 'inline-block',
+                  marginLeft: 8,
+                  minWidth: 20,
+                  height: 20,
+                  borderRadius: '50%',
+                  background: 'red',
+                  color: 'white',
+                  fontWeight: 600,
+                  fontSize: 12,
+                  textAlign: 'center',
+                  lineHeight: '20px',
+                  padding: '0 6px',
+                  verticalAlign: 'middle',
+                }}>
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
+            </button>
+          </li>
+          <li>
+            <button 
+              type="button" 
+              onClick={() => {
+                setActiveTab('shared');
+                router.push("/funding-dashboard");
+              }}
+              className={activeTab === 'funding' ? styles.activeTab : ''}
+            >
+              Funding 
+            </button>
           </li>
         </ul>
       </nav>
+
 
       <section className={styles.mainContent}>
         <header className={styles.heading}>

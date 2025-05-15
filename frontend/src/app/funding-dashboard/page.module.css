@@ -11,18 +11,19 @@
   border-right: 1px solid #ddd;
   box-shadow: 10px 10px 10px var(--shadows-color);
 }
-
 .sidebar h2 {
-  margin-top: 0;
+  margin-top: 0px;
   font-size: 30px;
+  margin-bottom: 0px;
 }
 
 .sidebar h3 {
-  border-top: 1px solid #000;
+  border-top: 1px solid #000000;
   padding-top: 10px;
   font-size: 1rem;
   margin-top: 3px;
   margin-bottom: 10px;
+  /*color: #777;*/
   font-weight: var(--font-weight-semibold);
 }
 
@@ -34,7 +35,8 @@
 .sidebar li button {
   background: none;
   border: none;
-  padding: 10px;
+  padding: 10px 10px;
+  margin: 0;
   font: inherit;
   color: inherit;
   cursor: pointer;
@@ -43,10 +45,25 @@
   text-align: left;
 }
 
-.sidebar li button.activeTab {
-  background-color: #d3d3d3 !important;
-  font-weight: bold;
+.sidebar li {
+  /* Remove background from li, only style the button */
+  background: none;
+  padding: 0;
 }
+
+.sidebar li:hover {
+  background-color: var(--field-hover-color);
+}
+
+  .sidebar li:nth-child(4) {
+   
+    /*color: #555;*/
+    cursor: pointer;
+    transition: color 0.3s ease;
+    border-radius: var(--button-radius);
+    background-color: var(--field-hover-color);
+  }
+
 
 /* Main content */
 .mainContent {
