@@ -1,0 +1,672 @@
+.container {
+    display: flex;
+    min-height: 100vh;
+    background: #f5f5f5;
+}
+
+.sidebar {
+    width: 280px;
+    background-color: var(--primary-color);
+    padding: 25px;
+    border-right: 1px solid #ddd;
+    box-shadow: 10px 10px 10px var(--shadows-color);
+}
+
+.sidebar h2 {
+    margin-top: 0px;
+    font-size: 30px;
+    margin-bottom: 0px;
+}
+
+.sidebar h3 {
+    border-top: 1px solid #000000;
+    padding-top: 10px;
+    font-size: 1rem;
+    margin-top: 3px;
+    margin-bottom: 10px;
+    font-weight: var(--font-weight-semibold);
+}
+
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+}
+
+.sidebar li button {
+    background: none;
+    border: none;
+    padding: 10px 10px;
+    margin: 0;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    border-radius: var(--button-radius);
+    width: 100%;
+    text-align: left;
+}
+
+.sidebar li {
+    background: none;
+    padding: 0;
+}
+
+.sidebar li:hover {
+    background-color: var(--field-hover-color);
+}
+
+.sidebar li button.activeTab {
+    background-color: #d3d3d3 !important;
+    font-weight: bold;
+    border-radius: var(--button-radius);
+    padding: 10px 10px;
+}
+
+.sidebar li button:not(.activeTab) {
+    background: none !important;
+    font-weight: normal;
+}
+
+.mainContent {
+    flex: 1;
+    padding: 2rem;
+    overflow-y: auto;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.header h1 {
+    font-size: 2rem;
+    color: #333;
+}
+
+.widgetList {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 1rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.widgetContainer {
+    background-color: var(--primary-color);
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.widgetContainer:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+}
+
+.widgetHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #000;
+    padding-bottom: 0.5rem;
+}
+
+.widgetTitle {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: var(--font-weight-medium);
+    color: #333;
+}
+
+.deleteButton {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 50%;
+    color: #222;
+    font-size: 20px;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.deleteButton:hover {
+    background-color: rgba(255, 0, 0, 0.1);
+}
+
+.projectCard {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.projectCard h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: var(--font-weight-medium);
+    color: #333;
+}
+
+.projectCard p {
+    color: #666;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    margin: 0;
+}
+
+.projectMeta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: #555;
+}
+
+.projectMeta p {
+    margin: 0;
+}
+
+.projectActions {
+    margin-top: 1rem;
+}
+
+.projectActions button {
+    background-color: var(--secondary-color);
+    color: var(--primary-color);
+    border: none;
+    padding: 8px 16px;
+    border-radius: var(--button-radius);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.3s ease;
+}
+
+.projectActions button:hover {
+    background-color: #333;
+}
+
+.navigationButtons {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #ddd;
+}
+
+.navigationButtons button {
+    background: none;
+    border: 1px solid #ddd;
+    padding: 6px 12px;
+    border-radius: var(--button-radius);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.3s ease;
+}
+
+.navigationButtons button:hover:not(:disabled) {
+    background-color: var(--field-hover-color);
+}
+
+.navigationButtons button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.navigationButtons p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.loading, .error {
+    text-align: center;
+    padding: 2rem;
+    color: #666;
+}
+
+.error {
+    color: #dc3545;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .container {
+        padding: 1rem;
+    }
+
+    .header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+
+    .widgetList {
+        padding: 0.5rem;
+    }
+}
+
+.fundingCard {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.fundingCard h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: var(--font-weight-medium);
+    color: #333;
+}
+
+.fundingCard dl {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.5rem 1rem;
+    margin: 0;
+}
+
+.fundingCard dt {
+    font-weight: var(--font-weight-medium);
+    color: #666;
+}
+
+.fundingCard dd {
+    margin: 0;
+    color: #333;
+}
+
+.fundingCard dd em {
+    font-style: normal;
+    font-weight: var(--font-weight-medium);
+}
+
+.statusActive {
+    color: #28a745;
+}
+
+.statusPlanned {
+    color: #6c757d;
+}
+
+.statusInactive {
+    color: #dc3545;
+}
+
+.pieContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 1rem 0;
+}
+
+.pieContainer figcaption {
+    margin: 0;
+    padding: 0;
+    line-height: 1;
+    font-weight: var(--font-weight-medium);
+    font-size: 1.1rem;
+    color: #333;
+    text-align: center;
+    margin-bottom: 0.5rem;
+}
+
+.pieChartWrapper {
+    width: 100%;
+    height: 200px;
+    margin-top: -1rem;
+}
+
+.fundingActions {
+    margin-top: 1rem;
+}
+
+.fundingActions button {
+    background-color: var(--secondary-color);
+    color: var(--primary-color);
+    border: none;
+    padding: 8px 16px;
+    border-radius: var(--button-radius);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.3s ease;
+}
+
+.fundingActions button:hover {
+    background-color: #333;
+}
+
+.fundingOverview {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.5rem 1rem;
+    margin: 0;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+.categoryBreakdown {
+    margin-top: 1.5rem;
+}
+
+.categoryBreakdown h4 {
+    margin: 0 0 1rem 0;
+    font-size: 1.1rem;
+    color: #333;
+    font-weight: var(--font-weight-medium);
+}
+
+.categoryList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.categoryItem {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    border: 1px solid #e9ecef;
+}
+
+.categoryHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.categoryName {
+    font-weight: var(--font-weight-medium);
+    color: #333;
+    font-size: 1rem;
+}
+
+.categoryType {
+    font-size: 0.9rem;
+    color: #666;
+    background-color: #e9ecef;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+}
+
+.categoryDescription {
+    color: #666;
+    font-size: 0.9rem;
+    margin: 0.5rem 0;
+    line-height: 1.4;
+}
+
+.categoryDetails {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.5rem 1rem;
+    margin: 0.5rem 0 0 0;
+    font-size: 0.9rem;
+}
+
+.categoryDetails dt {
+    color: #666;
+    font-weight: var(--font-weight-medium);
+}
+
+.categoryDetails dd {
+    margin: 0;
+    color: #333;
+}
+
+.milestoneSummary {
+    margin-bottom: 2rem;
+    padding: 0 10px;
+}
+
+.milestoneSummary h3 {
+    font-size: 1.1rem;
+    font-weight: var(--font-weight-medium);
+    color: #333;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.pieChartContainer {
+    width: 100%;
+    height: 250px;
+    margin: 0 auto;
+    padding: 10px 0;
+    position: relative;
+}
+
+.projectInfo {
+    margin-bottom: 1.5rem;
+}
+
+.projectInfo h3 {
+    font-size: 1.2rem;
+    font-weight: var(--font-weight-medium);
+    color: #333;
+    margin: 0 0 0.5rem 0;
+}
+
+.collaborators {
+    color: #666;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.milestoneList {
+    margin-bottom: 1.5rem;
+}
+
+.milestoneTable {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.milestoneTable th {
+    text-align: left;
+    font-size: 0.9rem;
+    color: #666;
+    font-weight: var(--font-weight-medium);
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.milestoneTable td {
+    padding: 0.75rem 0;
+    font-size: 0.9rem;
+    border-bottom: 1px solid #f1f1f1;
+}
+
+.milestoneTable tr:last-child td {
+    border-bottom: none;
+}
+
+.milestoneTitle {
+    font-weight: var(--font-weight-medium);
+    color: #333;
+}
+
+.dueDate {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #666;
+}
+
+.calendarIcon {
+    color: #666;
+}
+
+.milestoneStatus {
+    padding: 0.5rem 1rem;
+    border-radius: 1rem;
+    font-size: 0.85rem;
+    font-weight: var(--font-weight-medium);
+    display: inline-block;
+}
+
+.completed {
+    background-color: rgb(209, 236, 209);
+    color: black;
+}
+
+.inProgress {
+    background-color: rgb(238, 225, 202);
+    color: black;
+}
+
+.notStarted {
+    background-color: rgb(202, 161, 161);
+    color: black;
+}
+
+.noMilestones {
+    text-align: center;
+    color: #666;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    margin: 1rem 0;
+}
+
+.milestoneRow {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.milestoneRow:hover {
+    background-color: #f8f9fa;
+}
+
+.addWidgetContainer {
+    position: relative;
+    display: inline-block;
+}
+
+.addWidgetButton {
+    background-color: var(--secondary-color);
+    color: var(--primary-color);
+    border: none;
+    padding: 8px 16px;
+    border-radius: var(--button-radius);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.addWidgetButton:hover {
+    background-color: #333;
+}
+
+.widgetDropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background-color: white;
+    min-width: 200px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    padding: 0.5rem 0;
+    z-index: 1000;
+    margin-top: 0.5rem;
+}
+
+.widgetOption {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #333;
+    text-decoration: none;
+    transition: background-color 0.2s ease;
+    cursor: pointer;
+    background: none;
+    border: none;
+    text-align: left;
+    font-size: 0.9rem;
+}
+
+.widgetOption:hover {
+    background-color: #f5f5f5;
+}
+
+.projectDetails {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+.detailList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin: 0;
+    padding: 0;
+}
+
+.detailLabel {
+    font-weight: var(--font-weight-medium);
+    color: #666;
+    min-width: 100px;
+    margin: 0;
+}
+
+.detailValue {
+    color: #333;
+    margin: 0;
+}
+
+.milestoneList {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e9ecef;
+}
+
+.milestoneListTitle {
+    font-size: 1rem;
+    font-weight: var(--font-weight-medium);
+    color: #333;
+    margin: 0 0 0.5rem 0;
+}
+
+.milestoneItems {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.milestoneItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem;
+    background-color: white;
+    border-radius: 4px;
+    border: 1px solid #e9ecef;
+}
+
+.milestoneTitle {
+    font-weight: var(--font-weight-medium);
+    color: #333;
+    margin: 0;
+} 

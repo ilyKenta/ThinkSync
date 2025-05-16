@@ -1,6 +1,9 @@
+
 import type { Metadata } from "next";
 import "./globals.css";
 import { Inter } from 'next/font/google';
+import { ChakraProvider } from '@chakra-ui/react';
+import { AuthProvider } from './context/AuthContext';
 
 const inter = Inter({
   variable:"--font-primary",
@@ -23,7 +26,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body suppressHydrationWarning={true} className={inter.variable}>
-        {children}
+        <ChakraProvider>
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </ChakraProvider>
       </body>
     </html>
   );

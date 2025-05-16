@@ -4,13 +4,11 @@
 // Import React and React hooks for state management and side effects
 import React, { useState, useEffect } from "react";
 // Import useRouter for navigation (not used directly here, but available)
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 // Import icon components for UI
 import { Calendar, ArrowLeft } from "lucide-react";
 // Import CSS module for styling
 import styles from "./milestone-details.module.css";
-// Import Link for client-side navigation
-import Link from "next/link";
 
 // TypeScript interface for a Milestone object
 interface Milestone {
@@ -39,8 +37,10 @@ export default function MilestoneDetailsPage({
 }) {
   // Get the router object for navigation (not used in this page, but available)
   const router = useRouter();
+  const searchParams = useSearchParams();
   // Get the milestone ID from the URL params
   const { id } = params;
+  const fromCustomDashboard = searchParams.get('from') === 'custom-dashboard';
 
   // State to hold the milestone details (null until loaded)
   const [milestone, setMilestone] = useState<Milestone | null>(null);
@@ -191,6 +191,14 @@ export default function MilestoneDetailsPage({
     }
   };
 
+  const handleBack = () => {
+    if (fromCustomDashboard) {
+      router.push('/custom-dashboard');
+    } else {
+      router.push('/milestones');
+    }
+  };
+
   // Show loading message if data is still being fetched
   if (loading) {
     return (
@@ -206,18 +214,22 @@ export default function MilestoneDetailsPage({
       <main>
         <article style={{ padding: "2rem" }}>
           <header style={{ marginBottom: "1.5rem" }}>
-            <Link
-              href="/milestones"
+            <button
+              onClick={handleBack}
               style={{
                 display: "flex",
                 alignItems: "center",
                 color: "#555",
                 textDecoration: "none",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                padding: 0,
               }}
             >
               <ArrowLeft size={20} style={{ marginRight: 8 }} />
-              <strong>Back to Milestones</strong>
-            </Link>
+              <strong>Back</strong>
+            </button>
           </header>
 
           <aside
@@ -240,9 +252,9 @@ export default function MilestoneDetailsPage({
     <main className={styles.milestoneDetailsBg}>
       <article className="container mx-auto px-4 py-8">
         <header className={styles.headerRow}>
-          <Link href="/milestones" className={styles.backArrow}>
+          <button onClick={handleBack} className={styles.backArrow}>
             <ArrowLeft size={22} />
-          </Link>
+          </button>
           <h1>Milestone Details</h1>
         </header>
 

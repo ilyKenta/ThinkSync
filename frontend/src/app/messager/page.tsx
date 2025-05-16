@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import styles from "./page.module.css";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import ComposeMessage from './components/ComposeMessage';
 
 interface Attachment {
@@ -33,9 +33,11 @@ interface Message {
 
 const Page = () => {
   const router = useRouter();
+  const pathname = usePathname();
   const [messages, setMessages] = useState<Message[]>([]);
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [groupedCounts, setGroupedCounts] = useState<Record<number, number>>({});
+  const [unreadCount, setUnreadCount] = useState(0);
   const [activeTab, setActiveTab] = useState("my");
   const [newMessage, setNewMessage] = useState({
     receiver_ID: "",
@@ -69,7 +71,20 @@ const Page = () => {
       setMessages(data);
     };
 
+    const fetchUnreadCount = async () => {
+      const token = localStorage.getItem("jwt");
+      if (!token) return;
+      const res = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/messages/unread`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUnreadCount(Array.isArray(data) ? data.length : 0);
+      }
+    };
+
     fetchMessages();
+    fetchUnreadCount();
   }, []);
 
   const sendMessage = async (e: React.FormEvent) => {
@@ -201,17 +216,14 @@ const Page = () => {
     <main className={styles.container}>
       <nav className={styles.sidebar}>
         <h2>ThinkSync</h2>
-        <h3>Messages</h3>
+        <h3>DASHBOARD</h3>
 
-        <menu>
+        <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
           <li>
             <button
               type="button"
-              onClick={() => {
-                setActiveTab("my");
-                router.push("/researcher-dashboard");
-              }}
-              className={activeTab === "my" ? styles.active : ""}
+              onClick={() => router.push("/researcher-dashboard")}
+              className={pathname === "/researcher-dashboard" ? styles.activeTab : ""}
             >
               My Projects
             </button>
@@ -219,11 +231,8 @@ const Page = () => {
           <li>
             <button
               type="button"
-              onClick={() => {
-                setActiveTab("shared");
-                router.push("/Shared_projects");
-              }}
-              className={activeTab === "shared" ? styles.active : ""}
+              onClick={() => router.push("/Shared_projects")}
+              className={pathname === "/Shared_projects" ? styles.activeTab : ""}
             >
               Shared Projects
             </button>
@@ -231,23 +240,47 @@ const Page = () => {
           <li>
             <button
               type="button"
-              onClick={() => {
-                setActiveTab("messager");
-                router.push("/messager");
-              }}
-              className={activeTab === "messager" ? styles.active : ""}
+              onClick={() => router.push("/custom-dashboard")}
+              className={pathname === "/custom-dashboard" ? styles.activeTab : ""}
             >
-              Messager
+              Custom Dashboard
             </button>
           </li>
           <li>
             <button
               type="button"
-              onClick={() => {
-                setActiveTab("milestones");
-                router.push("/milestones");
-              }}
-              className={activeTab === "milestones" ? styles.active : ""}
+              onClick={() => router.push("/messager")}
+              className={pathname === "/messager" ? styles.activeTab : ""}
+            >
+              Messager
+              {unreadCount > 0 && (
+                <mark
+                  style={{
+                    display: "inline-block",
+                    marginLeft: 8,
+                    minWidth: 20,
+                    height: 20,
+                    borderRadius: "50%",
+                    background: "red",
+                    color: "white",
+                    fontWeight: 600,
+                    fontSize: 12,
+                    textAlign: "center",
+                    lineHeight: "20px",
+                    padding: "0 6px",
+                    verticalAlign: "middle",
+                  }}
+                >
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </mark>
+              )}
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => router.push("/milestones")}
+              className={pathname === "/milestones" ? styles.activeTab : ""}
             >
               Milestones
             </button>
@@ -255,16 +288,13 @@ const Page = () => {
           <li>
             <button
               type="button"
-              onClick={() => {
-                setActiveTab("funding");
-                router.push("/funding-dashboard");
-              }}
-              className={activeTab === "funding" ? styles.active : ""}
+              onClick={() => router.push("/funding-dashboard")}
+              className={pathname === "/funding-dashboard" ? styles.activeTab : ""}
             >
               Funding
             </button>
           </li>
-        </menu>
+        </ul>
       </nav>
 
       <section className={styles.mainContent}>

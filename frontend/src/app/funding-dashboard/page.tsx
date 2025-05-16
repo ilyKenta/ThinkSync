@@ -507,6 +507,18 @@ export default function Page() {
             <button 
               type="button" 
               onClick={() => {
+                setActiveTab('custom');
+                router.push("/custom-dashboard");
+              }}
+              className={activeTab === 'custom' ? styles.active : ''}
+            >
+              Custom Dashboard
+            </button>
+          </li>
+          <li>
+            <button 
+              type="button" 
+              onClick={() => {
                 setActiveTab('messager');
                 router.push("/messager");
               }}

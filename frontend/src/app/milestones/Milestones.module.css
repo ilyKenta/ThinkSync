@@ -1,4 +1,3 @@
-
 .container {
   display: flex;
   min-height: 100vh; /* Ensure the container takes at least the full viewport height */
@@ -34,41 +33,38 @@
   padding: 0;
 }
 
-
 .sidebar li button {
   background: none;
   border: none;
-  padding: 0;
+  padding: 10px 10px;
   margin: 0;
   font: inherit;
   color: inherit;
   cursor: pointer;
+  border-radius: var(--button-radius);
   width: 100%;
   text-align: left;
+}
+
+.sidebar li {
+  background: none;
+  padding: 0;
+}
+
+.sidebar li:hover {
+  background-color: var(--field-hover-color);
+}
+
+.sidebar li button.activeTab {
+  background-color: #d3d3d3 !important;
+  font-weight: bold;
+  border-radius: var(--button-radius);
   padding: 10px 10px;
-  border-radius: var(--button-radius);
-  transition: background-color 0.3s ease;
 }
 
-.sidebar li:nth-child(4) {
- 
-  /*color: #555;*/
-  cursor: pointer;
-  transition: color 0.3s ease;
-  border-radius: var(--button-radius);
-  background-color: var(--field-hover-color);
-}
-
-.sidebar li  {
-  /*color: #555;*/
-  cursor: pointer;
-  transition: color 0.3s ease;
-  border-radius: var(--button-radius);
-}
-
-.sidebar li button:hover {
-
-  background-color: var(--field-hover-color);
+.sidebar li button:not(.activeTab) {
+  background: none !important;
+  font-weight: normal;
 }
 
 .milestonesBg {

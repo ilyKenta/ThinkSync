@@ -8,6 +8,7 @@ const reviewerRoutes = require("./routes/reviewer");
 const messageRoutes = require("./routes/messages");
 const milestonesRoutes = require("./routes/milestones");
 const fundingRoutes = require("./routes/funding");
+const dashboardRoutes = require("./routes/dashboard");
 const db = require("./db");
 const cors = require("cors");
 const helmet = require("helmet");
@@ -72,6 +73,7 @@ app.use('/api/reviewer', reviewerRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/milestones', milestonesRoutes);
 app.use('/api/funding', fundingRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 // Use environment variable for port
 const PORT = process.env.PORT || 5000;

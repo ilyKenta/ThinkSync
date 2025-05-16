@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 
 import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
 
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 import { Calendar, ArrowLeft } from "lucide-react";
 
@@ -33,17 +33,13 @@ interface Project {
 }
 
 export default function MilestonesPage() {
-  // Get the router object for navigation
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState("shared");
-  // State to hold the list of all milestones
+  const pathname = usePathname();
   const [milestones, setMilestones] = useState<Milestone[]>([]);
-
   const [loading, setLoading] = useState(true);
   const [statusSummary, setStatusSummary] = useState<
     { status: string; count: number; percentage: number }[]
   >([]);
-
   const [error, setError] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -123,17 +119,14 @@ export default function MilestonesPage() {
     <main className={styles.container}>
       <nav className={styles.sidebar}>
         <h2>ThinkSync</h2>
-        <h3>MILESTONES</h3>
+        <h3>DASHBOARD</h3>
 
-        <ul>
+        <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
           <li>
             <button
               type="button"
-              onClick={() => {
-                setActiveTab("my");
-                router.push("/researcher-dashboard");
-              }}
-              className={activeTab === "my" ? styles.activeTab : ""}
+              onClick={() => router.push("/researcher-dashboard")}
+              className={pathname === "/researcher-dashboard" ? styles.activeTab : ""}
             >
               My Projects
             </button>
@@ -141,11 +134,8 @@ export default function MilestonesPage() {
           <li>
             <button
               type="button"
-              onClick={() => {
-                setActiveTab("shared");
-                router.push("/Shared_projects");
-              }}
-              className={activeTab === "shared" ? styles.activeTab : ""}
+              onClick={() => router.push("/Shared_projects")}
+              className={pathname === "/Shared_projects" ? styles.activeTab : ""}
             >
               Shared Projects
             </button>
@@ -153,11 +143,17 @@ export default function MilestonesPage() {
           <li>
             <button
               type="button"
-              onClick={() => {
-                setActiveTab("messager");
-                router.push("/messager");
-              }}
-              className={activeTab === "messager" ? styles.activeTab : ""}
+              onClick={() => router.push("/custom-dashboard")}
+              className={pathname === "/custom-dashboard" ? styles.activeTab : ""}
+            >
+              Custom Dashboard
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => router.push("/messager")}
+              className={pathname === "/messager" ? styles.activeTab : ""}
             >
               Messager
               {unreadCount > 0 && (
@@ -186,11 +182,8 @@ export default function MilestonesPage() {
           <li>
             <button
               type="button"
-              onClick={() => {
-                setActiveTab("milestones");
-                router.push("/milestones");
-              }}
-              className={activeTab === "milestones" ? styles.activeTab : ""}
+              onClick={() => router.push("/milestones")}
+              className={pathname === "/milestones" ? styles.activeTab : ""}
             >
               Milestones
             </button>
@@ -198,11 +191,8 @@ export default function MilestonesPage() {
           <li>
             <button
               type="button"
-              onClick={() => {
-                setActiveTab("funding");
-                router.push("/funding-dashboard");
-              }}
-              className={activeTab === "funding" ? styles.activeTab : ""}
+              onClick={() => router.push("/funding-dashboard")}
+              className={pathname === "/funding-dashboard" ? styles.activeTab : ""}
             >
               Funding
             </button>
