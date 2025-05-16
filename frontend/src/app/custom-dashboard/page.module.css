@@ -200,7 +200,7 @@
 
 .navigationButtons button {
     background: none;
-    border: 1px solid #ddd;
+    border: 1px solid #000000;
     padding: 6px 12px;
     border-radius: var(--button-radius);
     cursor: pointer;
@@ -669,4 +669,72 @@
     font-weight: var(--font-weight-medium);
     color: #333;
     margin: 0;
+}
+
+.actionButtons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+    justify-content: center;
+}
+
+.createButton {
+    background-color: var(--secondary-color);
+    color: var(--primary-color);
+    border: none;
+    padding: 8px 16px;
+    border-radius: var(--button-radius);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.3s ease;
+}
+
+.createButton:hover {
+    background-color: #333;
+}
+
+.editButton {
+    background-color: var(--primary-color);
+    color: var(--secondary-color);
+    border: 1px solid var(--secondary-color);
+    padding: 8px 16px;
+    border-radius: var(--button-radius);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.3s ease;
+}
+
+.editButton:hover {
+    background-color: var(--field-hover-color);
+}
+
+.inviteButton {
+    background-color: var(--primary-color);
+    color: var(--secondary-color);
+    border: 1px solid var(--secondary-color);
+    padding: 8px 16px;
+    border-radius: var(--button-radius);
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s ease;
+}
+
+.inviteButton:hover {
+    background-color: var(--field-hover-color);
+}
+
+.trashButton {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    transition: transform 0.2s;
+}
+
+.trashButton:hover {
+    transform: scale(1.1);
 } 

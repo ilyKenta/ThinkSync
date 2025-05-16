@@ -3,19 +3,24 @@ export interface WidgetProps {
 }
 
 export interface Project {
-    project_ID: number;
+    project_ID: string;
     title: string;
-    description?: string;
-    status?: string;
+    description: string;
+    goals?: string;
+    research_areas?: string;
+    start_date?: string;
+    end_date?: string;
+    funding_available?: boolean;
     created_at?: string;
-    owner_ID: string;
-    collaborators: Array<{
-        user_ID: string;
+    collaborators?: Array<{
         first_name: string;
         last_name: string;
-        is_owner: boolean;
     }>;
-    milestones: Milestone[];
+    milestones?: Array<{
+        milestone_ID: string;
+        title: string;
+        status: string;
+    }>;
 }
 
 export interface Milestone {

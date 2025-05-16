@@ -3,6 +3,7 @@
 import { LocalStorage } from "@azure/msal-browser";
 import styles from "../create-req/page.module.css";
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 
 export type EditReqFormProps = {
   projectId: string;
@@ -38,6 +39,16 @@ export default function EditReqForm({
   const [techReq, setReq] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    document.body.classList.add('modal-open');
+    
+    return () => {
+      document.body.classList.remove('modal-open');
+    };
+  }, []);
 
   // Initialize form fields with current requirement data
   useEffect(() => {
@@ -98,9 +109,11 @@ export default function EditReqForm({
     }
   };
 
-  return (
-    <main className={styles.createModal}>
-      <section className={styles.createBox}>
+  if (!mounted) return null;
+
+  const modalContent = (
+    <div className={styles.createModal} data-modal-root>
+      <div className={styles.createBox}>
         <button onClick={onClose} className={styles.closeButton}>
           X
         </button>
@@ -153,7 +166,9 @@ export default function EditReqForm({
           </button>
           {error && <div style={{ color: "red", marginTop: 8 }}>{error}</div>}
         </form>
-      </section>
-    </main>
+      </div>
+    </div>
   );
+
+  return createPortal(modalContent, document.body);
 }

@@ -1,8 +1,9 @@
 "use client";
 
 import styles from "./page.module.css";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { createPortal } from "react-dom";
 //import useAuth from "../useAuth";
 
 export type CreateFormProps = {
@@ -20,6 +21,8 @@ export type CreateFormProps = {
 
 export default function CreateForm({ onClose, onCreate }: CreateFormProps) {
   const router = useRouter();
+  const [isVisible, setIsVisible] = useState(false);
+  const [mounted, setMounted] = useState(false);
   // useAuth(); // Check authentication
 
   const [title, setTitle] = useState("");
@@ -29,7 +32,22 @@ export default function CreateForm({ onClose, onCreate }: CreateFormProps) {
   const [start_date, setStart] = useState("");
   const [end_date, setEnd] = useState("");
   const [funding_available, setFunding] = useState<boolean | null>(null);
-  const [requirementsData, setRequirementsData] = useState([]);
+
+  useEffect(() => {
+    setMounted(true);
+    document.body.classList.add('modal-open');
+    
+    return () => {
+      document.body.classList.remove('modal-open');
+    };
+  }, []);
+
+  const handleClose = () => {
+    setIsVisible(false);
+    setTimeout(() => {
+      onClose();
+    }, 200);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,17 +62,7 @@ export default function CreateForm({ onClose, onCreate }: CreateFormProps) {
       return;
     }
 
-    const payload = {
-      title,
-      description,
-      goals,
-      research_areas,
-      start_date,
-      end_date,
-      funding_available,
-      requirementsData,
-    };
-
+    // Call onCreate with the form data
     onCreate(
       title,
       description,
@@ -64,22 +72,20 @@ export default function CreateForm({ onClose, onCreate }: CreateFormProps) {
       end_date,
       funding_available
     );
-    onClose();
-
-    console.log(JSON.stringify(payload));
   };
 
-  // Clear custom validity when funding selection changes
   const handleFundingChange = (value: boolean) => {
     setFunding(value);
     const fundingInputs = document.getElementsByName("funding");
     (fundingInputs[0] as HTMLInputElement).setCustomValidity("");
   };
 
-  return (
-    <main className={styles.createModal}>
+  if (!mounted) return null;
+
+  const modalContent = (
+    <main className={styles.createModal} style={{ opacity: isVisible ? 1 : 0 }}>
       <section className={styles.createBox}>
-        <button onClick={onClose} className={styles.closeButton}>
+        <button onClick={handleClose} className={styles.closeButton}>
           X
         </button>
         <h1 className={styles.title}>Project Information</h1>
@@ -160,22 +166,31 @@ export default function CreateForm({ onClose, onCreate }: CreateFormProps) {
                   className={styles.radioInput}
                   checked={funding_available === false}
                   onChange={() => handleFundingChange(false)}
+                  required
                 />
                 No
               </label>
             </section>
           </section>
-          <section className={styles.buttonWrap}>
-            <button
-              type="submit"
-              aria-label="submit information"
-              className={styles.buttonNext}
-            >
-              Next →
-            </button>
-          </section>
+
+          <button
+            type="submit"
+            aria-label="submit information"
+            style={{
+              backgroundColor: "black",
+              color: "white",
+              border: "none",
+              borderRadius: "var(--button-radius)",
+              fontSize: 20,
+              fontWeight: 600,
+            }}
+          >
+            Next: Add Requirements
+          </button>
         </form>
       </section>
     </main>
   );
+
+  return createPortal(modalContent, document.body);
 }

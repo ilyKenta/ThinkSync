@@ -49,6 +49,13 @@ body {
  -moz-osx-font-smoothing: grayscale;
 }
 
+h2 {
+  font-size: 1.5rem;
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.2;
+  margin-bottom: 1rem;
+}
+
 * {
  box-sizing: border-box;
  padding: 0;

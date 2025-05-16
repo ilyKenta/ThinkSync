@@ -91,12 +91,12 @@
   }
   
   .loginForm button {
-    width: var(--card-buttons-width) ;
+    width: var(--card-buttons-width);
     height: var(--card-buttons-height);
     padding: 1rem;
     background-color: var(--secondary-color);
     color: white;
-    font-size: 25px;
+    font-size: 1.5rem;
     font-weight: var(--font-weight-medium);
     border: none;
     border-radius: var(--button-radius);

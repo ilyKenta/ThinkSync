@@ -6,26 +6,78 @@
   align-self: center;
 }
 
+/* Root level blocking */
+body.modal-open {
+  overflow: hidden !important;
+  position: fixed !important;
+  width: 100% !important;
+  height: 100% !important;
+  touch-action: none !important;
+}
+
+/* Block ALL background elements */
+body.modal-open > *:not([data-modal-root]) {
+  pointer-events: none !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  filter: blur(2px) !important;
+  opacity: 0.5 !important;
+  visibility: visible !important;
+  touch-action: none !important;
+}
+
+/* Multiple overlay layers */
+.createModal {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(0, 0, 0, 0.5) !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  z-index: 2147483647 !important;
+  opacity: 1 !important;
+  pointer-events: all !important;
+  touch-action: none !important;
+  isolation: isolate !important;
+}
+
+.createModal::before,
+.createModal::after {
+  content: '' !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(0, 0, 0, 0.5) !important;
+  z-index: -1 !important;
+  pointer-events: all !important;
+  touch-action: none !important;
+}
+
 .createBox {
-  max-width: 600px;
-  min-height: 600px;
-  margin: 4rem auto;
-  padding: 2rem;
-  background: var(--box-color);
-  border-radius: 12px;
-  box-shadow: 10px 10px 10px var(--shadows-color);
-  background-color: var(--box-color);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-  background: var(--primary-color);
-  padding: 2rem;
-  border-radius: 10px;
-  position: relative;
-  width: 500px;
-  max-width: 90%;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+  position: relative !important;
+  width: 500px !important;
+  max-width: 90% !important;
+  min-height: 600px !important;
+  padding: 2rem !important;
+  background: var(--primary-color) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.2) !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  flex-direction: column !important;
+  pointer-events: all !important;
+  z-index: 2147483647 !important;
+  touch-action: none !important;
+  isolation: isolate !important;
+  margin: auto !important;
 }
 
 .createBox label {
@@ -34,6 +86,7 @@
   margin-bottom: 0.2rem;
   font-size: 15px;
 }
+
 .createBox input {
   width: var(--input-fields-width);
   height: var(--input-fields-height);
@@ -43,6 +96,7 @@
   border: 1px solid #ccc;
   background-color: var(--box-color);
 }
+
 .createBox select {
   width: var(--input-fields-width);
   height: var(--input-fields-height);
@@ -52,6 +106,7 @@
   border: 1px solid #ccc;
   background-color: var(--box-color);
 }
+
 .createForm input:hover {
   background-color: var(--field-hover-color);
 }
@@ -70,7 +125,11 @@
   align-items: center;
   justify-content: center;
 }
+
 .closeButton {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
   color: var(--secondary-color);
   background-color: var(--box-color);
   height: 2rem;
@@ -78,75 +137,51 @@
   border-radius: var(--button-radius);
   border: 1px solid #ccc;
   display: block;
-  margin-left: auto;
-  margin-right: 0;
+  pointer-events: all;
+  z-index: 10000;
 }
+
 .closeButton:hover {
   background-color: var(--field-hover-color);
   cursor: pointer;
 }
-.createModal {
-  position: fixed;
-  top: 0;
-  left: 0;
+
+/* Ensure modal content remains interactive */
+.createModal * {
+  pointer-events: all !important;
+  touch-action: auto !important;
+}
+
+.createForm {
   width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 999;
+  pointer-events: all;
 }
 
 .createForm input {
   width: 100%;
   padding: 0.5rem;
   margin-bottom: 1rem;
+  pointer-events: all;
 }
-/*.radioGroup {
-  display: flex;
-  gap: 20px;
-  align-items: center;
-  flex-direction: row;
-}
-.radioOptions {
-  display: flex;
-  gap: 24px;
-}
-.radioContainer {
-  display: flex;
-  flex-direction: column;
-  cursor: pointer;
-  align-items: center;
-  gap: 6px;
-  padding: 5px;
-}
-.radioInput {
-  accent-color: #000000;
-  width: 25px;
-  height: 25px;
-  vertical-align: middle;
-}*/
 
-/**/
 .radioGroup {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  align-items: center; /* Center the whole group horizontally */
+  align-items: center;
 }
 
 .radioOptions {
   display: flex;
   gap: 2rem;
-  align-items: center; /* Center Yes/No items vertically */
+  align-items: center;
 }
 
 .radioContainer {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 0.75rem; /* little more breathing space between radio and text */
+  gap: 0.75rem;
   cursor: pointer;
   border-radius: 7px;
   transition: background-color 0.2s ease;
@@ -158,7 +193,7 @@
   cursor: pointer;
 }
 
-.radioInput:hover{
+.radioInput:hover {
   background-color: var(--field-hover-color);
 }
 
@@ -171,6 +206,7 @@
   border-radius: var(--button-radius);
   font-size: 12px;
 }
+
 .buttonWrap {
   display: flex;
   justify-content: center;

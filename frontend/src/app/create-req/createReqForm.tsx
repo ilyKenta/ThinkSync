@@ -1,10 +1,9 @@
 "use client";
 
 import styles from "./page.module.css";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import CreateForm from "../create-project/createForm";
-//import useAuth from "../useAuth";
+import { createPortal } from "react-dom";
 
 type CreateFormProps = {
   projectName: string;
@@ -17,6 +16,7 @@ type CreateFormProps = {
   onClose: () => void;
   onCreate: (projectName: string) => void;
 };
+
 export default function CreateReqForm({
   projectName,
   projectDesc,
@@ -29,12 +29,20 @@ export default function CreateReqForm({
   onCreate,
 }: CreateFormProps) {
   const router = useRouter();
-  // useAuth(); // Check authentication
+  const [mounted, setMounted] = useState(false);
 
   const [skill, setSkill] = useState("");
   const [experience, setExp] = useState("");
   const [reqrole, setRole] = useState("");
   const [techReq, setReq] = useState("");
+
+  useEffect(() => {
+    setMounted(true);
+    document.body.classList.add('modal-open');
+    return () => {
+      document.body.classList.remove('modal-open');
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,23 +51,6 @@ export default function CreateReqForm({
       alert("User not logged in");
       return;
     }
-    /*const payload = {
-      projectName,
-      projectDesc,
-      goals,
-      setResArea,
-      setStart,
-      setEnd,
-      Funding,
-
-
-      skill,
-      experience,
-      reqrole,
-      techReq,
-    };*/
-
-    //const token = 'dummyToken';
 
     const payload = {
       project: {
@@ -84,16 +75,12 @@ export default function CreateReqForm({
     onCreate(skill);
     onClose();
 
-    console.log(JSON.stringify(payload));
-
-    // NEED TO RUN ON CREATE
-
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/projects/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`, // Send token for authorization
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
       });
@@ -111,8 +98,8 @@ export default function CreateReqForm({
     }
   };
 
-  return (
-    <main className={styles.createModal}>
+  const modalContent = (
+    <main className={styles.createModal} data-modal-root>
       <section className={styles.createBox}>
         <button onClick={onClose} className={styles.closeButton}>
           X
@@ -127,13 +114,13 @@ export default function CreateReqForm({
             onChange={(e) => setSkill(e.target.value)}
             required
           />
-          <label htmlFor="explvl">Level of experience</label>{" "}
-          {/*remeber to amke drop down */}
+          <label htmlFor="explvl">Level of experience</label>
           <select
             name="explvl"
             id="explvl"
             className="drop-down"
             onChange={(e) => setExp(e.target.value)}
+            required
           >
             <option value=""></option>
             <option value="beginner">Beginner</option>
@@ -148,7 +135,7 @@ export default function CreateReqForm({
             onChange={(e) => setRole(e.target.value)}
             required
           />
-          <label htmlFor="techReq">Technical Requirments</label>
+          <label htmlFor="techReq">Technical Requirements</label>
           <input
             type="text"
             id="techReq"
@@ -163,4 +150,8 @@ export default function CreateReqForm({
       </section>
     </main>
   );
+
+  if (!mounted) return null;
+
+  return createPortal(modalContent, document.body);
 }

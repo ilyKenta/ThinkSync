@@ -355,7 +355,10 @@ const ResearcherDashboard = () => {
           </button>
           {showForm && (
             <CreateForm
-              onClose={() => setShowForm(false)}
+              onClose={() => {
+                setShowForm(false);
+                setShowReqForm(false);
+              }}
               onCreate={(
                 projectName: string,
                 projectDesc: string,
@@ -372,9 +375,8 @@ const ResearcherDashboard = () => {
                 setCurrentStart(setStart);
                 setCurrentEnd(setEnd);
                 setCurrentFunding(Funding);
-                setShowForm(false);
                 setShowReqForm(true);
-                fetchProjects();
+                setShowForm(false);
               }}
               data-testid="create-form"
             />
@@ -389,9 +391,13 @@ const ResearcherDashboard = () => {
               setStart={currentstart_date}
               setEnd={currentend_date}
               Funding={currentfunding_available}
-              onClose={() => setShowReqForm(false)}
+              onClose={() => {
+                setShowReqForm(false);
+                setShowForm(false);
+              }}
               onCreate={() => {
                 setShowReqForm(false);
+                setShowForm(false);
                 console.log(
                   "Requirements form submitted, reloading page to refresh projects"
                 );

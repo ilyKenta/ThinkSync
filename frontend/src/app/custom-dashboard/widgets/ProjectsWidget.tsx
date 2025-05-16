@@ -4,12 +4,32 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from '../page.module.css';
 import { WidgetProps, Project } from './types';
+import CreateForm from '../../create-project/createForm';
+import CreateReqForm from '../../create-req/createReqForm';
+import EditProjectForm from '../../edit-project/editProjectForm';
+import InviteCollaborators from '../../components/InviteCollaborators';
+import { FaUserPlus } from 'react-icons/fa';
 
 export default function ProjectsWidget({ onDelete }: WidgetProps) {
     const [projects, setProjects] = useState<Project[]>([]);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [showCreateForm, setShowCreateForm] = useState(false);
+    const [showReqForm, setShowReqForm] = useState(false);
+    const [showEditForm, setShowEditForm] = useState(false);
+    const [editProject, setEditProject] = useState<Project | null>(null);
+    const [inviteModalOpen, setInviteModalOpen] = useState(false);
+    const [inviteProject, setInviteProject] = useState<Project | null>(null);
+    const [currentProjectData, setCurrentProjectData] = useState({
+        projectName: '',
+        projectDesc: '',
+        goals: '',
+        setResArea: '',
+        setStart: '',
+        setEnd: '',
+        Funding: null as boolean | null
+    });
     const router = useRouter();
 
     useEffect(() => {
@@ -56,7 +76,79 @@ export default function ProjectsWidget({ onDelete }: WidgetProps) {
         setCurrentIndex((prev) => (prev - 1 + projects.length) % projects.length);
     };
 
-    
+    const handleCreate = (
+        projectName: string,
+        projectDesc: string,
+        goals: string,
+        setResArea: string,
+        setStart: string,
+        setEnd: string,
+        Funding: boolean | null
+    ) => {
+        setCurrentProjectData({
+            projectName,
+            projectDesc,
+            goals,
+            setResArea,
+            setStart,
+            setEnd,
+            Funding
+        });
+        setShowCreateForm(false);
+        setShowReqForm(true);
+    };
+
+    const handleEdit = (updatedProject: Project) => {
+        setProjects((prev) =>
+            prev.map((p) =>
+                p.project_ID === updatedProject.project_ID
+                    ? { ...p, ...updatedProject }
+                    : p
+            )
+        );
+        setShowEditForm(false);
+        setEditProject(null);
+    };
+
+    const handleDelete = async (projectId: string) => {
+        try {
+            const token = localStorage.getItem('jwt');
+            if (!token) {
+                throw new Error('No access token found');
+            }
+
+            const res = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/projects/delete/${projectId}`, {
+                method: 'DELETE',
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.error || 'Failed to delete project');
+            }
+
+            setProjects((prev) => {
+                const newProjects = prev.filter((project) => project.project_ID !== projectId);
+                if (newProjects.length === 0) {
+                    setCurrentIndex(0);
+                } else if (currentIndex >= newProjects.length) {
+                    setCurrentIndex(newProjects.length - 1);
+                }
+                return newProjects;
+            });
+        } catch (error) {
+            console.error('Delete error:', error);
+            alert('Could not delete project.');
+        }
+    };
+
+    const handleInviteClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setInviteProject(currentProject);
+        setInviteModalOpen(true);
+    };
 
     if (isLoading) {
         return (
@@ -90,6 +182,9 @@ export default function ProjectsWidget({ onDelete }: WidgetProps) {
                     <button className={styles.deleteButton} onClick={onDelete} aria-label="Delete widget">×</button>
                 </header>
                 <p>No projects found. Create a new project to get started.</p>
+                <button className={styles.createButton} onClick={() => setShowCreateForm(true)}>
+                    + Create Project
+                </button>
             </article>
         );
     }
@@ -108,7 +203,6 @@ export default function ProjectsWidget({ onDelete }: WidgetProps) {
                 <footer className={styles.projectMeta}>
                     <section className={styles.projectDetails}>
                         <dl className={styles.detailList}>
-
                             <dt className={styles.detailLabel}>Created:</dt>
                             <dd className={styles.detailValue}>
                                 {currentProject.created_at ? new Date(currentProject.created_at).toLocaleDateString() : 'Not Set'}
@@ -120,7 +214,6 @@ export default function ProjectsWidget({ onDelete }: WidgetProps) {
                                     ? currentProject.collaborators.map(c => `${c.first_name} ${c.last_name}`).join(', ')
                                     : 'None'}
                             </dd>
-
                         </dl>
 
                         {currentProject.milestones && currentProject.milestones.length > 0 && (
@@ -150,6 +243,88 @@ export default function ProjectsWidget({ onDelete }: WidgetProps) {
                 <p>{currentIndex + 1} of {projects.length}</p>
                 <button onClick={handleNext} disabled={currentIndex === projects.length - 1}>Next</button>
             </nav>
+            <section className={styles.actionButtons}>
+                <button className={styles.createButton} onClick={() => setShowCreateForm(true)}>
+                    + Create Project
+                </button>
+                <button 
+                    className={styles.editButton}
+                    onClick={() => {
+                        setEditProject(currentProject);
+                        setShowEditForm(true);
+                    }}
+                >
+                    Edit Project
+                </button>
+                <button
+                    className={styles.inviteButton}
+                    title="Invite Collaborators"
+                    onClick={handleInviteClick}
+                >
+                    <FaUserPlus />
+                </button>
+                <button
+                    className={styles.trashButton}
+                    title="Delete project"
+                    onClick={() => {
+                        if (window.confirm('Are you sure you want to delete this project?')) {
+                            handleDelete(currentProject.project_ID);
+                        }
+                    }}
+                >
+                    🗑️
+                </button>
+            </section>
+            {showCreateForm && (
+                <CreateForm
+                    onClose={() => {
+                        setShowCreateForm(false);
+                        setShowReqForm(false);
+                    }}
+                    onCreate={handleCreate}
+                />
+            )}
+            {showReqForm && (
+                <CreateReqForm
+                    projectName={currentProjectData.projectName}
+                    projectDesc={currentProjectData.projectDesc}
+                    goals={currentProjectData.goals}
+                    setResArea={currentProjectData.setResArea}
+                    setStart={currentProjectData.setStart}
+                    setEnd={currentProjectData.setEnd}
+                    Funding={currentProjectData.Funding}
+                    onClose={() => {
+                        setShowReqForm(false);
+                        setShowCreateForm(false);
+                    }}
+                    onCreate={() => {
+                        setShowReqForm(false);
+                        setShowCreateForm(false);
+                        fetchProjects();
+                    }}
+                />
+            )}
+            {showEditForm && editProject && (
+                <EditProjectForm
+                    initialValues={editProject}
+                    onClose={() => {
+                        setShowEditForm(false);
+                        setEditProject(null);
+                    }}
+                    onEdit={handleEdit}
+                />
+            )}
+            {inviteModalOpen && inviteProject && (
+                <InviteCollaborators
+                    projectId={inviteProject.project_ID}
+                    projectTitle={inviteProject.title || ""}
+                    projectDescription={inviteProject.description || ""}
+                    onClose={() => {
+                        setInviteModalOpen(false);
+                        setInviteProject(null);
+                    }}
+                />
+            )}
         </article>
     );
 } 

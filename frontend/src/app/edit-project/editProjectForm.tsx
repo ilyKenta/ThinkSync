@@ -3,6 +3,7 @@
 import styles from "../create-project/page.module.css";
 import { useState, useEffect } from "react";
 import EditReqForm from "./editReqForm";
+import { createPortal } from "react-dom";
 
 export type EditProjectFormProps = {
   onClose: () => void;
@@ -50,6 +51,16 @@ export default function EditProjectForm({
   const [requirements, setRequirements] = useState(
     initialValues.requirements || []
   );
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    document.body.classList.add('modal-open');
+    
+    return () => {
+      document.body.classList.remove('modal-open');
+    };
+  }, []);
 
   // Update state when initialValues change
   useEffect(() => {
@@ -108,8 +119,10 @@ export default function EditProjectForm({
     );
   }
 
-  return (
-    <main className={styles.createModal}>
+  if (!mounted) return null;
+
+  const modalContent = (
+    <main className={styles.createModal} data-modal-root>
       <section className={styles.createBox}>
         <button onClick={onClose} className={styles.closeButton}>
           X
@@ -225,4 +238,6 @@ export default function EditProjectForm({
       </section>
     </main>
   );
+
+  return createPortal(modalContent, document.body);
 }
