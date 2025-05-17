@@ -106,4 +106,10 @@ jest.spyOn(console, 'log').mockImplementation((...args) => {
     return;
   }
   originalLog(...args);
-}); 
+});
+
+global.ResizeObserver = class {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}; 

@@ -48,38 +48,48 @@ const Page = () => {
   const [attachments, setAttachments] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showCompose, setShowCompose] = useState(false);
-  //////////Un comment back end call and delte / comment out test data under this /////////////
   useEffect(() => {
     const fetchMessages = async () => {
-      const token = localStorage.getItem("jwt");
-      const response = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/messages`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      try {
+        const token = localStorage.getItem("jwt");
+        const response = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/messages`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-      const data = await response.json();
+        const data = await response.json();
 
-      const counts: Record<number, number> = {};
-      data.forEach((msg: Message) => {
-        counts[msg.sender_ID] = (counts[msg.sender_ID] || 0) + 1;
-      });
+        const counts: Record<number, number> = {};
+        data.forEach((msg: Message) => {
+          counts[msg.sender_ID] = (counts[msg.sender_ID] || 0) + 1;
+        });
 
-      console.log('Fetched messages:', data);
+        console.log('Fetched messages:', data);
 
-      setGroupedCounts(counts);
-      setMessages(data);
+        setGroupedCounts(counts);
+        setMessages(data);
+      } catch (error) {
+        console.error("Error fetching messages:", error);
+        setGroupedCounts({});
+        setMessages([]);
+      }
     };
 
     const fetchUnreadCount = async () => {
-      const token = localStorage.getItem("jwt");
-      if (!token) return;
-      const res = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/messages/unread`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setUnreadCount(Array.isArray(data) ? data.length : 0);
+      try {
+        const token = localStorage.getItem("jwt");
+        if (!token) return;
+        const res = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/messages/unread`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setUnreadCount(Array.isArray(data) ? data.length : 0);
+        }
+      } catch (error) {
+        console.error("Error fetching unread count:", error);
+        setUnreadCount(0);
       }
     };
 
