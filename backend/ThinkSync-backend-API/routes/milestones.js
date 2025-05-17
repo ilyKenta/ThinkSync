@@ -829,4 +829,5 @@ router.delete('/:projectId/:milestoneId', async (req, res) => {
     }
 });
 
-module.exports = router; 
+module.exports = router;
+module.exports.validateMilestoneFields = validateMilestoneFields; 
