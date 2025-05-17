@@ -10,9 +10,6 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "ThinkSync",
   description: "ThinkSync collaboration web app",
-  icons: {
-    icon: '/favicon.ico'
-  }
 };
 
 export default function RootLayout({

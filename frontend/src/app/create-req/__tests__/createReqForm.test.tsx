@@ -45,7 +45,7 @@ describe('CreateReqForm', () => {
     expect(screen.getByLabelText('Skill Required')).toBeInTheDocument();
     expect(screen.getByLabelText('Level of experience')).toBeInTheDocument();
     expect(screen.getByLabelText('Role', { selector: '#reqrole' })).toBeInTheDocument();
-    expect(screen.getByLabelText('Technical Requirments')).toBeInTheDocument();
+    expect(screen.getByLabelText('Technical Requirements')).toBeInTheDocument();
     expect(screen.getByLabelText('submit information')).toBeInTheDocument();
     expect(screen.getByText('X')).toBeInTheDocument();
   });
@@ -61,7 +61,7 @@ describe('CreateReqForm', () => {
     const roleInput = screen.getByLabelText('Role', { selector: '#reqrole' });
     fireEvent.change(roleInput, { target: { value: 'Lead' } });
     expect(roleInput).toHaveValue('Lead');
-    const techInput = screen.getByLabelText('Technical Requirments');
+    const techInput = screen.getByLabelText('Technical Requirements');
     fireEvent.change(techInput, { target: { value: 'React' } });
     expect(techInput).toHaveValue('React');
   });
@@ -77,7 +77,7 @@ describe('CreateReqForm', () => {
     fireEvent.change(screen.getByLabelText('Skill Required'), { target: { value: 'Python' } });
     fireEvent.change(screen.getByLabelText('Level of experience'), { target: { value: 'professional' } });
     fireEvent.change(screen.getByLabelText('Role', { selector: '#reqrole' }), { target: { value: 'Lead' } });
-    fireEvent.change(screen.getByLabelText('Technical Requirments'), { target: { value: 'React' } });
+    fireEvent.change(screen.getByLabelText('Technical Requirements'), { target: { value: 'React' } });
     fireEvent.click(screen.getByLabelText('submit information'));
     await waitFor(() => {
       expect(onCreate).toHaveBeenCalledWith('Python');
@@ -92,7 +92,7 @@ describe('CreateReqForm', () => {
     fireEvent.change(screen.getByLabelText('Skill Required'), { target: { value: 'Python' } });
     fireEvent.change(screen.getByLabelText('Level of experience'), { target: { value: 'professional' } });
     fireEvent.change(screen.getByLabelText('Role', { selector: '#reqrole' }), { target: { value: 'Lead' } });
-    fireEvent.change(screen.getByLabelText('Technical Requirments'), { target: { value: 'React' } });
+    fireEvent.change(screen.getByLabelText('Technical Requirements'), { target: { value: 'React' } });
     fireEvent.click(screen.getByLabelText('submit information'));
     await waitFor(() => {
       expect(global.alert).toHaveBeenCalledWith('User not logged in');
@@ -110,7 +110,7 @@ describe('CreateReqForm', () => {
     fireEvent.change(screen.getByLabelText('Skill Required'), { target: { value: 'Python' } });
     fireEvent.change(screen.getByLabelText('Level of experience'), { target: { value: 'professional' } });
     fireEvent.change(screen.getByLabelText('Role', { selector: '#reqrole' }), { target: { value: 'Lead' } });
-    fireEvent.change(screen.getByLabelText('Technical Requirments'), { target: { value: 'React' } });
+    fireEvent.change(screen.getByLabelText('Technical Requirements'), { target: { value: 'React' } });
     fireEvent.click(screen.getByLabelText('submit information'));
     await waitFor(() => {
       expect(global.alert).toHaveBeenCalledWith('Error: API error');
@@ -123,7 +123,7 @@ describe('CreateReqForm', () => {
     fireEvent.change(screen.getByLabelText('Skill Required'), { target: { value: 'Python' } });
     fireEvent.change(screen.getByLabelText('Level of experience'), { target: { value: 'professional' } });
     fireEvent.change(screen.getByLabelText('Role', { selector: '#reqrole' }), { target: { value: 'Lead' } });
-    fireEvent.change(screen.getByLabelText('Technical Requirments'), { target: { value: 'React' } });
+    fireEvent.change(screen.getByLabelText('Technical Requirements'), { target: { value: 'React' } });
     fireEvent.click(screen.getByLabelText('submit information'));
     await waitFor(() => {
       expect(global.alert).toHaveBeenCalledWith('An error occurred');

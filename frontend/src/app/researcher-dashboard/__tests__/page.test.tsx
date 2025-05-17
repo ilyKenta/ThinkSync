@@ -290,7 +290,18 @@ describe('ResearcherDashboard', () => {
       expect(screen.getByText('Project Information')).toBeInTheDocument();
       expect(screen.getByLabelText('Project name')).toBeInTheDocument();
       expect(screen.getByLabelText('Project Description')).toBeInTheDocument();
-      expect(screen.getByText('Next →')).toBeInTheDocument();
+      expect(screen.getByText('Next: Add Requirements')).toBeInTheDocument();
+    });
+
+    // Close the form
+    const closeButton = screen.getByText('X');
+    await act(async () => {
+      fireEvent.click(closeButton);
+    });
+
+    // Verify form is closed
+    await waitFor(() => {
+      expect(screen.queryByText('Project Information')).not.toBeInTheDocument();
     });
   });
 
@@ -518,7 +529,7 @@ describe('ResearcherDashboard', () => {
       expect(screen.getByText('Project Information')).toBeInTheDocument();
       expect(screen.getByLabelText('Project name')).toBeInTheDocument();
       expect(screen.getByLabelText('Project Description')).toBeInTheDocument();
-      expect(screen.getByText('Next →')).toBeInTheDocument();
+      expect(screen.getByText('Next: Add Requirements')).toBeInTheDocument();
     });
 
     // Fill out project details
@@ -528,7 +539,6 @@ describe('ResearcherDashboard', () => {
     const researchArea = 'Test Area';
     const startDate = '2024-01-01';
     const endDate = '2024-12-31';
-    const funding = true;
 
     // Fill in the form fields
     await act(async () => {
@@ -542,7 +552,7 @@ describe('ResearcherDashboard', () => {
     });
 
     // Submit the form
-    const nextButton = screen.getByText('Next →');
+    const nextButton = screen.getByText('Next: Add Requirements');
     await act(async () => {
       fireEvent.click(nextButton);
     });

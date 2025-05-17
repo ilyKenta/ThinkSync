@@ -93,12 +93,13 @@ router.post('/create', async (req, res) => {
     }
 });
 
-// Get all projects for an owner
+// Get all projects for an owner, including collaborators and reviews
 router.get('/owner', async (req, res) => {
     try {
         const token = extractToken(req);
         const userId = await getUserIdFromToken(token);
 
+        // Fetch projects and requirements
         const projects = await db.executeQuery(`
             SELECT p.*, pr.requirement_ID, pr.skill_required, pr.experience_level, pr.role, pr.technical_requirements
             FROM projects p
@@ -107,7 +108,26 @@ router.get('/owner', async (req, res) => {
             ORDER BY p.created_at DESC
         `, [userId]);
 
-        // Group requirements by project
+        // Fetch collaborators for all projects
+        const collaborators = await db.executeQuery(`
+            SELECT pc.project_ID, u.user_ID, u.fname, u.sname, u.department, u.acc_role, pc.role, pc.joined_at
+            FROM project_collaborations pc
+            JOIN users u ON pc.user_ID = u.user_ID
+            WHERE pc.project_ID IN (
+                SELECT project_ID FROM projects WHERE owner_ID = ?
+            )
+        `, [userId]);
+
+        // Fetch reviews for all projects
+        const reviews = await db.executeQuery(`
+            SELECT r.project_ID, r.review_ID, r.reviewer_ID, r.feedback, r.outcome, r.reviewed_at
+            FROM reviews r
+            WHERE r.project_ID IN (
+                SELECT project_ID FROM projects WHERE owner_ID = ?
+            )
+        `, [userId]);
+
+        // Group requirements, collaborators, and reviews by project
         const groupedProjects = projects.reduce((acc, row) => {
             if (!acc[row.project_ID]) {
                 acc[row.project_ID] = {
@@ -122,7 +142,9 @@ router.get('/owner', async (req, res) => {
                     funding_available: row.funding_available,
                     created_at: row.created_at,
                     review_status: row.review_status,
-                    requirements: []
+                    requirements: [],
+                    collaborators: [],
+                    reviews: []
                 };
             }
             if (row.requirement_ID) {
@@ -136,6 +158,34 @@ router.get('/owner', async (req, res) => {
             }
             return acc;
         }, {});
+
+        // Add collaborators to each project
+        collaborators.forEach(collab => {
+            if (groupedProjects[collab.project_ID]) {
+                groupedProjects[collab.project_ID].collaborators.push({
+                    user_ID: collab.user_ID,
+                    fname: collab.fname,
+                    sname: collab.sname,
+                    department: collab.department,
+                    acc_role: collab.acc_role,
+                    role: collab.role,
+                    joined: collab.joined
+                });
+            }
+        });
+
+        // Add reviews to each project
+        reviews.forEach(review => {
+            if (groupedProjects[review.project_ID]) {
+                groupedProjects[review.project_ID].reviews.push({
+                    review_ID: review.review_ID,
+                    reviewer_ID: review.reviewer_ID,
+                    feedback: review.feedback,
+                    outcome: review.outcome,
+                    reviewed_at: review.reviewed_at
+                });
+            }
+        });
 
         res.status(200).json({ projects: Object.values(groupedProjects) });
     } catch (error) {

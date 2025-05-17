@@ -85,6 +85,23 @@ export default function MilestonesPage() {
       }
     };
     fetchMilestones();
+
+    // Fetch unread messages count
+    const fetchUnread = async () => {
+      const token = localStorage.getItem('jwt');
+      if (!token) return;
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/messages/unread`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setUnreadCount(Array.isArray(data) ? data.length : 0);
+      }
+    };
+    fetchUnread();
   }, []);
 
   // Group milestones by project

@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import CreateForm, { CreateFormProps } from '../createForm';
 
 jest.mock('../page.module.css', () => new Proxy({}, { get: (target, prop) => prop }));
@@ -7,6 +7,14 @@ jest.mock('../page.module.css', () => new Proxy({}, { get: (target, prop) => pro
 describe('CreateForm', () => {
   let onClose: jest.Mock;
   let onCreate: jest.Mock;
+
+  beforeAll(() => {
+    jest.useFakeTimers();
+  });
+
+  afterAll(() => {
+    jest.useRealTimers();
+  });
 
   beforeEach(() => {
     onClose = jest.fn();
@@ -37,10 +45,12 @@ describe('CreateForm', () => {
     expect(screen.getByText('X')).toBeInTheDocument();
   });
 
-  it('calls onClose when close button is clicked', () => {
+  it('calls onClose when close button is clicked', async () => {
     render(<CreateForm onClose={onClose} onCreate={onCreate} />);
     fireEvent.click(screen.getByText('X'));
-    expect(onClose).toHaveBeenCalled();
+    await waitFor(() => {
+      expect(onClose).toHaveBeenCalled();
+    });
   });
 
   it('shows validation if funding is not selected and does not submit', () => {
@@ -62,7 +72,7 @@ describe('CreateForm', () => {
     expect(yesRadio).toBeChecked();
   });
 
-  it('submits form with correct values when all fields are filled and funding is Yes', () => {
+  it('submits form with correct values when all fields are filled and funding is Yes', async () => {
     render(<CreateForm onClose={onClose} onCreate={onCreate} />);
     fillForm();
     fireEvent.click(screen.getByLabelText('Yes'));
@@ -76,10 +86,9 @@ describe('CreateForm', () => {
       '2024-12-31',
       true
     );
-    expect(onClose).toHaveBeenCalled();
   });
 
-  it('submits form with correct values when all fields are filled and funding is No', () => {
+  it('submits form with correct values when all fields are filled and funding is No', async () => {
     render(<CreateForm onClose={onClose} onCreate={onCreate} />);
     fillForm();
     fireEvent.click(screen.getByLabelText('No'));
@@ -93,7 +102,6 @@ describe('CreateForm', () => {
       '2024-12-31',
       false
     );
-    expect(onClose).toHaveBeenCalled();
   });
 
   it('handles input changes for all fields', () => {

@@ -242,7 +242,35 @@ describe('Project Routes', () => {
         }
       ];
 
-      db.executeQuery.mockResolvedValueOnce(mockProjects);
+      const mockCollaborators = [
+        {
+          project_ID: 1,
+          user_ID: 'user123',
+          fname: 'John',
+          sname: 'Doe',
+          department: 'IT',
+          acc_role: 'Developer',
+          role: 'Collaborator',
+          joined_at: '2024-03-19T12:00:00Z'
+        }
+      ];
+
+      const mockReviews = [
+        {
+          project_ID: 1,
+          review_ID: 1,
+          reviewer_ID: 'reviewer123',
+          feedback: 'Good project',
+          outcome: 'approved',
+          reviewed_at: '2024-03-19T12:00:00Z'
+        }
+      ];
+
+      // Mock all three database queries
+      db.executeQuery
+        .mockResolvedValueOnce(mockProjects) // Projects query
+        .mockResolvedValueOnce(mockCollaborators) // Collaborators query
+        .mockResolvedValueOnce(mockReviews); // Reviews query
 
       const response = await request(app)
         .get(`/api/project/owner`)
@@ -253,7 +281,9 @@ describe('Project Routes', () => {
       expect(response.body.projects[0]).toHaveProperty('goals');
       expect(response.body.projects[0]).toHaveProperty('research_areas');
       expect(response.body.projects[0]).toHaveProperty('funding_available');
-      expect(db.executeQuery).toHaveBeenCalledTimes(1);
+      expect(response.body.projects[0]).toHaveProperty('collaborators');
+      expect(response.body.projects[0]).toHaveProperty('reviews');
+      expect(db.executeQuery).toHaveBeenCalledTimes(3);
     });
 
     it('should handle database error when fetching projects', async () => {

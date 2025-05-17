@@ -13,8 +13,20 @@ export interface Project {
     funding_available?: boolean;
     created_at?: string;
     collaborators?: Array<{
-        first_name: string;
-        last_name: string;
+        user_ID: string;
+        fname: string;
+        sname: string;
+        department?: string;
+        acc_role?: string;
+        role?: string;
+        joined_at?: string;
+    }>;
+    reviews?: Array<{
+        review_ID: string;
+        reviewer_ID: string;
+        feedback?: string;
+        outcome?: string;
+        reviewed_at?: string;
     }>;
     milestones?: Array<{
         milestone_ID: string;

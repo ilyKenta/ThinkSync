@@ -148,12 +148,38 @@ export default function CustomDashboard() {
         }
     };
 
-    const moveWidget = (dragIndex: number, hoverIndex: number) => {
+    const moveWidget = async (dragIndex: number, hoverIndex: number) => {
         const draggedWidget = widgets[dragIndex];
         const newWidgets = [...widgets];
         newWidgets.splice(dragIndex, 1);
         newWidgets.splice(hoverIndex, 0, draggedWidget);
         setWidgets(newWidgets);
+
+        // Update positions in the database
+        try {
+            const token = localStorage.getItem('jwt');
+            const response = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/dashboard/widgets/${draggedWidget.widget_ID}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    position_x: draggedWidget.position_x,
+                    position_y: hoverIndex,
+                    width: draggedWidget.width,
+                    height: draggedWidget.height
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to update widget position');
+            }
+        } catch (error) {
+            console.error('Error updating widget position:', error);
+            // Revert the local state if the update fails
+            setWidgets(widgets);
+        }
     };
 
     const renderWidget = (widget: Widget) => {

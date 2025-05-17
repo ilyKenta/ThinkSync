@@ -58,6 +58,7 @@ export default function ProjectsWidget({ onDelete }: WidgetProps) {
             }
             
             const data = await response.json();
+            console.log('Projects data:', data);
             setProjects(data.projects || []);
             setError(null);
         } catch (error) {
@@ -211,28 +212,19 @@ export default function ProjectsWidget({ onDelete }: WidgetProps) {
                             <dt className={styles.detailLabel}>Collaborators:</dt>
                             <dd className={styles.detailValue}>
                                 {currentProject.collaborators && currentProject.collaborators.length > 0 
-                                    ? currentProject.collaborators.map(c => `${c.first_name} ${c.last_name}`).join(', ')
+                                    ? currentProject.collaborators.map(c => `${c.fname} ${c.sname}${c.department ? ` (${c.department})` : ''}${c.role ? ` - ${c.role}` : ''}`).join(', ')
                                     : 'None'}
                             </dd>
                         </dl>
 
-                        {currentProject.milestones && currentProject.milestones.length > 0 && (
-                            <section className={styles.milestoneList}>
-                                <h4 className={styles.milestoneListTitle}>Milestone Details</h4>
-                                <ul className={styles.milestoneItems}>
-                                    {currentProject.milestones.map((milestone) => (
-                                        <li key={milestone.milestone_ID} className={styles.milestoneItem}>
-                                            <strong className={styles.milestoneTitle}>{milestone.title}</strong>
-                                            <mark className={`${styles.milestoneStatus} ${
-                                                milestone.status === 'Completed' ? styles.completed :
-                                                milestone.status === 'In Progress' ? styles.inProgress :
-                                                styles.notStarted
-                                            }`}>
-                                                {milestone.status}
-                                            </mark>
-                                        </li>
-                                    ))}
-                                </ul>
+                        {currentProject.reviews && currentProject.reviews.length > 0 && (
+                            <section className={styles.reviewList}>
+                                <h4 className={styles.reviewListTitle}>Latest Review</h4>
+                                <section className={styles.reviewItem}>
+                                    <strong className={styles.reviewTitle}>{currentProject.reviews[0].outcome ? 'Outcome: ' + currentProject.reviews[0].outcome : 'No review yet'}</strong>
+                                    <p className={styles.reviewFeedback}>{currentProject.reviews[0].feedback || 'No feedback'}</p>
+                                    <p className={styles.reviewDate}>{currentProject.reviews[0].reviewed_at ? 'Reviewed on: ' + new Date(currentProject.reviews[0].reviewed_at).toLocaleDateString() : 'Not reviewed yet'}</p>
+                                </section>
                             </section>
                         )}
                     </section>

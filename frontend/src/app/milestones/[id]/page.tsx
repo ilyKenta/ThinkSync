@@ -182,7 +182,11 @@ export default function MilestoneDetailsPage({
         throw new Error(data.error || 'Failed to delete milestone');
       }
 
-      router.push('/milestones');
+      if (fromCustomDashboard) {
+        router.push('/custom-dashboard');
+      } else {
+        router.push('/milestones');
+      }
     } catch (err) {
       setDeleteError(err instanceof Error ? err.message : "Failed to delete milestone");
       console.error("Error deleting milestone:", err);
