@@ -192,39 +192,6 @@ describe('Funding API', () => {
     expect(res.status).toBe(401);
   });
 
-  // GET /:projectId/categories
-  it('should get funding categories', async () => {
-    db.executeQuery
-      .mockResolvedValueOnce([{ role_name: 'researcher' }])
-      .mockResolvedValueOnce([{ funding_ID: 1 }])
-      .mockResolvedValueOnce([{ category: 'Personnel', amount_spent: 50 }]);
-    const res = await request(app).get('/api/funding/1/categories');
-    expect(res.status).toBe(200);
-    expect(res.body.categories).toBeDefined();
-  });
-  it('should 403 if not a researcher (get categories)', async () => {
-    db.executeQuery.mockResolvedValueOnce([]); // roles
-    const res = await request(app).get('/api/funding/1/categories');
-    expect(res.status).toBe(403);
-  });
-  it('should 404 if funding not found (get categories)', async () => {
-    db.executeQuery
-      .mockResolvedValueOnce([{ role_name: 'researcher' }])
-      .mockResolvedValueOnce([]); // fundingArr
-    const res = await request(app).get('/api/funding/1/categories');
-    expect(res.status).toBe(404);
-  });
-  it('should 500 on DB error (get categories)', async () => {
-    db.executeQuery.mockRejectedValueOnce({ code: 'ER_FAKE' });
-    const res = await request(app).get('/api/funding/1/categories');
-    expect(res.status).toBe(500);
-  });
-  it('should 401 on auth error (get categories)', async () => {
-    getUserIdFromToken.mockRejectedValueOnce(new Error('bad auth'));
-    const res = await request(app).get('/api/funding/1/categories');
-    expect(res.status).toBe(401);
-  });
-
   // POST /:projectId/categories
   it('should add a funding category', async () => {
     db.executeQuery

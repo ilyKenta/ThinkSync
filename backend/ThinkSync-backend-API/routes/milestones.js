@@ -389,7 +389,6 @@ router.get('/report/generate', async (req, res) => {
                             font: {
                                 size: 36,  // Increased from 28
                                 weight: 'bold',
-                                family: 'Arial'
                             },
                             padding: 40,  // Increased padding
                             color: '#333333'
@@ -399,7 +398,6 @@ router.get('/report/generate', async (req, res) => {
                             labels: {
                                 font: {
                                     size: 24,  // Increased from 18
-                                    family: 'Arial',
                                     weight: 'bold'  // Added bold weight
                                 },
                                 padding: 30,  // Increased padding

@@ -200,41 +200,13 @@ router.put('/:projectId', async (req, res) => {
     }
 });
 
-// Get funding breakdown by category
-router.get('/:projectId/categories', async (req, res) => {
-    try {
-        const token = extractToken(req);
-        const userId = await getUserIdFromToken(token);
-        if (!(await checkResearcherRole(userId))) {
-            return res.status(403).json({ error: 'Unauthorized: User is not a researcher' });
-        }
-        const { projectId } = req.params;
-        const fundingArr = await db.executeQuery(
-            `SELECT * FROM funding WHERE project_ID = ?`,
-            [projectId]
-        );
-        if (!fundingArr.length) return res.status(404).json({ error: 'Funding not found' });
-        const fundingId = fundingArr[0].funding_ID;
-        const categories = await db.executeQuery(
-            `SELECT * FROM funding_categories WHERE funding_ID = ?`,
-            [fundingId]
-        );
-        res.json({ categories });
-    } catch (error) {
-        if (error.code && typeof error.code === 'string' && error.code.startsWith('ER_')) {
-            res.status(500).json({ error: 'A server error occurred' });
-        } else {
-            res.status(401).json({ error: error.message || 'Failed to fetch funding categories' });
-        }
-    }
-});
-
 // Add a new funding category
 router.post('/:projectId/categories', async (req, res) => {
     try {
         const token = extractToken(req);
         const userId = await getUserIdFromToken(token);
-        if (!(await checkResearcherRole(userId))) {
+ 
+       if (!(await checkResearcherRole(userId))) {
             return res.status(403).json({ error: 'Unauthorized: User is not a researcher' });
         }
         const { projectId } = req.params;
@@ -518,22 +490,20 @@ router.get('/report', async (req, res) => {
                                     display: true,
                                     text: 'Funding Category Breakdown',
                                     font: {
-                                        size: 36,  // Increased from 20
-                                        weight: 'bold',
-                                        family: 'Arial'
+                                        size: 36,
+                                        weight: 'bold'
                                     },
-                                    padding: 40,  // Increased padding
+                                    padding: 40,
                                     color: '#333333'
                                 },
                                 legend: {
                                     position: 'bottom',
                                     labels: {
                                         font: {
-                                            size: 24,  // Increased from 12
-                                            family: 'Arial',
-                                            weight: 'bold'  // Added bold weight
+                                            size: 24,
+                                            weight: 'bold'
                                         },
-                                        padding: 30,  // Increased padding
+                                        padding: 30,
                                         usePointStyle: true,
                                         pointStyle: 'circle'
                                     }
