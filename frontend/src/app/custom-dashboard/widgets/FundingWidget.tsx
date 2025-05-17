@@ -555,7 +555,8 @@ export default function FundingWidget({ onDelete }: WidgetProps) {
                                     >
                                         <option value="active">Active</option>
                                         <option value="completed">Completed</option>
-                                        <option value="suspended">Suspended</option>
+                                        <option value="expired">Expired</option>
+                                        <option value="cancelled">Cancelled</option>
                                     </select>
 
                                     <label className={styles.label}>Grant End Date</label>

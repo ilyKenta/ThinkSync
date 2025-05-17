@@ -181,6 +181,7 @@ const Page = () => {
         <h3>Messages</h3>
 
         <menu>
+          <ul>
           <li>
             <button
               type="button"
@@ -217,6 +218,7 @@ const Page = () => {
               Messager
             </button>
           </li>
+          </ul>
         </menu>
       </nav>
 
