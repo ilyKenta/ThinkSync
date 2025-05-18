@@ -1,2 +1,2 @@
 #ThinkSync
-All necesary information for the backend will be locked here
+Basic information about the backend has been loaded here namley an image showing the structure and relationships in the db
