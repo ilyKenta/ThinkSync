@@ -140,7 +140,7 @@ export default function EditReqForm({
             <option value="intermediate">Intermediate</option>
             <option value="professional">Professional</option>
           </select>
-          <label htmlFor="role">Role</label>
+          <label htmlFor="reqrole">Role</label>
           <input
             type="text"
             id="reqrole"
@@ -158,7 +158,6 @@ export default function EditReqForm({
           />
           <button 
             type="submit" 
-            aria-label="submit information"
             disabled={loading}
             style={{ backgroundColor: 'black', color: 'white', border: 'none', borderRadius: 'var(--button-radius)', fontSize: 20, fontWeight: 600 }}
           >

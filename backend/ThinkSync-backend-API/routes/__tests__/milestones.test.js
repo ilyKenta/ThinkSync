@@ -56,9 +56,9 @@ describe('Milestones API', () => {
     app = express();
     app.use(express.json());
     app.use('/api/milestones', milestonesRoutes);
+    jest.clearAllMocks();
     extractToken.mockReturnValue(mockToken);
     getUserIdFromToken.mockResolvedValue(mockUserId);
-    jest.clearAllMocks();
   });
 
   // --- GET / ---
@@ -340,6 +340,237 @@ describe('Milestones API', () => {
       .delete('/api/milestones/1/1');
     expect(res.status).toBe(401);
   });
+
+  it('should not include duplicate collaborators in GET /', async () => {
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }])
+      .mockResolvedValueOnce([{ project_ID: 1, title: 'P1', owner_ID: mockUserId }])
+      .mockResolvedValueOnce([{ milestone_ID: 1, title: 'M1', assigned_user_ID: null }])
+      .mockResolvedValueOnce([{ user_ID: mockUserId, fname: 'A', sname: 'B' }])
+      .mockResolvedValueOnce([
+        { user_ID: 'u2', fname: 'C', sname: 'D' },
+        { user_ID: mockUserId, fname: 'A', sname: 'B' } // duplicate of owner
+      ])
+      .mockResolvedValueOnce([]);
+    const res = await request(app).get('/api/milestones');
+    expect(res.status).toBe(200);
+    const collabs = res.body.projects[0].collaborators;
+    const ids = collabs.map(c => c.user_ID);
+    expect(ids.filter((id, i) => ids.indexOf(id) !== i)).toHaveLength(0); // no duplicates
+  });
+
+  it('should calculate correct summary percentages in GET /', async () => {
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }])
+      .mockResolvedValueOnce([{ project_ID: 1, title: 'P1', owner_ID: mockUserId }])
+      .mockResolvedValueOnce([
+        { milestone_ID: 1, title: 'M1', status: 'Completed' },
+        { milestone_ID: 2, title: 'M2', status: 'Completed' },
+        { milestone_ID: 3, title: 'M3', status: 'Not Started' }
+      ])
+      .mockResolvedValueOnce([{ user_ID: mockUserId, fname: 'A', sname: 'B' }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        { status: 'Completed' },
+        { status: 'Completed' },
+        { status: 'Not Started' }
+      ]);
+    const res = await request(app).get('/api/milestones');
+    expect(res.status).toBe(200);
+    expect(res.body.summary).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ status: 'Completed', count: 2, percentage: 66.66666666666666 }),
+        expect.objectContaining({ status: 'Not Started', count: 1, percentage: 33.33333333333333 })
+      ])
+    );
+  });
+
+  it('should return empty projects and summary if no projects in GET /', async () => {
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([]);
+    const res = await request(app).get('/api/milestones');
+    expect(res.status).toBe(200);
+    expect(res.body.projects).toEqual([]);
+    expect(res.body.summary).toEqual([]);
+  });
+
+  it('should return project with no milestones in GET /', async () => {
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }])
+      .mockResolvedValueOnce([{ project_ID: 1, title: 'P1', owner_ID: mockUserId }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ user_ID: mockUserId, fname: 'A', sname: 'B' }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([]);
+    const res = await request(app).get('/api/milestones');
+    expect(res.status).toBe(200);
+    expect(res.body.projects[0].milestones).toEqual([]);
+  });
+
+  it('should create milestone with only required fields', async () => {
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }])
+      .mockResolvedValueOnce({ insertId: 2 });
+    const res = await request(app)
+      .post('/api/milestones/1')
+      .send({ title: 'T' });
+    expect(res.status).toBe(201);
+    expect(res.body.milestone_ID).toBe(2);
+  });
+
+  it('should allow assigned_user_ID as owner', async () => {
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }])
+      .mockResolvedValueOnce([{ user_ID: mockUserId }])
+      .mockResolvedValueOnce([{ user_ID: mockUserId }])
+      .mockResolvedValueOnce({ insertId: 3 });
+    const res = await request(app)
+      .post('/api/milestones/1')
+      .send({ title: 'T', assigned_user_ID: mockUserId });
+    expect(res.status).toBe(201);
+    expect(res.body.milestone_ID).toBe(3);
+  });
+
+  it('should allow assigned_user_ID as collaborator', async () => {
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }])
+      .mockResolvedValueOnce([{ user_ID: 'u2' }])
+      .mockResolvedValueOnce([{ user_ID: 'u2' }])
+      .mockResolvedValueOnce({ insertId: 4 });
+    const res = await request(app)
+      .post('/api/milestones/1')
+      .send({ title: 'T', assigned_user_ID: 'u2' });
+    expect(res.status).toBe(201);
+    expect(res.body.milestone_ID).toBe(4);
+  });
+
+  it('should 400 if assigned_user_ID is not a collaborator or owner', async () => {
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }])
+      .mockResolvedValueOnce([{ user_ID: 'u3' }])
+      .mockResolvedValueOnce([]);
+    const res = await request(app)
+      .post('/api/milestones/1')
+      .send({ title: 'T', assigned_user_ID: 'u3' });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/not a collaborator or owner/);
+  });
+
+  it('should 400 if assigned_user_ID does not exist', async () => {
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }])
+      .mockResolvedValueOnce([]);
+    const res = await request(app)
+      .post('/api/milestones/1')
+      .send({ title: 'T', assigned_user_ID: 'u4' });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/does not exist/);
+  });
+
+  it('should 500 if error thrown in collaborators query', async () => {
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }])
+      .mockResolvedValueOnce([{ project_ID: 1, title: 'P1', owner_ID: mockUserId }])
+      .mockResolvedValueOnce([{ milestone_ID: 1, title: 'M1', assigned_user_ID: null }])
+      .mockResolvedValueOnce([{ user_ID: mockUserId, fname: 'A', sname: 'B' }])
+      .mockRejectedValueOnce({ code: 'ER_FAKE' });
+    const res = await request(app).get('/api/milestones');
+    expect(res.status).toBe(500);
+  });
+
+  it('should 500 if error thrown in owner query', async () => {
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }])
+      .mockResolvedValueOnce([{ project_ID: 1, title: 'P1', owner_ID: mockUserId }])
+      .mockResolvedValueOnce([{ milestone_ID: 1, title: 'M1', assigned_user_ID: null }])
+      .mockRejectedValueOnce({ code: 'ER_FAKE' });
+    const res = await request(app).get('/api/milestones');
+    expect(res.status).toBe(500);
+  });
+
+  it('should 500 if error thrown in milestones query', async () => {
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }])
+      .mockResolvedValueOnce([{ project_ID: 1, title: 'P1', owner_ID: mockUserId }])
+      .mockRejectedValueOnce({ code: 'ER_FAKE' });
+    const res = await request(app).get('/api/milestones');
+    expect(res.status).toBe(500);
+  });
+
+  it('should 500 if error thrown in summary query', async () => {
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }])
+      .mockResolvedValueOnce([{ project_ID: 1, title: 'P1', owner_ID: mockUserId }])
+      .mockResolvedValueOnce([{ milestone_ID: 1, title: 'M1', assigned_user_ID: null }])
+      .mockResolvedValueOnce([{ user_ID: mockUserId, fname: 'A', sname: 'B' }])
+      .mockResolvedValueOnce([])
+      .mockRejectedValueOnce({ code: 'ER_FAKE' });
+    const res = await request(app).get('/api/milestones');
+    expect(res.status).toBe(500);
+  });
+
+  it('should handle DB error in milestone update with assigned user', async () => {
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }]) // roles check
+      .mockResolvedValueOnce([{ user_ID: 'u2' }]) // user check
+      .mockRejectedValueOnce({ code: 'ER_FAKE' }); // collab check
+
+    const res = await request(app)
+      .put('/api/milestones/1/1')
+      .send({ title: 'T', assigned_user_ID: 'u2' });
+    expect(res.status).toBe(500);
+  });
+
+  it('should handle DB error in milestone creation with assigned user', async () => {
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }]) // roles check
+      .mockResolvedValueOnce([{ user_ID: 'u2' }]) // user check
+      .mockRejectedValueOnce({ code: 'ER_FAKE' }); // collab check
+
+    const res = await request(app)
+      .post('/api/milestones/1')
+      .send({ title: 'T', assigned_user_ID: 'u2' });
+    expect(res.status).toBe(500);
+  });
+
+  it('should handle DB error in milestone deletion', async () => {
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }]) // roles check
+      .mockRejectedValueOnce({ code: 'ER_FAKE' }); // delete
+
+    const res = await request(app).delete('/api/milestones/1/1');
+    expect(res.status).toBe(500);
+  });
+
+  it('should handle update with invalid date format', async () => {
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }]); // roles check
+
+    const res = await request(app)
+      .put('/api/milestones/1/1')
+      .send({
+        title: 'T',
+        expected_completion_date: '31-12-2024' // Invalid format
+      });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/expected_completion_date must be in YYYY-MM-DD format/);
+  });
+
+  it('should handle update with invalid status', async () => {
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }]); // roles check
+
+    const res = await request(app)
+      .put('/api/milestones/1/1')
+      .send({
+        title: 'T',
+        status: 'InvalidStatus'
+      });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/Status must be one of/);
+  });
 });
 
 describe('validateMilestoneFields', () => {
@@ -364,9 +595,9 @@ describe('Milestones API edge cases', () => {
     app = express();
     app.use(express.json());
     app.use('/api/milestones', milestonesRoutes);
+    jest.clearAllMocks();
     extractToken.mockReturnValue(mockToken);
     getUserIdFromToken.mockResolvedValue(mockUserId);
-    jest.clearAllMocks();
   });
 
   it('should handle multiple projects with milestones in GET /', async () => {
@@ -552,9 +783,9 @@ describe('Milestones Report Generation', () => {
     app = express();
     app.use(express.json());
     app.use('/api/milestones', milestonesRoutes);
+    jest.clearAllMocks();
     extractToken.mockReturnValue(mockToken);
     getUserIdFromToken.mockResolvedValue(mockUserId);
-    jest.clearAllMocks();
   });
 
   it('should generate PDF report with pie chart for milestone statistics', async () => {

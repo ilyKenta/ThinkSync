@@ -46,7 +46,7 @@ interface Project {
     categories: Category[];
 }
 
-const normalizeCategory = (category: string): string => {
+export const normalizeCategory = (category: string): string => {
     const normalized = category.toLowerCase();
     if (normalized.includes('personnel')) return 'Personnel';
     if (normalized.includes('equipment')) return 'Equipment';
@@ -83,7 +83,7 @@ export default function FundingWidget({ onDelete }: WidgetProps) {
             const data = await response.json();
             setProjects(data.projects || []);
         } catch (error) {
-            console.error('Error fetching projects:', error);
+            console.error('Error in fetchProjects:', error);
             setError('Failed to load projects. Please try again later.');
         } finally {
             setIsLoading(false);
@@ -143,6 +143,7 @@ export default function FundingWidget({ onDelete }: WidgetProps) {
             }
             setShowEditForm(true);
         } catch (err) {
+            console.error('Error in handleEdit:', err);
             setError(err instanceof Error ? err.message : 'An error occurred');
         }
     };
@@ -200,7 +201,7 @@ export default function FundingWidget({ onDelete }: WidgetProps) {
             for (const category of editData.categories) {
                 if (category.category_ID) {
                     // Update existing category
-                    await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/funding/${project.project_ID}/categories/${category.category_ID}`, {
+                    const response = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/funding/${project.project_ID}/categories/${category.category_ID}`, {
                         method: 'PUT',
                         headers: {
                             'Authorization': `Bearer ${token}`,
@@ -212,9 +213,12 @@ export default function FundingWidget({ onDelete }: WidgetProps) {
                             amount_spent: category.amount_spent
                         })
                     });
+                    if (!response.ok) {
+                        throw new Error('Failed to update category');
+                    }
                 } else {
                     // Add new category
-                    await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/funding/${project.project_ID}/categories`, {
+                    const response = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/funding/${project.project_ID}/categories`, {
                         method: 'POST',
                         headers: {
                             'Authorization': `Bearer ${token}`,
@@ -226,6 +230,9 @@ export default function FundingWidget({ onDelete }: WidgetProps) {
                             amount_spent: category.amount_spent
                         })
                     });
+                    if (!response.ok) {
+                        throw new Error('Failed to add category');
+                    }
                 }
             }
 
@@ -233,8 +240,8 @@ export default function FundingWidget({ onDelete }: WidgetProps) {
             setShowEditForm(false);
             setEditData(null);
         } catch (err) {
+            console.error('Error in handleConfirmEdit:', err);
             setEditError(err instanceof Error ? err.message : 'Failed to update funding');
-            console.error('Error updating funding:', err);
         } finally {
             setSubmitting(false);
         }
@@ -259,8 +266,8 @@ export default function FundingWidget({ onDelete }: WidgetProps) {
             await fetchProjects();
             setShowDeleteConfirm(false);
         } catch (err) {
+            console.error('Error in handleDelete:', err);
             setError(err instanceof Error ? err.message : 'Failed to delete funding');
-            console.error('Error deleting funding:', err);
         }
     };
 
@@ -331,6 +338,7 @@ export default function FundingWidget({ onDelete }: WidgetProps) {
             document.body.removeChild(link);
             window.URL.revokeObjectURL(url);
         } catch (err) {
+            console.error('Error in handleDownloadReport:', err);
             alert('Failed to download report. Please try again.');
         }
     };
@@ -419,7 +427,7 @@ export default function FundingWidget({ onDelete }: WidgetProps) {
             </button>
 
             <section className={styles.projectInfo}>
-                <h3>{currentProject.title}</h3>
+                <h3 data-testid="project-title">{currentProject.title}</h3>
             </section>
 
             {currentProject.funding ? (
@@ -498,7 +506,7 @@ export default function FundingWidget({ onDelete }: WidgetProps) {
             </nav>
 
             <section className={styles.actionButtons}>
-                <button className={styles.editButton} onClick={handleEdit}>
+                <button className={styles.editButton} onClick={handleEdit} data-testid="edit-funding-button">
                     <Edit2 size={16} />
                     {currentProject.funding ? 'Edit Funding' : 'Initialize Funding'}
                 </button>
@@ -515,8 +523,8 @@ export default function FundingWidget({ onDelete }: WidgetProps) {
                     <aside className={styles.overlay}>
                         <article className={styles.modal}>
                             <section className={styles.centerForm}>
-                                <form className={styles.cardForm} onSubmit={handleConfirmEdit}>
-                                    <h2 className={styles.formTitle}>
+                                <form className={styles.cardForm} onSubmit={handleConfirmEdit} data-testid="funding-form">
+                                    <h2 className={styles.formTitle} data-testid="form-title">
                                         {editData.funding_initialized ? 'Edit Funding' : 'Initialize Funding'}
                                     </h2>
 
@@ -526,8 +534,9 @@ export default function FundingWidget({ onDelete }: WidgetProps) {
                                         </aside>
                                     )}
 
-                                    <label className={styles.label}>Total Awarded</label>
+                                    <label className={styles.label} htmlFor="total-awarded">Total Awarded</label>
                                     <input
+                                        id="total-awarded"
                                         type="number"
                                         className={styles.input}
                                         value={editData.funding?.total_awarded || 0}
@@ -587,7 +596,7 @@ export default function FundingWidget({ onDelete }: WidgetProps) {
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    {editData.categories.map((cat, idx) => (
+                                                    {(editData.categories || []).map((cat, idx) => (
                                                         <tr key={cat.category_ID || idx}>
                                                             <td>
                                                                 <input
@@ -685,9 +694,10 @@ export default function FundingWidget({ onDelete }: WidgetProps) {
                                     e.preventDefault();
                                     handleDelete();
                                 }}
+                                data-testid="delete-form"
                             >
-                                <h2 className={styles.formTitle}>Delete Funding</h2>
-                                <p style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
+                                <h2 className={styles.formTitle} data-testid="delete-title">Delete Funding</h2>
+                                <p style={{ marginBottom: '1.5rem', textAlign: 'center' }} data-testid="delete-confirmation">
                                     Are you sure you want to delete funding for <strong>{currentProject.title}</strong>? This action cannot be undone.
                                 </p>
 

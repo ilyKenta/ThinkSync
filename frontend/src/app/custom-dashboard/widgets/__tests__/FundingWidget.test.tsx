@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import FundingWidget from '../FundingWidget';
+import FundingWidget, { normalizeCategory } from '../FundingWidget';
 
 // Mock fetch
 const mockFetch = jest.fn();
@@ -116,7 +116,7 @@ describe('FundingWidget', () => {
         render(<FundingWidget onDelete={mockOnDelete} />);
         
         await waitFor(() => {
-            expect(screen.getByText(/Test Project/)).toBeInTheDocument();
+            expect(screen.getByRole('heading', { name: /Test Project/i })).toBeInTheDocument();
         });
         // Robustly check Total Awarded
         const totalAwardedDt = screen.getByText('Total Awarded:');
@@ -149,14 +149,14 @@ describe('FundingWidget', () => {
         render(<FundingWidget onDelete={mockOnDelete} />);
         
         await waitFor(() => {
-            expect(screen.getByRole('heading', { name: 'Test Project' })).toBeInTheDocument();
+            expect(screen.getByRole('heading', { name: /Test Project/i })).toBeInTheDocument();
         });
 
         const nextButton = screen.getByRole('button', { name: /next project/i });
         fireEvent.click(nextButton);
         
         await waitFor(() => {
-            expect(screen.getByRole('heading', { name: 'Second Project' })).toBeInTheDocument();
+            expect(screen.getByRole('heading', { name: /Second Project/i })).toBeInTheDocument();
         });
     });
 
@@ -176,7 +176,7 @@ describe('FundingWidget', () => {
         render(<FundingWidget onDelete={mockOnDelete} />);
         
         await waitFor(() => {
-            expect(screen.getByText('Test Project')).toBeInTheDocument();
+            expect(screen.getByRole('heading', { name: /Test Project/i })).toBeInTheDocument();
         });
 
         const editButton = screen.getByRole('button', { name: /edit funding/i });
@@ -203,30 +203,20 @@ describe('FundingWidget', () => {
             funding: null,
             categories: []
         };
-        
         mockFetch.mockResolvedValueOnce({
             ok: true,
             json: () => Promise.resolve({ projects: [projectWithoutFunding] })
         });
-        
         render(<FundingWidget onDelete={mockOnDelete} />);
-        
         await waitFor(() => {
-            expect(screen.getAllByText(/New Project/).length).toBeGreaterThan(0);
+            expect(screen.getByTestId('project-title')).toHaveTextContent('New Project');
         });
-
-        const initButton = screen.getByRole('button', { name: /initialize funding/i });
+        const initButton = screen.getByTestId('edit-funding-button');
         fireEvent.click(initButton);
-        
         await waitFor(() => {
-            // There may be multiple, so pick the heading
-            const headings = screen.getAllByText(/initialize funding/i);
-            expect(headings.length).toBeGreaterThan(0);
-            const label = screen.getAllByText(/total awarded/i)[0];
-            let input = label.nextElementSibling;
-            while (input && input.tagName !== 'INPUT') input = input.nextElementSibling;
-            if (!input) throw new Error('Input for Total Awarded not found');
-            expect(input!).toBeInTheDocument();
+            expect(screen.getByTestId('form-title')).toHaveTextContent('Initialize Funding');
+            const input = screen.getByLabelText(/Total Awarded/i);
+            expect(input).toBeInTheDocument();
         });
     });
 
@@ -246,7 +236,7 @@ describe('FundingWidget', () => {
         render(<FundingWidget onDelete={mockOnDelete} />);
         
         await waitFor(() => {
-            expect(screen.getByText('Test Project')).toBeInTheDocument();
+            expect(screen.getByRole('heading', { name: /Test Project/i })).toBeInTheDocument();
         });
 
         const editButton = screen.getByRole('button', { name: /edit funding/i });
@@ -269,41 +259,18 @@ describe('FundingWidget', () => {
     });
 
     test('handles delete confirmation correctly', async () => {
-        // Mock initial projects fetch
-        mockFetch.mockResolvedValueOnce({
-            ok: true,
-            json: () => Promise.resolve({ projects: [mockProject] })
-        });
-        
-        // Mock successful delete
-        mockFetch.mockResolvedValueOnce({
-            ok: true,
-            json: () => Promise.resolve({ success: true })
-        });
-        
+        mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ projects: [mockProject] }) });
+        mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ success: true }) });
         render(<FundingWidget onDelete={mockOnDelete} />);
-        
-        await waitFor(() => {
-            expect(screen.getByText('Test Project')).toBeInTheDocument();
-        });
-
-        // Find and click the initial delete button
+        await waitFor(() => expect(screen.getByTestId('project-title')).toHaveTextContent('Test Project'));
         const deleteButton = screen.getByRole('button', { name: /delete funding/i });
         fireEvent.click(deleteButton);
-        
-        // Wait for confirmation modal
         await waitFor(() => {
-            expect(screen.getByText(/are you sure you want to delete funding for/i)).toBeInTheDocument();
+            expect(screen.getByTestId('delete-confirmation')).toBeInTheDocument();
         });
-
-        // Find and click the confirmation delete button in the modal
-        const modals = screen.getAllByRole('article');
-        const modal = modals[modals.length - 1];
-        const confirmDeleteButton = modal.querySelector('button[type="submit"]');
+        const confirmDeleteButton = screen.getByTestId('delete-form').querySelector('button[type="submit"]');
         expect(confirmDeleteButton).toBeInTheDocument();
         fireEvent.click(confirmDeleteButton!);
-        
-        // Verify the delete API call
         await waitFor(() => {
             expect(mockFetch).toHaveBeenCalledWith(
                 'http://test-api-url/api/funding/1',
@@ -315,5 +282,161 @@ describe('FundingWidget', () => {
                 })
             );
         });
+    });
+
+    // --- CATEGORY NORMALIZATION ---
+    test('normalizeCategory utility covers all branches', () => {
+        expect(normalizeCategory('Personnel')).toBe('Personnel');
+        expect(normalizeCategory('personnel')).toBe('Personnel');
+        expect(normalizeCategory('Equipment')).toBe('Equipment');
+        expect(normalizeCategory('equipment')).toBe('Equipment');
+        expect(normalizeCategory('Consumables')).toBe('Consumables');
+        expect(normalizeCategory('consumable stuff')).toBe('Consumables');
+        expect(normalizeCategory('Other')).toBe('Other');
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+        mockFetch.mockReset();
+        mockFetch.mockImplementation(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ projects: [] }) }));
+    });
+
+    // --- PROJECT NAVIGATION ---
+    test('navigates between multiple projects', async () => {
+        const projects = [
+            { ...mockProject, project_ID: 1, title: 'Project 1' },
+            { ...mockProject, project_ID: 2, title: 'Project 2' },
+        ];
+        mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ projects }) });
+        render(<FundingWidget onDelete={mockOnDelete} />);
+        await waitFor(() => expect(screen.getByRole('heading', { name: /Project 1/i })).toBeInTheDocument());
+        const nextBtn = screen.getByRole('button', { name: /next project/i });
+        fireEvent.click(nextBtn);
+        await waitFor(() => expect(screen.getByRole('heading', { name: /Project 2/i })).toBeInTheDocument());
+        const prevBtn = screen.getByRole('button', { name: /previous project/i });
+        fireEvent.click(prevBtn);
+        await waitFor(() => expect(screen.getByRole('heading', { name: /Project 1/i })).toBeInTheDocument());
+    });
+
+    // --- EDIT MODAL: INIT VS UPDATE ---
+    test('opens edit modal for initialized funding', async () => {
+        mockFetch.mockImplementationOnce(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ projects: [mockProject] }) }));
+        mockFetch.mockImplementationOnce(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ categories: mockProject.categories }) }));
+        render(<FundingWidget onDelete={mockOnDelete} />);
+        await waitFor(() => expect(screen.getByTestId('project-title')).toHaveTextContent('Test Project'));
+        fireEvent.click(screen.getByTestId('edit-funding-button'));
+        await waitFor(() => expect(screen.getByTestId('form-title')).toHaveTextContent('Edit Funding'));
+    });
+
+    test('opens edit modal for uninitialized funding', async () => {
+        const uninit = { ...mockProject, funding_initialized: false, funding: null, categories: [] };
+        mockFetch.mockImplementationOnce(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ projects: [uninit] }) }));
+        render(<FundingWidget onDelete={mockOnDelete} />);
+        await waitFor(() => expect(screen.getByTestId('project-title')).toHaveTextContent('Test Project'));
+        fireEvent.click(screen.getByTestId('edit-funding-button'));
+        await waitFor(() => expect(screen.getByTestId('form-title')).toHaveTextContent('Initialize Funding'));
+    });
+
+    // --- ADD/REMOVE CATEGORY IN EDIT MODAL ---
+    test('adds and removes a category in edit modal', async () => {
+        mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ projects: [mockProject] }) });
+        mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ categories: mockProject.categories }) });
+        render(<FundingWidget onDelete={mockOnDelete} />);
+        await waitFor(() => expect(screen.getByRole('heading', { name: /Test Project/i })).toBeInTheDocument());
+        fireEvent.click(screen.getByRole('button', { name: /edit funding/i }));
+        await waitFor(() => expect(screen.getByRole('heading', { name: /edit funding/i })).toBeInTheDocument());
+        const addBtn = await screen.findByRole('button', { name: /add category/i });
+        fireEvent.click(addBtn);
+        // Remove category
+        const removeBtns = screen.getAllByRole('button', { name: /✕/i });
+        fireEvent.click(removeBtns[removeBtns.length - 1]);
+    });
+
+    // --- SAVE/CANCEL/ERROR IN EDIT MODAL ---
+    test('saves and cancels in edit modal, handles error', async () => {
+        mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ projects: [mockProject] }) });
+        mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ categories: mockProject.categories }) });
+        mockFetch.mockResolvedValue({ ok: true }); // save
+        render(<FundingWidget onDelete={mockOnDelete} />);
+        await waitFor(() => expect(screen.getByRole('heading', { name: /Test Project/i })).toBeInTheDocument());
+        fireEvent.click(screen.getByRole('button', { name: /edit funding/i }));
+        await waitFor(() => expect(screen.getByRole('heading', { name: /edit funding/i })).toBeInTheDocument());
+        // Save
+        const saveBtn = screen.getByRole('button', { name: /save changes/i });
+        fireEvent.click(saveBtn);
+        // Cancel
+        fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
+        // Error
+        mockFetch.mockResolvedValueOnce({ ok: false, json: () => Promise.resolve({}) });
+        fireEvent.click(screen.getByRole('button', { name: /edit funding/i }));
+        await waitFor(() => expect(screen.getByRole('heading', { name: /edit funding/i })).toBeInTheDocument());
+        fireEvent.click(saveBtn);
+    });
+
+    // --- DELETE MODAL ---
+    test('opens, confirms, cancels delete modal, handles error', async () => {
+        mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ projects: [mockProject] }) });
+        render(<FundingWidget onDelete={mockOnDelete} />);
+        await waitFor(() => expect(screen.getByRole('heading', { name: /Test Project/i })).toBeInTheDocument());
+        fireEvent.click(screen.getByRole('button', { name: /delete funding/i }));
+        // Wait for modal to appear
+        await waitFor(() => {
+            const modal = document.querySelector('.modal');
+            expect(modal).toBeTruthy();
+        });
+        // Cancel
+        fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
+        // Confirm
+        mockFetch.mockResolvedValueOnce({ ok: true });
+        const modal = document.querySelector('.modal');
+        if (modal) {
+            const confirmBtn = modal.querySelector('button.saveBtn');
+            expect(confirmBtn).toBeInTheDocument();
+            fireEvent.click(confirmBtn!);
+            // Error
+            mockFetch.mockResolvedValueOnce({ ok: false });
+            fireEvent.click(confirmBtn!);
+        }
+    });
+
+    // --- DOWNLOAD REPORT ---
+    test('downloads report successfully and handles error', async () => {
+        // Mock URL.createObjectURL and revokeObjectURL
+        if (!window.URL.createObjectURL) window.URL.createObjectURL = jest.fn(() => 'blob:url');
+        if (!window.URL.revokeObjectURL) window.URL.revokeObjectURL = jest.fn();
+        jest.spyOn(window, 'alert').mockImplementation(() => {});
+        // 1. Initial fetch for projects
+        mockFetch.mockImplementationOnce(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ projects: [mockProject] }) }));
+        // 2. Download report (blob)
+        mockFetch.mockImplementationOnce(() => Promise.resolve({ ok: true, blob: async () => new Blob() }));
+        // 3. Fetch projects after download
+        mockFetch.mockImplementationOnce(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ projects: [mockProject] }) }));
+        render(<FundingWidget onDelete={mockOnDelete} />);
+        await waitFor(() => expect(screen.getByTestId('project-title')).toHaveTextContent('Test Project'));
+        fireEvent.click(screen.getByText('Download Report'));
+        expect(mockFetch).toHaveBeenCalled();
+        expect(window.URL.createObjectURL).toBeDefined();
+        // 4. Download report error (include blob method)
+        mockFetch.mockImplementationOnce(() => Promise.resolve({ ok: false, text: async () => 'error', blob: async () => new Blob() }));
+        // 5. Fetch projects after error
+        mockFetch.mockImplementationOnce(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ projects: [mockProject] }) }));
+        fireEvent.click(screen.getByText('Download Report'));
+        await waitFor(() => expect(window.alert).toHaveBeenCalled());
+    });
+
+    // --- PIE CHART AND TABLE ---
+    test('renders pie chart and table for various categories', async () => {
+        mockFetch.mockClear();
+        const categories = [
+            { category_ID: 1, category: 'Personnel', amount_spent: 3000 },
+            { category_ID: 2, category: 'Equipment', amount_spent: 2000 },
+            { category_ID: 3, category: 'Consumables', amount_spent: 0 },
+        ];
+        mockFetch.mockImplementationOnce(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ projects: [{ ...mockProject, categories }] }) }));
+        render(<FundingWidget onDelete={mockOnDelete} />);
+        await waitFor(() => expect(screen.getByTestId('project-title')).toHaveTextContent('Test Project'));
+        expect(screen.getByText('Personnel')).toBeInTheDocument();
+        expect(screen.getByText('Equipment')).toBeInTheDocument();
+        expect(screen.getAllByText('No description').length).toBe(3);
     });
 }); 

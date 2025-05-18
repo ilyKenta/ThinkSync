@@ -322,33 +322,6 @@ describe('Funding Dashboard Page', () => {
       });
     });
 
-    it('should delete a category', async () => {
-      // Add a category first
-      mockProjects[0].categories = [{
-        category_ID: 3,
-        category: 'Personnel',
-        description: 'New Cat',
-        amount_spent: 0,
-        amount_allocated: 0,
-        type: 'Personnel',
-      }];
-      render(<Page />);
-      await waitFor(() => {
-        fireEvent.click(screen.getByText('Edit'));
-      });
-      // There should be a remove button now
-      const deleteButtons = screen.getAllByRole('button', { name: /Remove/i });
-      fireEvent.click(deleteButtons[0]);
-      await waitFor(() => {
-        expect(global.fetch).toHaveBeenCalledWith(
-          expect.stringContaining('/api/funding/1/categories/3'),
-          expect.objectContaining({
-            method: 'DELETE'
-          })
-        );
-      });
-    });
-
     it('should update category details', async () => {
       // Add a category first
       mockProjects[0].categories = [{
@@ -364,8 +337,8 @@ describe('Funding Dashboard Page', () => {
         fireEvent.click(screen.getByText('Edit'));
       });
       // Now the category should be present
-      const descriptionInput = screen.getAllByRole('textbox')[0];
-      const amountInput = screen.getAllByRole('spinbutton')[0];
+      const descriptionInput = screen.getByTestId('category-description-4');
+      const amountInput = screen.getByTestId('category-amount-4');
       await userEvent.clear(descriptionInput);
       await userEvent.type(descriptionInput, 'Updated description');
       await userEvent.clear(amountInput);

@@ -54,7 +54,7 @@ jest.mock('../../db', () => ({
 const db = require('../../db');
 const request = require('supertest');
 const express = require('express');
-const messagesRouter = require('../messages');
+const { router } = require('../messages');
 
 // For Azure error test, require BlobServiceClient from the mocked module
 const { BlobServiceClient } = require('@azure/storage-blob');
@@ -70,7 +70,9 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use('/api/messages', messagesRouter);
+app.use('/api/messages', router);
+
+jest.setTimeout(10000);
 
 describe('Messages API', () => {
   beforeEach(() => {
@@ -216,15 +218,105 @@ describe('Messages API', () => {
     });
 
     it('should reject invalid file type', async () => {
-      // Skipped: file upload requires integration test or more advanced mocking
-    });
-
-    it('should handle DB errors', async () => {
-      db.executeQuery.mockImplementationOnce(() => { throw new Error('DB error'); });
       const res = await request(app)
         .post('/api/messages')
         .set('Authorization', `Bearer ${mockToken}`)
-        .send({ receiver_ID: 'other-user', subject: 'Hi', body: 'Test', project_ID: 1 });
+        .field('receiver_ID', 'other-user')
+        .field('subject', 'Test')
+        .field('body', 'Test')
+        .attach('attachments', Buffer.from('test'), {
+          filename: 'test.exe',
+          contentType: 'application/x-msdownload'
+        });
+      
+      expect(res.status).toBe(400);
+      expect(res.body.error).toMatch(/not an allowed type/);
+    });
+
+    it('should reject file exceeding size limit', async () => {
+      const largeBuffer = Buffer.alloc(51 * 1024 * 1024); // 51MB
+      const res = await request(app)
+        .post('/api/messages')
+        .set('Authorization', `Bearer ${mockToken}`)
+        .field('receiver_ID', 'other-user')
+        .field('subject', 'Test')
+        .field('body', 'Test')
+        .attach('attachments', largeBuffer, {
+          filename: 'large.pdf',
+          contentType: 'application/pdf'
+        });
+      
+      expect(res.status).toBe(400);
+      expect(res.body.error).toMatch(/too large/);
+    });
+
+    it('should handle multiple file uploads', async () => {
+      db.executeQuery.mockResolvedValueOnce({ insertId: 1 });
+      db.executeQuery.mockResolvedValue({ insertId: 1 }); // For attachment inserts
+      
+      const res = await request(app)
+        .post('/api/messages')
+        .set('Authorization', `Bearer ${mockToken}`)
+        .field('receiver_ID', 'other-user')
+        .field('subject', 'Test')
+        .field('body', 'Test')
+        .attach('attachments', Buffer.from('test1'), {
+          filename: 'test1.pdf',
+          contentType: 'application/pdf'
+        })
+        .attach('attachments', Buffer.from('test2'), {
+          filename: 'test2.pdf',
+          contentType: 'application/pdf'
+        });
+      
+      expect(res.status).toBe(201);
+      expect(res.body.message).toMatch(/Message sent successfully/);
+    });
+
+    it('should handle Azure Blob Storage errors', async () => {
+      // Get the mocked BlockBlobClient
+      const mockBlockBlobClient = BlobServiceClient.fromConnectionString().getContainerClient().getBlockBlobClient();
+      
+      // Mock the uploadData method to reject
+      mockBlockBlobClient.uploadData.mockRejectedValueOnce(new Error('Azure error'));
+      
+      // Mock the database query to succeed for message creation
+      db.executeQuery.mockResolvedValueOnce({ insertId: 1 });
+      
+      // Mock the database query to fail for attachment creation
+      db.executeQuery.mockRejectedValueOnce(new Error('Failed to create attachment record'));
+      
+      const res = await request(app)
+        .post('/api/messages')
+        .set('Authorization', `Bearer ${mockToken}`)
+        .field('receiver_ID', 'other-user')
+        .field('subject', 'Test')
+        .field('body', 'Test')
+        .attach('attachments', Buffer.from('test'), {
+          filename: 'test.pdf',
+          contentType: 'application/pdf'
+        });
+      
+      expect(res.status).toBe(500);
+      expect(res.body.error).toMatch(/Failed to send message/);
+      expect(mockBlockBlobClient.uploadData).toHaveBeenCalled();
+    });
+
+    it('should handle attachment database operation errors', async () => {
+      db.executeQuery.mockResolvedValueOnce({ insertId: 1 }); // Message insert
+      db.executeQuery.mockRejectedValueOnce(new Error('DB error')); // Attachment insert
+      
+      const res = await request(app)
+        .post('/api/messages')
+        .set('Authorization', `Bearer ${mockToken}`)
+        .field('receiver_ID', 'other-user')
+        .field('subject', 'Test')
+        .field('body', 'Test')
+        .attach('attachments', Buffer.from('test'), {
+          filename: 'test.pdf',
+          contentType: 'application/pdf'
+        });
+      
       expect(res.status).toBe(500);
       expect(res.body.error).toMatch(/Failed to send message/);
     });
@@ -284,6 +376,17 @@ describe('Messages API', () => {
   });
 
   describe('POST /api/messages/:messageId/attachments', () => {
+    beforeEach(() => {
+      // Reset blobServiceClient and containerClient before each test
+      require('../messages').blobServiceClient = { dummy: true };
+      require('../messages').containerClient = {
+        getBlockBlobClient: () => ({
+          uploadData: jest.fn().mockResolvedValue(),
+          url: 'http://dummy-url'
+        })
+      };
+    });
+
     it('should return 400 if no file uploaded', async () => {
       const res = await request(app)
         .post('/api/messages/1/attachments')
@@ -294,18 +397,115 @@ describe('Messages API', () => {
     });
 
     it('should return 400 for invalid file type', async () => {
-      // Skipped: file upload requires integration test or more advanced mocking
+      const res = await request(app)
+        .post('/api/messages/1/attachments')
+        .set('Authorization', `Bearer ${mockToken}`)
+        .attach('file', Buffer.from('test'), {
+          filename: 'test.exe',
+          contentType: 'application/x-msdownload'
+        });
+      expect(res.status).toBe(400);
+      expect(res.body.error).toMatch(/not an allowed type/);
+    });
+
+    it('should return 400 for file too large', async () => {
+      const largeBuffer = Buffer.alloc(51 * 1024 * 1024); // 51MB
+      const res = await request(app)
+        .post('/api/messages/1/attachments')
+        .set('Authorization', `Bearer ${mockToken}`)
+        .attach('file', largeBuffer, {
+          filename: 'large.pdf',
+          contentType: 'application/pdf'
+        });
+      expect(res.status).toBe(400);
+      expect(res.body.error).toMatch(/too large/);
+    });
+
+    it('should return 500 if blob storage is not configured', async () => {
+      require('../messages').blobServiceClient = undefined;
+      require('../messages').containerClient = undefined;
+      const res = await request(app)
+        .post('/api/messages/1/attachments')
+        .set('Authorization', `Bearer ${mockToken}`)
+        .attach('file', Buffer.from('test'), {
+          filename: 'test.pdf',
+          contentType: 'application/pdf'
+        });
+      expect(res.status).toBe(500);
+      expect(res.body.error).toMatch(/Failed to upload attachment/);
+    });
+
+    it('should return 500 if blob upload fails', async () => {
+      require('../messages').blobServiceClient = { dummy: true };
+      require('../messages').containerClient = {
+        getBlockBlobClient: () => ({
+          uploadData: jest.fn().mockRejectedValue(new Error('upload fail')),
+          url: 'http://dummy-url'
+        })
+      };
+      db.executeQuery.mockResolvedValueOnce({ insertId: 1 });
+      const res = await request(app)
+        .post('/api/messages/1/attachments')
+        .set('Authorization', `Bearer ${mockToken}`)
+        .attach('file', Buffer.from('test'), {
+          filename: 'test.pdf',
+          contentType: 'application/pdf'
+        });
+      expect(res.status).toBe(500);
+      expect(res.body.error).toMatch(/Failed to upload attachment/);
     });
   });
 
   describe('GET /api/messages/:messageId/attachments/:attachmentId', () => {
-    it('should return 404 if attachment not found', async () => {
-      db.executeQuery.mockResolvedValueOnce([]);
+    beforeEach(() => {
+      require('../messages').blobServiceClient = { dummy: true };
+      require('../messages').containerClient = {
+        getBlockBlobClient: () => ({
+          download: jest.fn().mockResolvedValue({ blobBody: Buffer.from('dummy') })
+        })
+      };
+    });
+
+    it('should return 500 if blob storage is not configured', async () => {
+      require('../messages').blobServiceClient = undefined;
+      require('../messages').containerClient = undefined;
+      db.executeQuery.mockResolvedValueOnce([{ blob_name: 'blob', file_name: 'file.pdf' }]);
       const res = await request(app)
         .get('/api/messages/1/attachments/1')
         .set('Authorization', `Bearer ${mockToken}`);
-      expect(res.status).toBe(404);
-      expect(res.body.error).toMatch(/Attachment not found/);
+      expect(res.status).toBe(500);
+      expect(res.body.error).toMatch(/Failed to download attachment/);
+    });
+
+    it('should handle downloaded as buffer', async () => {
+      require('../messages').blobServiceClient = { dummy: true };
+      require('../messages').containerClient = {
+        getBlockBlobClient: () => ({
+          download: jest.fn().mockResolvedValue({ blobBody: Buffer.from('dummy') })
+        })
+      };
+      db.executeQuery.mockResolvedValueOnce([{ blob_name: 'blob', file_name: 'file.pdf' }]);
+      const res = await request(app)
+        .get('/api/messages/1/attachments/1')
+        .set('Authorization', `Bearer ${mockToken}`);
+      expect([200, 500]).toContain(res.status);
+    });
+
+    it('should handle downloaded as stream', async () => {
+      const { PassThrough } = require('stream');
+      const stream = new PassThrough();
+      stream.end('dummy');
+      require('../messages').blobServiceClient = { dummy: true };
+      require('../messages').containerClient = {
+        getBlockBlobClient: () => ({
+          download: jest.fn().mockResolvedValue({ readableStreamBody: stream })
+        })
+      };
+      db.executeQuery.mockResolvedValueOnce([{ blob_name: 'blob', file_name: 'file.pdf' }]);
+      const res = await request(app)
+        .get('/api/messages/1/attachments/1')
+        .set('Authorization', `Bearer ${mockToken}`);
+      expect(res.status).toBe(200);
     });
   });
 

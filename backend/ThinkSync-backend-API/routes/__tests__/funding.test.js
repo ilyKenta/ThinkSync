@@ -6,6 +6,7 @@ const { getUserIdFromToken, extractToken } = require('../../utils/auth');
 
 jest.mock('../../db', () => ({ executeQuery: jest.fn() }));
 jest.mock('../../utils/auth', () => ({
+  ...jest.requireActual('../../utils/auth'),
   getUserIdFromToken: jest.fn(),
   extractToken: jest.fn()
 }));
@@ -51,8 +52,9 @@ describe('Funding API', () => {
     app.use(express.json());
     app.use('/api/funding', fundingRoutes);
     extractToken.mockReturnValue(mockToken);
-    getUserIdFromToken.mockResolvedValue(mockUserId);
     jest.clearAllMocks();
+    db.executeQuery.mockReset();
+    getUserIdFromToken.mockResolvedValue(1); // Always return user ID 1 by default
   });
 
   // POST /:projectId
@@ -439,6 +441,250 @@ describe('Funding API', () => {
         done(err);
       });
   });
+
+  // Additional Robust Edge Cases
+  it('should 400 on invalid grant_status (init)', async () => {
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }]) // role check
+      .mockResolvedValueOnce([{ funding_available: 100 }]) // projectCheck
+      .mockResolvedValueOnce([]); // no existing funding
+    const res = await request(app)
+      .post('/api/funding/1')
+      .send({ total_awarded: 100, grant_status: 'badstatus' });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/grant_status/);
+  });
+
+  it('should 400 on invalid grant_end_date (init)', async () => {
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }]) // role check
+      .mockResolvedValueOnce([{ funding_available: 100 }]) // projectCheck
+      .mockResolvedValueOnce([]); // no existing funding
+    const res = await request(app)
+      .post('/api/funding/1')
+      .send({ total_awarded: 100, grant_end_date: 'not-a-date' });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/grant_end_date/);
+  });
+
+  it('should 400 on NaN total_awarded (init)', async () => {
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }])
+      .mockResolvedValueOnce([{ funding_available: 100 }])
+      .mockResolvedValueOnce([]);
+    const res = await request(app)
+      .post('/api/funding/1')
+      .send({ total_awarded: NaN });
+    expect(res.status).toBe(400);
+  });
+  it('should 400 on undefined total_awarded (init)', async () => {
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }])
+      .mockResolvedValueOnce([{ funding_available: 100 }])
+      .mockResolvedValueOnce([]);
+    const res = await request(app)
+      .post('/api/funding/1')
+      .send({});
+    expect(res.status).toBe(400);
+  });
+  it('should 400 on negative total_awarded (init)', async () => {
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }])
+      .mockResolvedValueOnce([{ funding_available: 100 }])
+      .mockResolvedValueOnce([]);
+    const res = await request(app)
+      .post('/api/funding/1')
+      .send({ total_awarded: -5 });
+    expect(res.status).toBe(400);
+  });
+
+  it('should 400 on empty category (add category)', async () => {
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }])
+      .mockResolvedValueOnce([{ funding_ID: 1 }]);
+    const res = await request(app)
+      .post('/api/funding/1/categories')
+      .send({ category: '', amount_spent: 10 });
+    expect(res.status).toBe(400);
+  });
+  it('should 400 on whitespace category (add category)', async () => {
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }])
+      .mockResolvedValueOnce([{ funding_ID: 1 }]);
+    const res = await request(app)
+      .post('/api/funding/1/categories')
+      .send({ category: '   ', amount_spent: 10 });
+    expect(res.status).toBe(400);
+  });
+  it('should 400 on long category (add category)', async () => {
+    getUserIdFromToken.mockResolvedValue(1);
+    extractToken.mockReturnValue('mockToken');
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }])
+      .mockResolvedValueOnce([{ funding_ID: 1 }]);
+    const res = await request(app)
+      .post('/api/funding/1/categories')
+      .send({ category: 'a'.repeat(256), amount_spent: 10 });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/at most 255 characters/);
+  });
+
+  it('should 400 on NaN amount_spent (add category)', async () => {
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }])
+      .mockResolvedValueOnce([{ funding_ID: 1 }]);
+    const res = await request(app)
+      .post('/api/funding/1/categories')
+      .send({ category: 'Equipment', amount_spent: NaN });
+    expect(res.status).toBe(400);
+  });
+  it('should 400 on undefined amount_spent (add category)', async () => {
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }])
+      .mockResolvedValueOnce([{ funding_ID: 1 }]);
+    const res = await request(app)
+      .post('/api/funding/1/categories')
+      .send({ category: 'Equipment' });
+    expect(res.status).toBe(400);
+  });
+  it('should 400 on negative amount_spent (add category)', async () => {
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }])
+      .mockResolvedValueOnce([{ funding_ID: 1 }]);
+    const res = await request(app)
+      .post('/api/funding/1/categories')
+      .send({ category: 'Equipment', amount_spent: -5 });
+    expect(res.status).toBe(400);
+  });
+
+  it('should 400 on empty category (update category)', async () => {
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }])
+      .mockResolvedValueOnce([{ funding_ID: 1 }])
+      .mockResolvedValueOnce([{ category_ID: 2 }]);
+    const res = await request(app)
+      .put('/api/funding/1/categories/2')
+      .send({ category: '', amount_spent: 10 });
+    expect(res.status).toBe(400);
+  });
+  it('should 400 on whitespace category (update category)', async () => {
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }])
+      .mockResolvedValueOnce([{ funding_ID: 1 }])
+      .mockResolvedValueOnce([{ category_ID: 2 }]);
+    const res = await request(app)
+      .put('/api/funding/1/categories/2')
+      .send({ category: '   ', amount_spent: 10 });
+    expect(res.status).toBe(400);
+  });
+  it('should 400 on long category (update category)', async () => {
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }])
+      .mockResolvedValueOnce([{ funding_ID: 1 }])
+      .mockResolvedValueOnce([{ category_ID: 2 }]);
+    const res = await request(app)
+      .put('/api/funding/1/categories/2')
+      .send({ category: 'a'.repeat(256), amount_spent: 10 });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/at most 255 characters/);
+  });
+
+  it('should 400 on NaN amount_spent (update category)', async () => {
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }])
+      .mockResolvedValueOnce([{ funding_ID: 1 }])
+      .mockResolvedValueOnce([{ category_ID: 2 }]);
+    const res = await request(app)
+      .put('/api/funding/1/categories/2')
+      .send({ category: 'Equipment', amount_spent: NaN });
+    expect(res.status).toBe(400);
+  });
+  it('should 400 on undefined amount_spent (update category)', async () => {
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }])
+      .mockResolvedValueOnce([{ funding_ID: 1 }])
+      .mockResolvedValueOnce([{ category_ID: 2 }]);
+    const res = await request(app)
+      .put('/api/funding/1/categories/2')
+      .send({ category: 'Equipment' });
+    expect(res.status).toBe(400);
+  });
+  it('should 400 on negative amount_spent (update category)', async () => {
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }])
+      .mockResolvedValueOnce([{ funding_ID: 1 }])
+      .mockResolvedValueOnce([{ category_ID: 2 }]);
+    const res = await request(app)
+      .put('/api/funding/1/categories/2')
+      .send({ category: 'Equipment', amount_spent: -5 });
+    expect(res.status).toBe(400);
+  });
+
+  it('should GET categories for a project', async () => {
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }]) // role check
+      .mockResolvedValueOnce([{ funding_ID: 1 }]) // funding exists
+      .mockResolvedValueOnce([{ category_ID: 1, category: 'Equipment', amount_spent: 50 }]); // categories
+    const res = await request(app)
+      .get('/api/funding/1/categories');
+    expect(res.status).toBe(200);
+    expect(res.body.categories).toBeDefined();
+    expect(res.body.categories[0].category).toBe('Equipment');
+  });
+
+  it('should 404 if no funding for GET categories', async () => {
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }]) // role check
+      .mockResolvedValueOnce([]); // no funding
+    const res = await request(app)
+      .get('/api/funding/1/categories');
+    expect(res.status).toBe(404);
+  });
+
+  it('should 500 on DB error (GET categories)', async () => {
+    getUserIdFromToken.mockResolvedValueOnce(1);
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }])
+      .mockRejectedValueOnce({ code: 'ER_FAKE' });
+    const res = await request(app)
+      .get('/api/funding/1/categories');
+    expect(res.status).toBe(500);
+  });
+
+  it('should 404 on delete non-existent category', async () => {
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }])
+      .mockResolvedValueOnce({ affectedRows: 0 });
+    const res = await request(app)
+      .delete('/api/funding/1/categories/2');
+    expect(res.status).toBe(404);
+  });
+
+  it('should 500 on DB error (delete category)', async () => {
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }])
+      .mockRejectedValueOnce({ code: 'ER_FAKE' });
+    const res = await request(app)
+      .delete('/api/funding/1/categories/2');
+    expect(res.status).toBe(500);
+  });
+
+  it('should return PDF report for project with no categories', (done) => {
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }]) // roles
+      .mockResolvedValueOnce([{ project_ID: 1, title: 'P1', description: 'desc', funding_ID: 1, total_awarded: 100, grant_status: 'active' }]) // projects
+      .mockResolvedValueOnce([]); // no categories
+
+    request(app)
+      .get('/api/funding/report')
+      .expect('Content-Type', /pdf/)
+      .expect(200)
+      .end((err, res) => {
+        if (err) return done(err);
+        expect(res.headers['content-type']).toMatch(/pdf/);
+        done();
+      });
+  }, 10000); // Increase timeout for PDF generation
 });
 
 afterAll(() => { jest.clearAllMocks(); }); 

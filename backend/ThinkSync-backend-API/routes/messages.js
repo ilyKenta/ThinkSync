@@ -257,7 +257,7 @@ router.post('/', authenticateUser, upload.array('attachments', 5), async (req, r
 // Upload attachment
 router.post('/:messageId/attachments', authenticateUser, upload.single('file'), async (req, res) => {
     try {
-        if (!blobServiceClient || !containerClient) {
+        if (!module.exports.blobServiceClient || !module.exports.containerClient) {
             throw new Error('Azure Storage is not properly configured');
         }
 
@@ -274,7 +274,7 @@ router.post('/:messageId/attachments', authenticateUser, upload.single('file'), 
         }
 
         const blobName = `${messageId}/${file.originalname}`;
-        const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+        const blockBlobClient = module.exports.containerClient.getBlockBlobClient(blobName);
         await blockBlobClient.uploadData(file.buffer);
 
         const attachmentUrl = blockBlobClient.url;
@@ -293,7 +293,7 @@ router.post('/:messageId/attachments', authenticateUser, upload.single('file'), 
 // Get attachment
 router.get('/:messageId/attachments/:attachmentId', authenticateUser, async (req, res) => {
     try {
-        if (!blobServiceClient || !containerClient) {
+        if (!module.exports.blobServiceClient || !module.exports.containerClient) {
             throw new Error('Azure Storage is not properly configured');
         }
 
@@ -309,7 +309,7 @@ router.get('/:messageId/attachments/:attachmentId', authenticateUser, async (req
 
         // Use the exact blob_name from the database
         const blobName = attachment.blob_name;
-        const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+        const blockBlobClient = module.exports.containerClient.getBlockBlobClient(blobName);
         const downloadBlockBlobResponse = await blockBlobClient.download();
         const downloaded = downloadBlockBlobResponse.readableStreamBody || downloadBlockBlobResponse.blobBody;
 
@@ -405,4 +405,9 @@ router.put('/mark-read', authenticateUser, async (req, res) => {
     }
 });
 
-module.exports = router; 
+module.exports = {
+  router,
+  initializeAzureStorage,
+  blobServiceClient,
+  containerClient
+}; 

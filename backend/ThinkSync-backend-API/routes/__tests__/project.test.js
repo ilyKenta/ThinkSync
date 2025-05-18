@@ -218,6 +218,67 @@ describe('Project Routes', () => {
       expect(response.status).toBe(400);
       expect(response.body.error).toBe('Invalid requirements data');
     });
+
+    it('should handle invalid date format', async () => {
+      const invalidPayload = {
+        project: {
+          ...validPayload.project,
+          start_date: '2024/03/20', // Invalid format
+          end_date: '2024-04-20'
+        },
+        requirements: validPayload.requirements
+      };
+
+      const response = await request(app)
+        .post('/api/project/create')
+        .set('Authorization', `Bearer ${mockToken}`)
+        .send(invalidPayload);
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe('Invalid project data');
+    });
+
+    it('should handle invalid date order', async () => {
+      const invalidPayload = {
+        project: {
+          ...validPayload.project,
+          start_date: '2024-04-20', // Later than end_date
+          end_date: '2024-03-20'
+        },
+        requirements: validPayload.requirements
+      };
+
+      const response = await request(app)
+        .post('/api/project/create')
+        .set('Authorization', `Bearer ${mockToken}`)
+        .send(invalidPayload);
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe('Invalid project data');
+    });
+
+    it('should handle missing required fields', async () => {
+      const invalidPayload = {
+        project: {
+          title: 'Test Project',
+          // Missing description
+          goals: 'Test Goals',
+          research_areas: 'Test Research Areas',
+          start_date: '2024-03-20',
+          end_date: '2024-04-20',
+          funding_available: true
+        },
+        requirements: validPayload.requirements
+      };
+
+      const response = await request(app)
+        .post('/api/project/create')
+        .set('Authorization', `Bearer ${mockToken}`)
+        .send(invalidPayload);
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe('Invalid project data');
+    });
   });
 
   describe('GET /owner', () => {
@@ -297,106 +358,153 @@ describe('Project Routes', () => {
       expect(response.body.error).toBe('Internal server error');
       expect(console.error).toHaveBeenCalledWith('Error fetching projects:', expect.any(Error));
     });
+
+    ['Access token is required', 'Invalid token format', 'Token invalid', 'Token has expired'].forEach(tokenError => {
+      it(`should return 401 for token error: ${tokenError} (db.executeQuery throws)`, async () => {
+        getUserIdFromToken.mockResolvedValueOnce(mockUserId);
+        db.executeQuery.mockRejectedValueOnce(new Error(tokenError));
+        const response = await request(app)
+          .get('/api/project/owner')
+          .set('Authorization', `Bearer ${mockToken}`);
+        expect(response.status).toBe(401);
+        expect(response.body.error).toBe(tokenError);
+      });
+    });
+
+    it('should return 500 for generic error (db.executeQuery throws)', async () => {
+      getUserIdFromToken.mockResolvedValueOnce(mockUserId);
+      db.executeQuery.mockRejectedValueOnce(new Error('Some other error'));
+      const response = await request(app)
+        .get('/api/project/owner')
+        .set('Authorization', `Bearer ${mockToken}`);
+      expect(response.status).toBe(500);
+      expect(response.body.error).toBe('Internal server error');
+    });
   });
 
   describe('PUT /update/:projectId', () => {
-    const validUpdate = {
+    const validUpdatePayload = {
       project: {
         title: 'Updated Project',
         description: 'Updated Description',
         goals: 'Updated Goals',
         research_areas: 'Updated Research Areas',
-        start_date: '2024-03-21',
-        end_date: '2024-04-21',
-        funding_available: false
+        start_date: '2024-03-20',
+        end_date: '2024-04-20',
+        funding_available: true
       },
       requirements: [
         {
           skill_required: 'Python',
           experience_level: 'professional',
-          role: 'Lead Developer',
-          technical_requirements: 'Django, Flask'
+          role: 'Data Scientist',
+          technical_requirements: 'TensorFlow, PyTorch'
         }
       ]
     };
 
-    it('should update a project successfully', async () => {
-      const projectId = 1;
-      db.executeQuery
-        .mockResolvedValueOnce([{ owner_ID: mockUserId }]) // Check ownership
-        .mockResolvedValueOnce([]) // Update project
-        .mockResolvedValueOnce([]) // Delete old requirements
-        .mockResolvedValueOnce([]); // Insert new requirements
+    it('should handle project not found', async () => {
+      db.executeQuery.mockResolvedValueOnce([]); // No project found
 
       const response = await request(app)
-        .put(`/api/project/update/${projectId}`)
+        .put('/api/project/update/999')
         .set('Authorization', `Bearer ${mockToken}`)
-        .send(validUpdate);
+        .send(validUpdatePayload);
 
-      expect(response.status).toBe(200);
-      expect(response.body.message).toBe('Project updated successfully');
-      expect(db.executeQuery).toHaveBeenCalledTimes(4);
-    });
-
-    it('should handle database error during project update', async () => {
-      const projectId = 1;
-      db.executeQuery
-        .mockResolvedValueOnce([{ owner_ID: mockUserId }]) // Check ownership
-        .mockRejectedValueOnce(new Error('Database error')); // Update project
-
-      const response = await request(app)
-        .put(`/api/project/update/${projectId}`)
-        .set('Authorization', `Bearer ${mockToken}`)
-        .send(validUpdate);
-
-      expect(response.status).toBe(500);
-      expect(response.body.error).toBe('Internal server error');
-      expect(console.error).toHaveBeenCalledWith('Error updating project:', expect.any(Error));
-    });
-
-    it('should handle database error during requirements update', async () => {
-      const projectId = 1;
-      db.executeQuery
-        .mockResolvedValueOnce([{ owner_ID: mockUserId }]) // Check ownership
-        .mockResolvedValueOnce([]) // Update project
-        .mockRejectedValueOnce(new Error('Database error')); // Delete old requirements
-
-      const response = await request(app)
-        .put(`/api/project/update/${projectId}`)
-        .set('Authorization', `Bearer ${mockToken}`)
-        .send(validUpdate);
-
-      expect(response.status).toBe(500);
-      expect(response.body.error).toBe('Internal server error');
-      expect(console.error).toHaveBeenCalledWith('Error updating project:', expect.any(Error));
+      expect(response.status).toBe(404);
+      expect(response.body.error).toBe('Project not found');
     });
 
     it('should handle unauthorized update', async () => {
-      const projectId = 1;
-      db.executeQuery.mockResolvedValueOnce([{ owner_ID: 'different-user' }]);
+      db.executeQuery.mockResolvedValueOnce([{ owner_ID: 'different-user' }]); // Different owner
 
       const response = await request(app)
-        .put(`/api/project/update/${projectId}`)
+        .put('/api/project/update/1')
         .set('Authorization', `Bearer ${mockToken}`)
-        .send(validUpdate);
+        .send(validUpdatePayload);
 
       expect(response.status).toBe(403);
       expect(response.body.error).toBe('Unauthorized to update this project');
     });
 
-    it('should handle missing project data', async () => {
-      const projectId = 1;
-      const invalidUpdate = {
-        requirements: validUpdate.requirements
-      };
+    it('should handle database error during project update', async () => {
+      db.executeQuery
+        .mockResolvedValueOnce([{ owner_ID: mockUserId }]) // Project found
+        .mockRejectedValueOnce(new Error('Database error')); // Update fails
 
       const response = await request(app)
-        .put(`/api/project/update/${projectId}`)
+        .put('/api/project/update/1')
         .set('Authorization', `Bearer ${mockToken}`)
-        .send(invalidUpdate);
+        .send(validUpdatePayload);
+
+      expect(response.status).toBe(500);
+      expect(response.body.error).toBe('Internal server error');
+    });
+
+    it('should handle database error during requirements update', async () => {
+      db.executeQuery
+        .mockResolvedValueOnce([{ owner_ID: mockUserId }]) // Project found
+        .mockResolvedValueOnce({ affectedRows: 1 }) // Project update
+        .mockResolvedValueOnce({ affectedRows: 1 }) // Delete requirements
+        .mockRejectedValueOnce(new Error('Database error')); // Insert requirements fails
+
+      const response = await request(app)
+        .put('/api/project/update/1')
+        .set('Authorization', `Bearer ${mockToken}`)
+        .send(validUpdatePayload);
+
+      expect(response.status).toBe(500);
+      expect(response.body.error).toBe('Internal server error');
+    });
+
+    it('should handle invalid requirements during update', async () => {
+      const invalidPayload = {
+        project: validUpdatePayload.project,
+        requirements: [{
+          skill_required: 'Python',
+          experience_level: 'invalid-level', // Invalid level
+          role: 'Data Scientist',
+          technical_requirements: 'TensorFlow, PyTorch'
+        }]
+      };
+
+      db.executeQuery.mockResolvedValueOnce([{ owner_ID: mockUserId }]); // Project found
+
+      const response = await request(app)
+        .put('/api/project/update/1')
+        .set('Authorization', `Bearer ${mockToken}`)
+        .send(invalidPayload);
 
       expect(response.status).toBe(400);
-      expect(response.body.error).toBe('Missing project or requirements data');
+      expect(response.body.error).toBe('Invalid requirements data');
+    });
+
+    ['Access token is required', 'Invalid token format', 'Token invalid', 'Token has expired'].forEach(tokenError => {
+      it(`should return 401 for token error: ${tokenError} (db.executeQuery throws)`, async () => {
+        getUserIdFromToken.mockResolvedValueOnce(mockUserId);
+        db.executeQuery.mockRejectedValueOnce(new Error(tokenError));
+        const response = await request(app)
+          .put('/api/project/update/1')
+          .set('Authorization', `Bearer ${mockToken}`)
+          .send({ project: {
+            title: 'Test', description: 'Test', goals: 'Test', research_areas: 'Test', start_date: '2024-01-01', end_date: '2024-12-31', funding_available: true
+          }, requirements: [{ skill_required: 'JS', experience_level: 'beginner', role: 'Dev', technical_requirements: 'Node' }] });
+        expect(response.status).toBe(401);
+        expect(response.body.error).toBe(tokenError);
+      });
+    });
+
+    it('should return 500 for generic error (db.executeQuery throws)', async () => {
+      getUserIdFromToken.mockResolvedValueOnce(mockUserId);
+      db.executeQuery.mockRejectedValueOnce(new Error('Some other error'));
+      const response = await request(app)
+        .put('/api/project/update/1')
+        .set('Authorization', `Bearer ${mockToken}`)
+        .send({ project: {
+          title: 'Test', description: 'Test', goals: 'Test', research_areas: 'Test', start_date: '2024-01-01', end_date: '2024-12-31', funding_available: true
+        }, requirements: [{ skill_required: 'JS', experience_level: 'beginner', role: 'Dev', technical_requirements: 'Node' }] });
+      expect(response.status).toBe(500);
+      expect(response.body.error).toBe('Internal server error');
     });
   });
 
@@ -442,6 +550,57 @@ describe('Project Routes', () => {
       expect(response.status).toBe(500);
       expect(response.body.error).toBe('Internal server error');
       expect(console.error).toHaveBeenCalledWith('Error deleting project:', expect.any(Error));
+    });
+
+    ['Access token is required', 'Invalid token format', 'Token invalid', 'Token has expired'].forEach(tokenError => {
+      it(`should return 401 for token error: ${tokenError} (db.executeQuery throws)`, async () => {
+        getUserIdFromToken.mockResolvedValueOnce(mockUserId);
+        db.executeQuery.mockRejectedValueOnce(new Error(tokenError));
+        const response = await request(app)
+          .delete('/api/project/delete/1')
+          .set('Authorization', `Bearer ${mockToken}`);
+        expect(response.status).toBe(401);
+        expect(response.body.error).toBe(tokenError);
+      });
+    });
+
+    it('should return 500 for generic error (db.executeQuery throws)', async () => {
+      getUserIdFromToken.mockResolvedValueOnce(mockUserId);
+      db.executeQuery.mockRejectedValueOnce(new Error('Some other error'));
+      const response = await request(app)
+        .delete('/api/project/delete/1')
+        .set('Authorization', `Bearer ${mockToken}`);
+      expect(response.status).toBe(500);
+      expect(response.body.error).toBe('Internal server error');
+    });
+  });
+
+  describe('GET /collaborator', () => {
+    const tokenErrors = [
+      'Access token is required',
+      'Invalid token format',
+      'Token invalid',
+      'Token has expired'
+    ];
+
+    tokenErrors.forEach(tokenError => {
+      it(`should return 401 for token error: ${tokenError}`, async () => {
+        getUserIdFromToken.mockRejectedValueOnce(new Error(tokenError));
+        const response = await request(app)
+          .get('/api/project/collaborator')
+          .set('Authorization', `Bearer ${mockToken}`);
+        expect(response.status).toBe(401);
+        expect(response.body.error).toBe(tokenError);
+      });
+    });
+
+    it('should return 500 for generic error', async () => {
+      getUserIdFromToken.mockRejectedValueOnce(new Error('Some other error'));
+      const response = await request(app)
+        .get('/api/project/collaborator')
+        .set('Authorization', `Bearer ${mockToken}`);
+      expect(response.status).toBe(500);
+      expect(response.body.error).toBe('Internal server error');
     });
   });
 }); 

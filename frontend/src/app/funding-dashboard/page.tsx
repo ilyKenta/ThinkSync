@@ -856,6 +856,7 @@ export default function Page() {
                                         setEditData({ ...editData, categories: updated });
                                       }}
                                       placeholder="Enter description"
+                                      data-testid={`category-description-${cat.category_ID}`}
                                     />
                                   </td>
                                   <td>
@@ -882,6 +883,7 @@ export default function Page() {
                                         updated[idx].amount_spent = parseFloat(e.target.value) || 0;
                                         setEditData({ ...editData, categories: updated });
                                       }}
+                                      data-testid={`category-amount-${cat.category_ID}`}
                                     />
                                   </td>
                                   <td>
@@ -889,6 +891,8 @@ export default function Page() {
                                       type="button"
                                       onClick={() => handleDeleteCategory(project.project_ID, cat.category_ID)}
                                       aria-label={`Remove ${cat.category} category`}
+                                      data-testid={`remove-category-${cat.category_ID}`}
+                                      className={styles.removeButton}
                                     >
                                       ✕
                                     </button>

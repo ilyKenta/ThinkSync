@@ -210,8 +210,8 @@ router.post('/:projectId/categories', async (req, res) => {
         const { category, description, amount_spent } = req.body;
 
         // Validate required fields
-        if (!category || typeof category !== 'string' || !category.trim()) {
-            return res.status(400).json({ error: 'Category is required and must be a non-empty string' });
+        if (!category || typeof category !== 'string' || !category.trim() || category.length > 255) {
+            return res.status(400).json({ error: 'Category is required, must be a non-empty string, and at most 255 characters' });
         }
         if (amount_spent === undefined || amount_spent === null) {
             return res.status(400).json({ error: 'amount_spent is required' });
@@ -253,8 +253,8 @@ router.put('/:projectId/categories/:categoryId', async (req, res) => {
         const { category, description, amount_spent } = req.body;
 
         // Validate required fields
-        if (!category || typeof category !== 'string' || !category.trim()) {
-            return res.status(400).json({ error: 'Category is required and must be a non-empty string' });
+        if (!category || typeof category !== 'string' || !category.trim() || category.length > 255) {
+            return res.status(400).json({ error: 'Category is required, must be a non-empty string, and at most 255 characters' });
         }
         if (amount_spent === undefined || amount_spent === null) {
             return res.status(400).json({ error: 'amount_spent is required' });
@@ -637,6 +637,40 @@ router.delete('/:projectId', async (req, res) => {
             res.status(500).json({ error: 'A server error occurred' });
         } else {
             res.status(401).json({ error: error.message || 'Failed to delete funding' });
+        }
+    }
+});
+
+// Get categories for a specific project's funding
+router.get('/:projectId/categories', async (req, res) => {
+    try {
+        const token = extractToken(req);
+        const userId = await getUserIdFromToken(token);
+        if (!(await checkResearcherRole(userId))) {
+            return res.status(403).json({ error: 'Unauthorized: User is not a researcher' });
+        }
+        const { projectId } = req.params;
+
+        // Get funding ID for the project
+        const fundingArr = await db.executeQuery(
+            `SELECT funding_ID FROM funding WHERE project_ID = ?`,
+            [projectId]
+        );
+        if (!fundingArr.length) return res.status(404).json({ error: 'Funding not found' });
+        const fundingId = fundingArr[0].funding_ID;
+
+        // Get categories for this funding
+        const categories = await db.executeQuery(
+            `SELECT * FROM funding_categories WHERE funding_ID = ?`,
+            [fundingId]
+        );
+
+        res.json({ categories });
+    } catch (error) {
+        if (error.code && typeof error.code === 'string' && error.code.startsWith('ER_')) {
+            res.status(500).json({ error: 'A server error occurred' });
+        } else {
+            res.status(401).json({ error: error.message || 'Failed to fetch categories' });
         }
     }
 });
