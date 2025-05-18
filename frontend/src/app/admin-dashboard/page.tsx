@@ -90,7 +90,7 @@ const AdminDashboard = () => {
             >
               Messager
               {unreadCount > 0 && (
-                <span style={{
+                <strong style={{
                   display: 'inline-block',
                   marginLeft: 8,
                   minWidth: 20,
@@ -106,7 +106,7 @@ const AdminDashboard = () => {
                   verticalAlign: 'middle',
                 }}>
                   {unreadCount > 99 ? '99+' : unreadCount}
-                </span>
+                </strong>
               )}
             </button>
           </li>

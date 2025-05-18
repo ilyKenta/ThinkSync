@@ -19,19 +19,25 @@ const InboxSidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   }, [isOpen]);
 
   return (
-    <div className={`${styles.sidebar} ${isOpen ? styles.open : ''}`}>
-      <div className={styles.sidebarHeader}>
+    <aside className={`${styles.sidebar} ${isOpen ? styles.open : ''}`} aria-label="Received Invitations">
+      <header className={styles.sidebarHeader}>
         <h2>Received Invitations</h2>
-        <button onClick={onClose} className={styles.closeButton}>×</button>
-      </div>
-      <div className={styles.sidebarContent}>
-        <div className={styles.invitationsContainer}>
-          <div className={styles.invitationsList}>
+        <button 
+          onClick={onClose} 
+          className={styles.closeButton}
+          aria-label="Close sidebar"
+        >
+          ×
+        </button>
+      </header>
+      <main className={styles.sidebarContent}>
+        <section className={styles.invitationsContainer}>
+          <nav className={styles.invitationsList} aria-label="Invitations list">
             <ReceivedInvitations key={key} />
-          </div>
-        </div>
-      </div>
-    </div>
+          </nav>
+        </section>
+      </main>
+    </aside>
   );
 };
 

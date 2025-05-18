@@ -112,8 +112,8 @@ export default function EditReqForm({
   if (!mounted) return null;
 
   const modalContent = (
-    <div className={styles.createModal} data-modal-root>
-      <div className={styles.createBox}>
+    <section className={styles.createModal} data-modal-root>
+      <section className={styles.createBox}>
         <button onClick={onClose} className={styles.closeButton}>
           X
         </button>
@@ -163,10 +163,10 @@ export default function EditReqForm({
           >
             {loading ? "Saving..." : "Save Changes"}
           </button>
-          {error && <div style={{ color: "red", marginTop: 8 }}>{error}</div>}
+          {error && <section style={{ color: "red", marginTop: 8 }}>{error}</section>}
         </form>
-      </div>
-    </div>
+      </section>
+    </section>
   );
 
   return createPortal(modalContent, document.body);

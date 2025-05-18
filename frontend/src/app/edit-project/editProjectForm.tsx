@@ -228,11 +228,11 @@ export default function EditProjectForm({
           >
             Next: Edit Requirements
           </button>
-          {error && <div style={{ color: "red", marginTop: 8 }}>{error}</div>}
+          {error && <section style={{ color: "red", marginTop: 8 }}>{error}</section>}
           {success && (
-            <div style={{ color: "green", marginTop: 8 }}>
+            <section style={{ color: "green", marginTop: 8 }}>
               Project updated successfully!
-            </div>
+            </section>
           )}
         </form>
       </section>

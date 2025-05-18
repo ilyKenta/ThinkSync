@@ -8,8 +8,8 @@ export default function Home() {
   const router = useRouter();
 
   // Section refs for smooth scrolling
-  const featuresRef = useRef<HTMLDivElement | null>(null);
-  const howItWorksRef = useRef<HTMLDivElement | null>(null);
+  const featuresRef = useRef<HTMLElement | null>(null);
+  const howItWorksRef = useRef<HTMLElement | null>(null);
 
   const handleRedirect = () => {
     router.push("/login");
@@ -31,7 +31,7 @@ export default function Home() {
         >
           ThinkSync
         </button>
-        <nav className={styles.nav}>
+        <nav className={styles.nav} aria-label="Main navigation">
           <button className={styles.loginButton} onClick={handleRedirect}>
             login
           </button>
@@ -62,8 +62,10 @@ export default function Home() {
       <section
         ref={featuresRef}
         style={{ background: "#e8eaeb", padding: "3rem 0" }}
+        aria-labelledby="key-features-title"
       >
         <h2
+          id="key-features-title"
           style={{
             textAlign: "center",
             marginBottom: "2.5rem",
@@ -72,85 +74,67 @@ export default function Home() {
         >
           Key Features
         </h2>
-        <div
+        <ul
           style={{
             display: "flex",
             flexWrap: "wrap",
             justifyContent: "center",
             gap: "2rem",
+            listStyle: "none",
+            padding: 0,
+            margin: 0,
           }}
+          aria-label="Feature cards"
         >
-          <div
-            style={{
-              background: "#fff",
-              borderRadius: 12,
-              boxShadow: "0 2px 12px #0001",
-              padding: "2rem",
-              minWidth: 240,
-              maxWidth: 340,
-              flex: "1 1 260px",
-            }}
-          >
-            <div style={{ fontSize: 32, color: "#b2e0e6", marginBottom: 8 }}>
-              👥
-            </div>
-            <strong>Find Research Partners</strong>
-            <p style={{ marginTop: 8, color: "#222", fontSize: 15 }}>
-              Connect with other researchers based on interests, skills, and
-              project needs.
-            </p>
-          </div>
-          <div
-            style={{
-              background: "#fff",
-              borderRadius: 12,
-              boxShadow: "0 2px 12px #0001",
-              padding: "2rem",
-              minWidth: 240,
-              maxWidth: 340,
-              flex: "1 1 260px",
-            }}
-          >
-            <div style={{ fontSize: 32, color: "#b2e0e6", marginBottom: 8 }}>
-              📄
-            </div>
-            <strong>Share Resources</strong>
-            <p style={{ marginTop: 8, color: "#222", fontSize: 15 }}>
-              Easily share documents, data, and other research materials with
-              your collaborators.
-            </p>
-          </div>
-          <div
-            style={{
-              background: "#fff",
-              borderRadius: 12,
-              boxShadow: "0 2px 12px #0001",
-              padding: "2rem",
-              minWidth: 240,
-              maxWidth: 340,
-              flex: "1 1 260px",
-            }}
-          >
-            <div style={{ fontSize: 32, color: "#b2e0e6", marginBottom: 8 }}>
-              📊
-            </div>
-            <strong>Track Progress</strong>
-            <p style={{ marginTop: 8, color: "#222", fontSize: 15 }}>
-              Monitor project milestones, deadlines, and contributions from team
-              members.
-            </p>
-          </div>
-        </div>
-        <div style={{ textAlign: "center", marginTop: "2rem" }}>
+          {[{
+            icon: "👥",
+            title: "Find Research Partners",
+            desc: "Connect with other researchers based on interests, skills, and project needs."
+          }, {
+            icon: "📄",
+            title: "Share Resources",
+            desc: "Easily share documents, data, and other research materials with your collaborators."
+          }, {
+            icon: "📊",
+            title: "Track Progress",
+            desc: "Monitor project milestones, deadlines, and contributions from team members."
+          }].map((feature) => (
+            <li
+              key={feature.title}
+              style={{
+                background: "#fff",
+                borderRadius: 12,
+                boxShadow: "0 2px 12px #0001",
+                padding: "2rem",
+                minWidth: 240,
+                maxWidth: 340,
+                flex: "1 1 260px",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-start",
+              }}
+            >
+              <strong style={{ fontSize: 32, color: "#b2e0e6", marginBottom: 8 }}>
+                {feature.icon}
+              </strong>
+              <strong>{feature.title}</strong>
+              <p style={{ marginTop: 8, color: "#222", fontSize: 15 }}>
+                {feature.desc}
+              </p>
+            </li>
+          ))}
+        </ul>
+        <section style={{ textAlign: "center", marginTop: "2rem" }}>
           <button className={styles.cta} onClick={scrollToHowItWorks}>
             How it works ↓
           </button>
-        </div>
+        </section>
       </section>
 
       {/* How It Works Section */}
-      <section ref={howItWorksRef} style={{ padding: "3rem 0 2rem 0" }}>
+      <section ref={howItWorksRef} style={{ padding: "3rem 0 2rem 0" }} aria-labelledby="how-it-works-title">
         <h2
+          id="how-it-works-title"
           style={{
             textAlign: "center",
             marginBottom: "2.5rem",
@@ -159,7 +143,7 @@ export default function Home() {
         >
           How It Works
         </h2>
-        <div style={{ maxWidth: 540, margin: "0 auto" }}>
+        <ol style={{ maxWidth: 540, margin: "0 auto", padding: 0, listStyle: "none" }}>
           {[
             {
               title: "Create Your Profile",
@@ -182,7 +166,7 @@ export default function Home() {
                 "Monitor project milestones, share resources, and keep everyone updated on progress.",
             },
           ].map((step, idx) => (
-            <div
+            <li
               key={step.title}
               style={{
                 display: "flex",
@@ -191,7 +175,7 @@ export default function Home() {
                 marginBottom: 28,
               }}
             >
-              <span
+              <strong
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
@@ -204,19 +188,21 @@ export default function Home() {
                   fontWeight: 700,
                   fontSize: 18,
                   marginRight: 8,
+                  flexShrink: 0,
                 }}
+                aria-label={`Step ${idx + 1}`}
               >
                 {idx + 1}
-              </span>
-              <div style={{ flex: 1 }}>
+              </strong>
+              <article style={{ flex: 1 }}>
                 <strong style={{ fontSize: 18 }}>{step.title}</strong>
-                <div style={{ color: "#444", fontSize: 15, marginTop: 2 }}>
+                <p style={{ color: "#444", fontSize: 15, marginTop: 2 }}>
                   {step.description}
-                </div>
-              </div>
-            </div>
+                </p>
+              </article>
+            </li>
           ))}
-        </div>
+        </ol>
       </section>
 
       {/* Footer */}

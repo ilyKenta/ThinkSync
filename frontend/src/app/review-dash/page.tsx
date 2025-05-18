@@ -163,7 +163,7 @@ const Page = () => {
             >
               Messager
               {unreadCount > 0 && (
-                <span style={{
+                <strong style={{
                   display: 'inline-block',
                   marginLeft: 8,
                   minWidth: 20,
@@ -179,7 +179,7 @@ const Page = () => {
                   verticalAlign: 'middle',
                 }}>
                   {unreadCount > 99 ? '99+' : unreadCount}
-                </span>
+                </strong>
               )}
             </button>
           </li>

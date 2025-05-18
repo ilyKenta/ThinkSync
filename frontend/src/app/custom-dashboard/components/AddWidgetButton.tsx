@@ -33,7 +33,7 @@ export default function AddWidgetButton({ onAddWidget }: AddWidgetButtonProps) {
     };
 
     return (
-        <div className={styles.addWidgetContainer}>
+        <section className={styles.addWidgetContainer}>
             <button
                 className={styles.addWidgetButton}
                 onClick={toggleDropdown}
@@ -41,7 +41,7 @@ export default function AddWidgetButton({ onAddWidget }: AddWidgetButtonProps) {
                 Add Widget
             </button>
             {isOpen && (
-                <div className={styles.widgetDropdown}>
+                <section className={styles.widgetDropdown}>
                     {widgetTypes.map(({ type, label }) => (
                         <button
                             key={type}
@@ -51,8 +51,8 @@ export default function AddWidgetButton({ onAddWidget }: AddWidgetButtonProps) {
                             {label}
                         </button>
                     ))}
-                </div>
+                </section>
             )}
-        </div>
+        </section>
     );
 } 

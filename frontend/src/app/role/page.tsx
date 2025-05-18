@@ -16,23 +16,29 @@ const Page = () => {
   };
 
   return (
-    <div className={styles.container}>
+    <main className={styles.container} role="main">
       <h1 className={styles.title}>Use of platform</h1>
-      <div className={styles.buttonGroup}>
+      <section className={styles.buttonGroup} aria-label="Role selection">
         {['researcher', 'admin', 'reviewer'].map((role) => (
           <button
             key={role}
             className={`${styles.roleButton} ${selectedRole === role ? styles.selected : ''}`}
             onClick={() => setSelectedRole(role)}
+            aria-pressed={selectedRole === role}
+            aria-label={`Select ${role} role`}
           >
             {role}
           </button>
         ))}
-      </div>
-      <button className={styles.continueButton} onClick={handleContinue}>
+      </section>
+      <button 
+        className={styles.continueButton} 
+        onClick={handleContinue}
+        aria-label="Continue to selected role"
+      >
         Continue →
       </button>
-    </div>
+    </main>
   );
 };
 

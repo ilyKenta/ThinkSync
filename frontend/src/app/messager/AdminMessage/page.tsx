@@ -240,7 +240,7 @@ const Page = () => {
             </header>
             <nav className={styles.previewList}>
               {conversationPreviews.length === 0 && (
-                <div className={styles.noResults}>No messages yet.</div>
+                <section className={styles.noResults}>No messages yet.</section>
               )}
               {conversationPreviews.map(({ key, latestMsg, otherUser }) => {
                 const currentUserId = localStorage.getItem('user_ID');
@@ -258,7 +258,7 @@ const Page = () => {
                       <strong className={styles.previewName}>
                         {otherUser.fname} {otherUser.sname}
                         {hasUnread && (
-                          <span
+                          <strong
                             style={{
                               display: 'inline-block',
                               marginLeft: 8,
@@ -305,7 +305,7 @@ const Page = () => {
                       (user1 === selectedUser && user2 === currentUserId);
                   });
                   if (!conversation) {
-                    return <div className={styles.noMessages}>No messages in this conversation</div>;
+                    return <section className={styles.noMessages}>No messages in this conversation</section>;
                   }
                   const messages = conversation[1]
                     .sort((a, b) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime());
