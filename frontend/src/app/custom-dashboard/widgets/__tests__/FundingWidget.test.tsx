@@ -118,9 +118,17 @@ describe('FundingWidget', () => {
         await waitFor(() => {
             expect(screen.getByText(/Test Project/)).toBeInTheDocument();
         });
-        // Use regex for numbers with spaces
-        expect(screen.getByText(/R\s?10\s?000/)).toBeInTheDocument();
-        expect(screen.getAllByText(/R\s?5\s?000/).length).toBeGreaterThan(0);
+        // Use a function matcher to ignore all whitespace (including non-breaking spaces)
+        expect(
+          screen.getByText((content, node) =>
+            !!(node && node.textContent && node.textContent.replace(/\s|\u00A0/g, '') === 'R10000')
+          )
+        ).toBeInTheDocument();
+        expect(
+          screen.getAllByText((content, node) =>
+            !!(node && node.textContent && node.textContent.replace(/\s|\u00A0/g, '') === 'R5000')
+          ).length
+        ).toBeGreaterThan(0);
         expect(screen.getByText(/active/i)).toBeInTheDocument();
         expect(screen.getByText(/2024\/12\/31/)).toBeInTheDocument();
     });
