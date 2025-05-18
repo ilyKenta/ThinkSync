@@ -371,8 +371,9 @@ export default function MilestonesWidget({ onDelete }: WidgetProps) {
                                         </aside>
                                     )}
 
-                                    <label className={styles.label}>Title</label>
+                                    <label className={styles.label} htmlFor="milestone-title">Title</label>
                                     <input
+                                        id="milestone-title"
                                         type="text"
                                         className={styles.input}
                                         value={newMilestone.title}
@@ -381,8 +382,9 @@ export default function MilestonesWidget({ onDelete }: WidgetProps) {
                                         required
                                     />
 
-                                    <label className={styles.label}>Description</label>
+                                    <label className={styles.label} htmlFor="milestone-description">Description</label>
                                     <textarea
+                                        id="milestone-description"
                                         className={styles.textarea}
                                         value={newMilestone.description}
                                         onChange={(e) => setNewMilestone({ ...newMilestone, description: e.target.value })}
@@ -390,8 +392,9 @@ export default function MilestonesWidget({ onDelete }: WidgetProps) {
                                         required
                                     />
 
-                                    <label className={styles.label}>Due Date</label>
+                                    <label className={styles.label} htmlFor="milestone-due-date">Due Date</label>
                                     <input
+                                        id="milestone-due-date"
                                         type="date"
                                         className={styles.input}
                                         value={newMilestone.dueDate}
@@ -399,8 +402,9 @@ export default function MilestonesWidget({ onDelete }: WidgetProps) {
                                         required
                                     />
 
-                                    <label className={styles.label}>Status</label>
+                                    <label className={styles.label} htmlFor="milestone-status">Status</label>
                                     <select
+                                        id="milestone-status"
                                         className={styles.input}
                                         value={newMilestone.status}
                                         onChange={(e) => setNewMilestone({ ...newMilestone, status: e.target.value })}
@@ -411,8 +415,9 @@ export default function MilestonesWidget({ onDelete }: WidgetProps) {
                                         <option value="Completed">Completed</option>
                                     </select>
 
-                                    <label className={styles.label}>Assign To</label>
+                                    <label className={styles.label} htmlFor="milestone-assigned-to">Assign To</label>
                                     <select
+                                        id="milestone-assigned-to"
                                         className={styles.input}
                                         value={newMilestone.assigned_user_ID}
                                         onChange={(e) => setNewMilestone({ ...newMilestone, assigned_user_ID: e.target.value })}
@@ -425,7 +430,7 @@ export default function MilestonesWidget({ onDelete }: WidgetProps) {
                                         ))}
                                     </select>
 
-                                    <div className={styles.buttonRow}>
+                                    <section className={styles.buttonRow}>
                                         <button
                                             type="button"
                                             className={styles.cancelBtn}
@@ -441,7 +446,7 @@ export default function MilestonesWidget({ onDelete }: WidgetProps) {
                                         >
                                             {submitting ? "Creating..." : "Create Milestone"}
                                         </button>
-                                    </div>
+                                    </section>
                                 </form>
                             </section>
                         </article>

@@ -647,7 +647,7 @@ export default function FundingWidget({ onDelete }: WidgetProps) {
                                         </fieldset>
                                     )}
 
-                                    <div className={styles.buttonRow}>
+                                    <section className={styles.buttonRow}>
                                         <button
                                             type="button"
                                             className={styles.cancelBtn}
@@ -666,7 +666,7 @@ export default function FundingWidget({ onDelete }: WidgetProps) {
                                         >
                                             {submitting ? "Saving..." : "Save Changes"}
                                         </button>
-                                    </div>
+                                    </section>
                                 </form>
                             </section>
                         </article>

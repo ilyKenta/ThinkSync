@@ -400,12 +400,15 @@ router.get('/report/generate', async (req, res) => {
             const chartY = doc.y;
 
             drawPieChart(doc, chartData, chartX, chartY, chartRadius);
-            doc.moveDown(12); // Add space after chart
+            
+            // Calculate the bottom of the pie chart including legend
+            const chartBottom = chartY + (chartRadius * 2) + (chartData.length * 20); // Add space for legend
+            doc.y = chartBottom + 40; // Add padding after chart
 
             // Add overall statistics table
             doc.fontSize(14)
-               .text('Status Breakdown:', { underline: true })
-               .moveDown(0.5);
+               .text('Status Breakdown:', 50, doc.y, { underline: true })
+               .moveDown(1);
 
             // Create table for statistics
             const statsTableTop = doc.y;
@@ -444,219 +447,220 @@ router.get('/report/generate', async (req, res) => {
                    .text(`${percentage.toFixed(1)}%`, statsTableLeft + (statsColWidth * 2) + 10, y + 10);
             });
 
-            doc.moveDown(3);
+            // Add page break before Project Details section
+            doc.addPage();
+
+            // Add project details
+            doc.fontSize(18)
+               .text('Project Details', 50, doc.y, { width: 495, align: 'center' })
+               .moveDown(2);
+
+            // For each project
+            for (const project of projectData) {
+                try {
+                    // Add project title with background
+                    doc.rect(50, doc.y, 495, 30)
+                       .fill('#f0f0f0');
+                    
+                    doc.fontSize(16)
+                       .fillColor('#000000')
+                       .text(project.title, 60, doc.y + 10)
+                       .moveDown(2);
+
+                    // Add project team section
+                    doc.fontSize(14)
+                       .text('Project Team:', 60, doc.y, { underline: true })
+                       .moveDown(0.5);
+
+                    // Create table for project team
+                    const teamTableTop = doc.y;
+                    const teamTableLeft = 60;
+                    const teamColWidth = 150;
+                    const teamRowHeight = 30;
+
+                    // Check if we need a new page for the team table
+                    if (doc.y > 700) {
+                        doc.addPage();
+                        doc.fontSize(14)
+                           .text('Project Team:', 60, doc.y, { underline: true })
+                           .moveDown(0.5);
+                        teamTableTop = doc.y;
+                    }
+
+                    // Draw table border
+                    doc.rect(teamTableLeft, teamTableTop, 475, teamRowHeight * (project.collaborators.length + 2))
+                       .stroke('#cccccc');
+
+                    // Table headers
+                    doc.fontSize(12)
+                       .fillColor('#000000')
+                       .text('Role', teamTableLeft + 10, teamTableTop + 10)
+                       .text('Name', teamTableLeft + teamColWidth + 10, teamTableTop + 10);
+
+                    // Draw header separator
+                    doc.moveTo(teamTableLeft, teamTableTop + teamRowHeight)
+                       .lineTo(teamTableLeft + 475, teamTableTop + teamRowHeight)
+                       .stroke();
+
+                    // Add owner row
+                    const ownerY = teamTableTop + teamRowHeight;
+                    doc.moveTo(teamTableLeft, ownerY)
+                       .lineTo(teamTableLeft + 475, ownerY)
+                       .stroke();
+                    doc.text('Owner', teamTableLeft + 10, ownerY + 10)
+                       .text(`${project.owner.first_name} ${project.owner.last_name}`, teamTableLeft + teamColWidth + 10, ownerY + 10);
+
+                    // Add collaborator rows with page break handling
+                    let currentY = ownerY + teamRowHeight;
+                    project.collaborators.forEach((collab, index) => {
+                        // Check if we need a new page
+                        if (currentY > 700) {
+                            doc.addPage();
+                            // Redraw headers on new page
+                            doc.fontSize(14)
+                               .text('Project Team:', 60, doc.y, { underline: true })
+                               .moveDown(0.5);
+                            doc.fontSize(12)
+                               .fillColor('#000000')
+                               .text('Role', teamTableLeft + 10, doc.y + 10)
+                               .text('Name', teamTableLeft + teamColWidth + 10, doc.y + 10);
+                            doc.moveTo(teamTableLeft, doc.y + 30)
+                               .lineTo(teamTableLeft + 475, doc.y + 30)
+                               .stroke();
+                            currentY = doc.y + 30;
+                        }
+
+                        doc.moveTo(teamTableLeft, currentY)
+                           .lineTo(teamTableLeft + 475, currentY)
+                           .stroke();
+                        doc.text('Collaborator', teamTableLeft + 10, currentY + 10)
+                           .text(`${collab.first_name} ${collab.last_name}`, teamTableLeft + teamColWidth + 10, currentY + 10);
+                        currentY += teamRowHeight;
+                    });
+
+                    doc.moveDown(2);
+
+                    // Add milestones section
+                    doc.fontSize(14)
+                       .text('Milestones:', 60, doc.y, { underline: true })
+                       .moveDown(1);
+
+                    if (project.milestones && project.milestones.length > 0) {
+                        // Table setup for milestones
+                        const tableTop = doc.y;
+                        const tableLeft = 60;
+                        const colWidth = 95; // 475/5 columns
+                        const rowHeight = 30;
+                        const headers = ['Title', 'Status', 'Description', 'Expected Date', 'Assigned To'];
+
+                        // Check if we need a new page for the milestones table
+                        if (doc.y > 700) {
+                            doc.addPage();
+                            doc.fontSize(14)
+                               .text('Milestones:', 60, doc.y, { underline: true })
+                               .moveDown(1);
+                        }
+
+                        // Draw table headers
+                        doc.fontSize(12)
+                           .fillColor('#000000');
+                        
+                        // Draw all headers on the same line
+                        const headerY = doc.y;
+                        headers.forEach((header, i) => {
+                            doc.text(header, tableLeft + (colWidth * i), headerY);
+                        });
+
+                        // Draw header underline
+                        doc.moveTo(tableLeft, headerY + 20)
+                           .lineTo(tableLeft + 475, headerY + 20)
+                           .stroke();
+
+                        // Process each milestone
+                        let currentMilestoneY = headerY + 30;
+                        for (const milestone of project.milestones) {
+                            try {
+                                // Check if we need a new page
+                                if (currentMilestoneY > 700) {
+                                    doc.addPage();
+                                    // Redraw headers on new page
+                                    doc.fontSize(14)
+                                       .text('Milestones:', 60, doc.y, { underline: true })
+                                       .moveDown(1);
+                                    doc.fontSize(12)
+                                       .fillColor('#000000');
+                                    
+                                    // Draw all headers on the same line
+                                    const newHeaderY = doc.y;
+                                    headers.forEach((header, i) => {
+                                        doc.text(header, tableLeft + (colWidth * i), newHeaderY);
+                                    });
+                                    doc.moveTo(tableLeft, newHeaderY + 20)
+                                       .lineTo(tableLeft + 475, newHeaderY + 20)
+                                       .stroke();
+                                    currentMilestoneY = newHeaderY + 30;
+                                }
+
+                                // Get assigned user name if exists
+                                let assignedUserName = 'Not Assigned';
+                                if (milestone.assigned_user_ID) {
+                                    const assignedUser = await db.executeQuery(
+                                        `SELECT fname, sname FROM users WHERE user_ID = ?`,
+                                        [milestone.assigned_user_ID]
+                                    );
+                                    if (assignedUser.length > 0) {
+                                        assignedUserName = `${assignedUser[0].fname} ${assignedUser[0].sname}`;
+                                    }
+                                }
+
+                                // Format date if exists
+                                let formattedDate = 'Not Set';
+                                if (milestone.expected_completion_date) {
+                                    const date = new Date(milestone.expected_completion_date);
+                                    formattedDate = date.toLocaleDateString();
+                                }
+
+                                // Draw table row
+                                doc.fontSize(10) // Smaller font for table content
+                                   .text(milestone.title, tableLeft, currentMilestoneY, { width: colWidth, align: 'left' })
+                                   .text(milestone.status || 'Not Started', tableLeft + colWidth, currentMilestoneY, { width: colWidth, align: 'left' })
+                                   .text(milestone.description || 'No Description', tableLeft + (colWidth * 2), currentMilestoneY, { width: colWidth, align: 'left' })
+                                   .text(formattedDate, tableLeft + (colWidth * 3), currentMilestoneY, { width: colWidth, align: 'left' })
+                                   .text(assignedUserName, tableLeft + (colWidth * 4), currentMilestoneY, { width: colWidth, align: 'left' });
+
+                                // Draw row separator
+                                doc.moveTo(tableLeft, currentMilestoneY + 20)
+                                   .lineTo(tableLeft + 475, currentMilestoneY + 20)
+                                   .stroke();
+
+                                currentMilestoneY += rowHeight;
+                                doc.moveDown(1);
+                            } catch (error) {
+                                console.error(`Error processing milestone ${milestone.milestone_ID}:`, error);
+                                continue;
+                            }
+                        }
+                    } else {
+                        doc.fontSize(12)
+                           .fillColor('#000000')
+                           .text('No milestones found for this project.', 60, doc.y)
+                           .moveDown(2);
+                    }
+
+                    // Add page break between projects, but not after the last project
+                    if (project !== projectData[projectData.length - 1]) {
+                        doc.addPage();
+                    }
+                } catch (error) {
+                    console.error(`Error processing project ${project.title}:`, error);
+                    continue; // Skip this project and continue with others
+                }
+            }
         } catch (error) {
             console.error('Error generating chart:', error);
             doc.fontSize(14)
                .text('Error generating chart. Please try again.', { align: 'center' })
                .moveDown();
-        }
-
-        // Add project details
-        doc.fontSize(18)
-           .text('Project Details', 50, doc.y, { width: 495, align: 'center' })
-           .moveDown(2);
-
-        // For each project
-        for (const project of projectData) {
-            try {
-                // Add project title with background
-                doc.rect(50, doc.y, 495, 30)
-                   .fill('#f0f0f0');
-                
-                doc.fontSize(16)
-                   .fillColor('#000000')
-                   .text(project.title, 60, doc.y + 10)
-                   .moveDown(2);
-
-                // Add project team section
-                doc.fontSize(14)
-                   .text('Project Team:', 60, doc.y, { underline: true })
-                   .moveDown(0.5);
-
-                // Create table for project team
-                const teamTableTop = doc.y;
-                const teamTableLeft = 60;
-                const teamColWidth = 150;
-                const teamRowHeight = 30;
-
-                // Check if we need a new page for the team table
-                if (doc.y > 700) {
-                    doc.addPage();
-                    doc.fontSize(14)
-                       .text('Project Team:', 60, doc.y, { underline: true })
-                       .moveDown(0.5);
-                    teamTableTop = doc.y;
-                }
-
-                // Draw table border
-                doc.rect(teamTableLeft, teamTableTop, 475, teamRowHeight * (project.collaborators.length + 2))
-                   .stroke('#cccccc');
-
-                // Table headers
-                doc.fontSize(12)
-                   .fillColor('#000000')
-                   .text('Role', teamTableLeft + 10, teamTableTop + 10)
-                   .text('Name', teamTableLeft + teamColWidth + 10, teamTableTop + 10);
-
-                // Draw header separator
-                doc.moveTo(teamTableLeft, teamTableTop + teamRowHeight)
-                   .lineTo(teamTableLeft + 475, teamTableTop + teamRowHeight)
-                   .stroke();
-
-                // Add owner row
-                const ownerY = teamTableTop + teamRowHeight;
-                doc.moveTo(teamTableLeft, ownerY)
-                   .lineTo(teamTableLeft + 475, ownerY)
-                   .stroke();
-                doc.text('Owner', teamTableLeft + 10, ownerY + 10)
-                   .text(`${project.owner.first_name} ${project.owner.last_name}`, teamTableLeft + teamColWidth + 10, ownerY + 10);
-
-                // Add collaborator rows with page break handling
-                let currentY = ownerY + teamRowHeight;
-                project.collaborators.forEach((collab, index) => {
-                    // Check if we need a new page
-                    if (currentY > 700) {
-                        doc.addPage();
-                        // Redraw headers on new page
-                        doc.fontSize(14)
-                           .text('Project Team:', 60, doc.y, { underline: true })
-                           .moveDown(0.5);
-                        doc.fontSize(12)
-                           .fillColor('#000000')
-                           .text('Role', teamTableLeft + 10, doc.y + 10)
-                           .text('Name', teamTableLeft + teamColWidth + 10, doc.y + 10);
-                        doc.moveTo(teamTableLeft, doc.y + 30)
-                           .lineTo(teamTableLeft + 475, doc.y + 30)
-                           .stroke();
-                        currentY = doc.y + 30;
-                    }
-
-                    doc.moveTo(teamTableLeft, currentY)
-                       .lineTo(teamTableLeft + 475, currentY)
-                       .stroke();
-                    doc.text('Collaborator', teamTableLeft + 10, currentY + 10)
-                       .text(`${collab.first_name} ${collab.last_name}`, teamTableLeft + teamColWidth + 10, currentY + 10);
-                    currentY += teamRowHeight;
-                });
-
-                doc.moveDown(2);
-
-                // Add milestones section
-                doc.fontSize(14)
-                   .text('Milestones:', 60, doc.y, { underline: true })
-                   .moveDown(1);
-
-                if (project.milestones && project.milestones.length > 0) {
-                    // Table setup for milestones
-                    const tableTop = doc.y;
-                    const tableLeft = 60;
-                    const colWidth = 95; // 475/5 columns
-                    const rowHeight = 30;
-                    const headers = ['Title', 'Status', 'Description', 'Expected Date', 'Assigned To'];
-
-                    // Check if we need a new page for the milestones table
-                    if (doc.y > 700) {
-                        doc.addPage();
-                        doc.fontSize(14)
-                           .text('Milestones:', 60, doc.y, { underline: true })
-                           .moveDown(1);
-                    }
-
-                    // Draw table headers
-                    doc.fontSize(12)
-                       .fillColor('#000000');
-                    
-                    // Draw all headers on the same line
-                    const headerY = doc.y;
-                    headers.forEach((header, i) => {
-                        doc.text(header, tableLeft + (colWidth * i), headerY);
-                    });
-
-                    // Draw header underline
-                    doc.moveTo(tableLeft, headerY + 20)
-                       .lineTo(tableLeft + 475, headerY + 20)
-                       .stroke();
-
-                    // Process each milestone
-                    let currentMilestoneY = headerY + 30;
-                    for (const milestone of project.milestones) {
-                        try {
-                            // Check if we need a new page
-                            if (currentMilestoneY > 700) {
-                                doc.addPage();
-                                // Redraw headers on new page
-                                doc.fontSize(14)
-                                   .text('Milestones:', 60, doc.y, { underline: true })
-                                   .moveDown(1);
-                                doc.fontSize(12)
-                                   .fillColor('#000000');
-                                
-                                // Draw all headers on the same line
-                                const newHeaderY = doc.y;
-                                headers.forEach((header, i) => {
-                                    doc.text(header, tableLeft + (colWidth * i), newHeaderY);
-                                });
-                                doc.moveTo(tableLeft, newHeaderY + 20)
-                                   .lineTo(tableLeft + 475, newHeaderY + 20)
-                                   .stroke();
-                                currentMilestoneY = newHeaderY + 30;
-                            }
-
-                            // Get assigned user name if exists
-                            let assignedUserName = 'Not Assigned';
-                            if (milestone.assigned_user_ID) {
-                                const assignedUser = await db.executeQuery(
-                                    `SELECT fname, sname FROM users WHERE user_ID = ?`,
-                                    [milestone.assigned_user_ID]
-                                );
-                                if (assignedUser.length > 0) {
-                                    assignedUserName = `${assignedUser[0].fname} ${assignedUser[0].sname}`;
-                                }
-                            }
-
-                            // Format date if exists
-                            let formattedDate = 'Not Set';
-                            if (milestone.expected_completion_date) {
-                                const date = new Date(milestone.expected_completion_date);
-                                formattedDate = date.toLocaleDateString();
-                            }
-
-                            // Draw table row
-                            doc.fontSize(10) // Smaller font for table content
-                               .text(milestone.title, tableLeft, currentMilestoneY, { width: colWidth, align: 'left' })
-                               .text(milestone.status || 'Not Started', tableLeft + colWidth, currentMilestoneY, { width: colWidth, align: 'left' })
-                               .text(milestone.description || 'No Description', tableLeft + (colWidth * 2), currentMilestoneY, { width: colWidth, align: 'left' })
-                               .text(formattedDate, tableLeft + (colWidth * 3), currentMilestoneY, { width: colWidth, align: 'left' })
-                               .text(assignedUserName, tableLeft + (colWidth * 4), currentMilestoneY, { width: colWidth, align: 'left' });
-
-                            // Draw row separator
-                            doc.moveTo(tableLeft, currentMilestoneY + 20)
-                               .lineTo(tableLeft + 475, currentMilestoneY + 20)
-                               .stroke();
-
-                            currentMilestoneY += rowHeight;
-                            doc.moveDown(1);
-                        } catch (error) {
-                            console.error(`Error processing milestone ${milestone.milestone_ID}:`, error);
-                            continue;
-                        }
-                    }
-                } else {
-                    doc.fontSize(12)
-                       .fillColor('#000000')
-                       .text('No milestones found for this project.', 60, doc.y)
-                       .moveDown(2);
-                }
-
-                // Add page break between projects, but not after the last project
-                if (project !== projectData[projectData.length - 1]) {
-                    doc.addPage();
-                }
-            } catch (error) {
-                console.error(`Error processing project ${project.title}:`, error);
-                continue; // Skip this project and continue with others
-            }
         }
 
         // Finalize the PDF
