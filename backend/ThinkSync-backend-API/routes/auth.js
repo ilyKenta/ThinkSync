@@ -4,7 +4,7 @@ const router = express.Router();
 const { getUserIdFromToken, validateToken} = require('../utils/auth');
 
 
-
+//authenticate with microsoft
 router.post('/microsoft', async (req, res) => {
     const { token } = req.body;
 
@@ -58,6 +58,7 @@ router.post('/microsoft', async (req, res) => {
     }
 });
 
+//validate user payload
 const isValidUserPayload = (reqBody, includeResearchFields = false) => {
     const {phone_number, department, acc_role, res_area, qualification, current_proj } = reqBody;
     if (!phone_number || typeof phone_number !== 'string') return false;
@@ -73,6 +74,7 @@ const isValidUserPayload = (reqBody, includeResearchFields = false) => {
     return true;
 };
 
+//sign up as reviewer
 router.post('/reviewer', async (req, res) => {
     const { token, phone_number, department, acc_role, res_area, qualification, current_proj } = req.body;
     const userData = req.body;
@@ -124,6 +126,7 @@ router.post('/reviewer', async (req, res) => {
     }
 });
 
+//sign up as researcher
 router.post('/researcher', async (req, res) => {
     const { token, phone_number, department, acc_role, res_area, qualification, current_proj } = req.body;
     const userData = req.body;
@@ -175,6 +178,7 @@ router.post('/researcher', async (req, res) => {
     }
 });
 
+//sign up as admin
 router.post('/admin', async (req, res) => {
     const { token, phone_number, department, acc_role } = req.body;
     const userData = req.body;
