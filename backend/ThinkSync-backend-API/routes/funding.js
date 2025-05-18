@@ -482,7 +482,7 @@ router.get('/report', async (req, res) => {
                                 datalabels: {
                                     color: '#fff',
                                     font: {
-                                        family: 'sans-serif',
+                                        family: 'DejaVu Sans' || 'sans-serif',
                                         weight: 'bold',
                                         size: 24
                                     },
@@ -496,7 +496,7 @@ router.get('/report', async (req, res) => {
                                     display: true,
                                     text: 'Funding Category Breakdown',
                                     font: {
-                                        family: 'sans-serif',
+                                        family: 'DejaVu Sans' || 'sans-serif',
                                         size: 36,
                                         weight: 'bold'
                                     },
@@ -507,7 +507,7 @@ router.get('/report', async (req, res) => {
                                     position: 'bottom',
                                     labels: {
                                         font: {
-                                            family: 'sans-serif',
+                                            family: 'DejaVu Sans' || 'sans-serif',
                                             size: 24,
                                             weight: 'bold'
                                         },
