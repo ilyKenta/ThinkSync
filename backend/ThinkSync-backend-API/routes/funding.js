@@ -446,6 +446,11 @@ router.get('/report', async (req, res) => {
                         type: 'png',
                         plugins: {
                             modern: ['chartjs-plugin-datalabels']
+                        },
+                        fonts: {
+                            family: 'Arial',
+                            size: 24,
+                            weight: 'bold'
                         }
                     });
 
@@ -477,8 +482,9 @@ router.get('/report', async (req, res) => {
                                 datalabels: {
                                     color: '#fff',
                                     font: {
+                                        family: "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
                                         weight: 'bold',
-                                        size: 24  // Increased from 14
+                                        size: 24
                                     },
                                     formatter: (value, ctx) => {
                                         const total = ctx.dataset.data.reduce((acc, data) => acc + data, 0);
@@ -490,6 +496,7 @@ router.get('/report', async (req, res) => {
                                     display: true,
                                     text: 'Funding Category Breakdown',
                                     font: {
+                                        family: "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
                                         size: 36,
                                         weight: 'bold'
                                     },
@@ -500,6 +507,7 @@ router.get('/report', async (req, res) => {
                                     position: 'bottom',
                                     labels: {
                                         font: {
+                                            family: "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
                                             size: 24,
                                             weight: 'bold'
                                         },

@@ -343,6 +343,11 @@ router.get('/report/generate', async (req, res) => {
                 type: 'png',
                 plugins: {
                     modern: ['chartjs-plugin-datalabels']
+                },
+                fonts: {
+                    family: 'Arial',
+                    size: 24,
+                    weight: 'bold'
                 }
             });
             
@@ -374,8 +379,9 @@ router.get('/report/generate', async (req, res) => {
                         datalabels: {
                             color: '#fff',
                             font: {
+                                family: "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
                                 weight: 'bold',
-                                size: 24  // Increased from 16
+                                size: 24
                             },
                             formatter: (value, ctx) => {
                                 const total = ctx.dataset.data.reduce((acc, data) => acc + data, 0);
@@ -387,20 +393,22 @@ router.get('/report/generate', async (req, res) => {
                             display: true,
                             text: 'Overall Milestone Status Distribution',
                             font: {
-                                size: 36,  // Increased from 28
-                                weight: 'bold',
+                                family: "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
+                                size: 36,
+                                weight: 'bold'
                             },
-                            padding: 40,  // Increased padding
+                            padding: 40,
                             color: '#333333'
                         },
                         legend: {
                             position: 'bottom',
                             labels: {
                                 font: {
-                                    size: 24,  // Increased from 18
-                                    weight: 'bold'  // Added bold weight
+                                    family: "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
+                                    size: 24,
+                                    weight: 'bold'
                                 },
-                                padding: 30,  // Increased padding
+                                padding: 30,
                                 usePointStyle: true,
                                 pointStyle: 'circle'
                             }
