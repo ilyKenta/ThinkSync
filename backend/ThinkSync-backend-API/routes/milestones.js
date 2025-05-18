@@ -204,6 +204,60 @@ router.post('/:projectId', async (req, res) => {
     }
 });
 
+// Add helper function for drawing pie chart
+function drawPieChart(doc, data, x, y, radius) {
+    const total = data.reduce((sum, item) => sum + item.value, 0);
+    let startAngle = -Math.PI / 2; // Start from top
+    const centerX = x + radius;
+    const centerY = y + radius;
+
+    // Draw pie slices
+    data.forEach((item, i) => {
+        const sliceAngle = (item.value / total) * 2 * Math.PI;
+        const endAngle = startAngle + sliceAngle;
+
+        // Draw slice
+        doc.save()
+           .moveTo(centerX, centerY)
+           .arc(centerX, centerY, radius, startAngle, endAngle, false)
+           .lineTo(centerX, centerY)
+           .fill(item.color || '#36A2EB')
+           .restore();
+
+        // Calculate label position
+        const labelAngle = startAngle + (sliceAngle / 2);
+        const labelRadius = radius * 0.6;
+        const labelX = centerX + (labelRadius * Math.cos(labelAngle));
+        const labelY = centerY + (labelRadius * Math.sin(labelAngle));
+
+        // Draw percentage label
+        const percentage = Math.round((item.value / total) * 100);
+        if (percentage > 5) { // Only show label if slice is big enough
+            doc.fontSize(12)
+               .fillColor('#FFFFFF')
+               .text(`${percentage}%`, labelX - 10, labelY - 6, {
+                   width: 25,
+                   align: 'center'
+               });
+        }
+
+        // Draw legend
+        const legendX = x + (radius * 2) + 20;
+        const legendY = y + (i * 20);
+        doc.rect(legendX, legendY, 10, 10)
+           .fill(item.color || '#36A2EB');
+        doc.fontSize(10)
+           .fillColor('#000000')
+           .text(`${item.label} (${percentage}%)`, legendX + 15, legendY - 2);
+
+        startAngle = endAngle;
+    });
+
+    // Draw circle border
+    doc.circle(centerX, centerY, radius)
+       .stroke();
+}
+
 // Generate PDF report of all projects and milestones
 router.get('/report/generate', async (req, res) => {
     let doc = null;
@@ -333,151 +387,70 @@ router.get('/report/generate', async (req, res) => {
                .text('Overall Milestone Statistics', { align: 'center' })
                .moveDown();
 
-            // Create pie chart
-            const width = 800;  // Decreased from 1200
-            const height = 800; // Decreased from 1200
-            const chartJSNodeCanvas = new ChartJSNodeCanvas({ 
-                width, 
-                height,
-                backgroundColour: 'white',
-                type: 'png',
-                plugins: {
-                    modern: ['chartjs-plugin-datalabels']
-                },
-                fonts: {
-                    family: 'Arial',
-                    size: 24,
-                    weight: 'bold'
-                }
-            });
-            
-            const configuration = {
-                type: 'pie',
-                data: {
-                    labels: Object.keys(overallStatusCounts),
-                    datasets: [{
-                        data: Object.values(overallStatusCounts),
-                        backgroundColor: [
-                            '#FF6384', // Not Started - Red
-                            '#36A2EB', // In Progress - Blue
-                            '#4BC0C0'  // Completed - Teal
-                        ],
-                        borderWidth: 3,
-                        borderColor: 'white',
-                        hoverBorderWidth: 4,
-                        hoverBorderColor: '#666666'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    animation: {
-                        animateScale: true,
-                        animateRotate: true
-                    },
-                    plugins: {
-                        datalabels: {
-                            color: '#fff',
-                            font: {
-                                weight: 'bold',
-                                size: 24
-                            },
-                            formatter: (value, ctx) => {
-                                const total = ctx.dataset.data.reduce((acc, data) => acc + data, 0);
-                                const percentage = Math.round((value * 100) / total);
-                                return `${percentage}%`;
-                            }
-                        },
-                        title: {
-                            display: true,
-                            text: 'Overall Milestone Status Distribution',
-                            font: {
-                                size: 36,
-                                weight: 'bold'
-                            },
-                            padding: 40,
-                            color: '#333333'
-                        },
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                font: {
-                                    size: 24,
-                                    weight: 'bold'
-                                },
-                                padding: 30,
-                                usePointStyle: true,
-                                pointStyle: 'circle'
-                            }
-                        }
-                    }
-                }
-            };
+            // Prepare data for pie chart
+            const chartData = Object.entries(overallStatusCounts).map(([status, count], index) => ({
+                label: status,
+                value: count,
+                color: ['#FF6384', '#36A2EB', '#4BC0C0'][index]
+            }));
 
-            // Generate chart image with higher quality
-            const image = await chartJSNodeCanvas.renderToBuffer(configuration);
-            
-            // Center the graph horizontally
-            const pageWidth = 595.28; // A4 width in points
-            const graphWidth = 400;
-            const graphX = (pageWidth - graphWidth) / 2;
-            doc.image(image, {
-                fit: [400, 400],
-                align: 'center',
-                x: graphX
+            // Draw pie chart
+            const chartRadius = 150;
+            const chartX = (doc.page.width - (chartRadius * 2)) / 2;
+            const chartY = doc.y;
+
+            drawPieChart(doc, chartData, chartX, chartY, chartRadius);
+            doc.moveDown(12); // Add space after chart
+
+            // Add overall statistics table
+            doc.fontSize(14)
+               .text('Status Breakdown:', { underline: true })
+               .moveDown(0.5);
+
+            // Create table for statistics
+            const statsTableTop = doc.y;
+            const statsTableLeft = 50;
+            const statsColWidth = 150;
+            const statsRowHeight = 30;
+
+            // Draw table border
+            doc.rect(statsTableLeft, statsTableTop, 450, statsRowHeight * 4)
+               .stroke('#cccccc');
+
+            // Table headers
+            doc.fontSize(12)
+               .fillColor('#000000')
+               .text('Status', statsTableLeft + 10, statsTableTop + 10)
+               .text('Count', statsTableLeft + statsColWidth + 10, statsTableTop + 10)
+               .text('Percentage', statsTableLeft + (statsColWidth * 2) + 10, statsTableTop + 10);
+
+            // Draw header separator
+            doc.moveTo(statsTableLeft, statsTableTop + statsRowHeight)
+               .lineTo(statsTableLeft + 450, statsTableTop + statsRowHeight)
+               .stroke();
+
+            // Table rows
+            Object.entries(overallStatusCounts).forEach(([status, count], index) => {
+                const y = statsTableTop + (statsRowHeight * (index + 1));
+                const percentage = allMilestones.length > 0 ? (count / allMilestones.length) * 100 : 0;
+                
+                // Draw row separator
+                doc.moveTo(statsTableLeft, y)
+                   .lineTo(statsTableLeft + 450, y)
+                   .stroke();
+
+                doc.text(status, statsTableLeft + 10, y + 10)
+                   .text(count.toString(), statsTableLeft + statsColWidth + 10, y + 10)
+                   .text(`${percentage.toFixed(1)}%`, statsTableLeft + (statsColWidth * 2) + 10, y + 10);
             });
-            
-            doc.moveDown();
+
+            doc.moveDown(3);
         } catch (error) {
             console.error('Error generating chart:', error);
             doc.fontSize(14)
                .text('Error generating chart. Please try again.', { align: 'center' })
                .moveDown();
         }
-
-        // Add overall statistics table
-        doc.fontSize(14)
-           .text('Status Breakdown:', { underline: true })
-           .moveDown(0.5);
-
-        // Create table for statistics
-        const statsTableTop = doc.y;
-        const statsTableLeft = 50;
-        const statsColWidth = 150;
-        const statsRowHeight = 30;
-
-        // Draw table border
-        doc.rect(statsTableLeft, statsTableTop, 450, statsRowHeight * 4)
-           .stroke('#cccccc');
-
-        // Table headers
-        doc.fontSize(12)
-           .fillColor('#000000')
-           .text('Status', statsTableLeft + 10, statsTableTop + 10)
-           .text('Count', statsTableLeft + statsColWidth + 10, statsTableTop + 10)
-           .text('Percentage', statsTableLeft + (statsColWidth * 2) + 10, statsTableTop + 10);
-
-        // Draw header separator
-        doc.moveTo(statsTableLeft, statsTableTop + statsRowHeight)
-           .lineTo(statsTableLeft + 450, statsTableTop + statsRowHeight)
-           .stroke();
-
-        // Table rows
-        Object.entries(overallStatusCounts).forEach(([status, count], index) => {
-            const y = statsTableTop + (statsRowHeight * (index + 1));
-            const percentage = allMilestones.length > 0 ? (count / allMilestones.length) * 100 : 0;
-            
-            // Draw row separator
-            doc.moveTo(statsTableLeft, y)
-               .lineTo(statsTableLeft + 450, y)
-               .stroke();
-
-            doc.text(status, statsTableLeft + 10, y + 10)
-               .text(count.toString(), statsTableLeft + statsColWidth + 10, y + 10)
-               .text(`${percentage.toFixed(1)}%`, statsTableLeft + (statsColWidth * 2) + 10, y + 10);
-        });
-
-        doc.moveDown(3);
 
         // Add project details
         doc.fontSize(18)
@@ -833,4 +806,5 @@ router.delete('/:projectId/:milestoneId', async (req, res) => {
 });
 
 module.exports = router;
-module.exports.validateMilestoneFields = validateMilestoneFields; 
+module.exports.validateMilestoneFields = validateMilestoneFields;
+module.exports.checkResearcherRole = checkResearcherRole; 

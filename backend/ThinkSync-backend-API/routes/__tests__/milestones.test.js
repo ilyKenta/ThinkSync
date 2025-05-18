@@ -543,4 +543,136 @@ describe('validateMilestoneFields', () => {
   });
 });
 
+describe('Milestones Report Generation', () => {
+  let app;
+  let mockToken = 'mock-token';
+  let mockUserId = 'user-1';
+
+  beforeEach(() => {
+    app = express();
+    app.use(express.json());
+    app.use('/api/milestones', milestonesRoutes);
+    extractToken.mockReturnValue(mockToken);
+    getUserIdFromToken.mockResolvedValue(mockUserId);
+    jest.clearAllMocks();
+  });
+
+  it('should generate PDF report with pie chart for milestone statistics', async () => {
+    // Mock researcher role check
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }]) // roles check
+      .mockResolvedValueOnce([
+        { project_ID: 1, title: 'Project 1', owner_ID: mockUserId }
+      ]) // projects
+      .mockResolvedValueOnce([
+        { milestone_ID: 1, title: 'M1', status: 'Not Started' },
+        { milestone_ID: 2, title: 'M2', status: 'In Progress' },
+        { milestone_ID: 3, title: 'M3', status: 'Completed' }
+      ]) // milestones
+      .mockResolvedValueOnce([{ user_ID: mockUserId, fname: 'John', sname: 'Doe' }]) // owner
+      .mockResolvedValueOnce([]); // collaborators
+
+    const res = await request(app)
+      .get('/api/milestones/report/generate')
+      .expect(200);
+
+    expect(res.headers['content-type']).toMatch(/pdf/);
+    expect(PDFDocument).toHaveBeenCalled();
+  });
+
+  it('should handle empty milestone data in report generation', async () => {
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }])
+      .mockResolvedValueOnce([{ project_ID: 1, title: 'Project 1', owner_ID: mockUserId }])
+      .mockResolvedValueOnce([]) // no milestones
+      .mockResolvedValueOnce([{ user_ID: mockUserId, fname: 'John', sname: 'Doe' }])
+      .mockResolvedValueOnce([]);
+
+    const res = await request(app)
+      .get('/api/milestones/report/generate')
+      .expect(200);
+
+    expect(res.headers['content-type']).toMatch(/pdf/);
+  });
+
+  it('should handle multiple projects with milestones in report', async () => {
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }])
+      .mockResolvedValueOnce([
+        { project_ID: 1, title: 'Project 1', owner_ID: mockUserId },
+        { project_ID: 2, title: 'Project 2', owner_ID: mockUserId }
+      ])
+      .mockResolvedValueOnce([
+        { milestone_ID: 1, title: 'M1', status: 'Not Started' },
+        { milestone_ID: 2, title: 'M2', status: 'In Progress' }
+      ])
+      .mockResolvedValueOnce([{ user_ID: mockUserId, fname: 'John', sname: 'Doe' }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        { milestone_ID: 3, title: 'M3', status: 'Completed' },
+        { milestone_ID: 4, title: 'M4', status: 'Not Started' }
+      ])
+      .mockResolvedValueOnce([{ user_ID: mockUserId, fname: 'John', sname: 'Doe' }])
+      .mockResolvedValueOnce([]);
+
+    const res = await request(app)
+      .get('/api/milestones/report/generate')
+      .expect(200);
+
+    expect(res.headers['content-type']).toMatch(/pdf/);
+  });
+
+  it('should handle projects with collaborators in report', async () => {
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }])
+      .mockResolvedValueOnce([{ project_ID: 1, title: 'Project 1', owner_ID: mockUserId }])
+      .mockResolvedValueOnce([
+        { milestone_ID: 1, title: 'M1', status: 'Not Started' }
+      ])
+      .mockResolvedValueOnce([{ user_ID: mockUserId, fname: 'John', sname: 'Doe' }])
+      .mockResolvedValueOnce([
+        { user_ID: 'u2', fname: 'Jane', sname: 'Smith' }
+      ]);
+
+    const res = await request(app)
+      .get('/api/milestones/report/generate')
+      .expect(200);
+
+    expect(res.headers['content-type']).toMatch(/pdf/);
+  });
+
+  it('should handle error during report generation', async () => {
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }])
+      .mockRejectedValueOnce(new Error('Database error'));
+
+    const res = await request(app)
+      .get('/api/milestones/report/generate')
+      .expect(500);
+
+    expect(res.body.error).toBeDefined();
+  });
+
+  it('should handle missing owner information in report', async () => {
+    db.executeQuery
+      .mockResolvedValueOnce([{ role_name: 'researcher' }])
+      .mockResolvedValueOnce([{ project_ID: 1, title: 'Project 1', owner_ID: mockUserId }])
+      .mockResolvedValueOnce([
+        { milestone_ID: 1, title: 'M1', status: 'Not Started' }
+      ])
+      .mockResolvedValueOnce([]) // no owner found
+      .mockResolvedValueOnce([]); // collaborators
+
+    const res = await request(app)
+      .get('/api/milestones/report/generate')
+      .expect(200);
+
+    expect(res.headers['content-type']).toMatch(/pdf/);
+    // Verify that the error was logged
+    expect(console.error).toHaveBeenCalledWith(
+      expect.stringContaining('Owner information not found for project')
+    );
+  });
+});
+
 afterAll(() => { jest.clearAllMocks(); }); 

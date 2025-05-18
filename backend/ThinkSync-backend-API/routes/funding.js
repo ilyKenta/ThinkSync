@@ -3,9 +3,6 @@ const router = express.Router();
 const db = require('../db');
 const { getUserIdFromToken, extractToken } = require('../utils/auth');
 const PDFDocument = require('pdfkit');
-const { ChartJSNodeCanvas } = require('chartjs-node-canvas');
-const { Chart, registerables } = require('chart.js');
-Chart.register(...registerables);
 
 // Register additional plugins
 require('chartjs-plugin-datalabels');
@@ -305,6 +302,60 @@ router.delete('/:projectId/categories/:categoryId', async (req, res) => {
     }
 });
 
+// Add helper function for drawing pie chart
+function drawPieChart(doc, data, x, y, radius) {
+    const total = data.reduce((sum, item) => sum + item.value, 0);
+    let startAngle = -Math.PI / 2; // Start from top
+    const centerX = x + radius;
+    const centerY = y + radius;
+
+    // Draw pie slices
+    data.forEach((item, i) => {
+        const sliceAngle = (item.value / total) * 2 * Math.PI;
+        const endAngle = startAngle + sliceAngle;
+
+        // Draw slice
+        doc.save()
+           .moveTo(centerX, centerY)
+           .arc(centerX, centerY, radius, startAngle, endAngle, false)
+           .lineTo(centerX, centerY)
+           .fill(item.color || '#36A2EB')
+           .restore();
+
+        // Calculate label position
+        const labelAngle = startAngle + (sliceAngle / 2);
+        const labelRadius = radius * 0.6;
+        const labelX = centerX + (labelRadius * Math.cos(labelAngle));
+        const labelY = centerY + (labelRadius * Math.sin(labelAngle));
+
+        // Draw percentage label
+        const percentage = Math.round((item.value / total) * 100);
+        if (percentage > 5) { // Only show label if slice is big enough
+            doc.fontSize(12)
+               .fillColor('#FFFFFF')
+               .text(`${percentage}%`, labelX - 10, labelY - 6, {
+                   width: 25,
+                   align: 'center'
+               });
+        }
+
+        // Draw legend
+        const legendX = x + (radius * 2) + 20;
+        const legendY = y + (i * 20);
+        doc.rect(legendX, legendY, 10, 10)
+           .fill(item.color || '#36A2EB');
+        doc.fontSize(10)
+           .fillColor('#000000')
+           .text(`${item.label} (${percentage}%)`, legendX + 15, legendY - 2);
+
+        startAngle = endAngle;
+    });
+
+    // Draw circle border
+    doc.circle(centerX, centerY, radius)
+       .stroke();
+}
+
 // Generate PDF report of all projects and their funding details
 router.get('/report', async (req, res) => {
     let doc = null;
@@ -431,183 +482,98 @@ router.get('/report', async (req, res) => {
                     categoryTotals[normalized] += parseFloat(cat.amount_spent) || 0;
                 });
                 // Prepare data for pie chart
-                const chartData = Object.entries(categoryTotals).map(([label, value]) => ({ label, value }));
+                const chartData = Object.entries(categoryTotals).map(([category, amount], index) => ({
+                    label: category,
+                    value: amount,
+                    color: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'][index]
+                }));
                 // Add remaining amount as a slice
-                chartData.push({ label: 'Remaining', value: amountRemaining });
+                chartData.push({
+                    label: 'Remaining',
+                    value: amountRemaining,
+                    color: '#8AC249'
+                });
 
-                // Create pie chart for category breakdown
-                try {
-                    const width = 800;  // Increased from 400
-                    const height = 800; // Increased from 400
-                    const chartJSNodeCanvas = new ChartJSNodeCanvas({ 
-                        width, 
-                        height,
-                        backgroundColour: 'white',
-                        type: 'png',
-                        plugins: {
-                            modern: ['chartjs-plugin-datalabels']
-                        },
-                        fonts: {
-                            family: 'Arial',
-                            size: 24,
-                            weight: 'bold'
-                        }
-                    });
+                // Draw pie chart
+                const chartRadius = 150;
+                const chartX = (doc.page.width - (chartRadius * 2)) / 2;
+                const chartY = doc.y;
 
-                    const configuration = {
-                        type: 'pie',
-                        data: {
-                            labels: chartData.map(d => d.label),
-                            datasets: [{
-                                data: chartData.map(d => d.value),
-                                backgroundColor: [
-                                    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
-                                    '#FF9F40', '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
-                                    '#8AC249'  // Green color for remaining amount
-                                ],
-                                borderWidth: 3,
-                                borderColor: 'white',
-                                hoverBorderWidth: 4,
-                                hoverBorderColor: '#666666'
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            animation: {
-                                animateScale: true,
-                                animateRotate: true
-                            },
-                            plugins: {
-                                datalabels: {
-                                    color: '#fff',
-                                    font: {
-                                        weight: 'bold',
-                                        size: 24
-                                    },
-                                    formatter: (value, ctx) => {
-                                        const total = ctx.dataset.data.reduce((acc, data) => acc + data, 0);
-                                        const percentage = Math.round((value * 100) / total);
-                                        return `${percentage}%`;
-                                    }
-                                },
-                                title: {
-                                    display: true,
-                                    text: 'Funding Category Breakdown',
-                                    font: {
-                                        size: 36,
-                                        weight: 'bold'
-                                    },
-                                    padding: 40,
-                                    color: '#333333'
-                                },
-                                legend: {
-                                    position: 'bottom',
-                                    labels: {
-                                        font: {
-                                            size: 24,
-                                            weight: 'bold'
-                                        },
-                                        padding: 30,
-                                        usePointStyle: true,
-                                        pointStyle: 'circle'
-                                    }
-                                }
-                            }
-                        }
-                    };
+                drawPieChart(doc, chartData, chartX, chartY, chartRadius);
+                doc.moveDown(12); // Add space after chart
 
-                    // Generate chart image with higher quality
-                    const image = await chartJSNodeCanvas.renderToBuffer(configuration);
-                    
-                    // Center the graph horizontally
-                    const pageWidth = 595.28; // A4 width in points
-                    const graphWidth = 400;
-                    const graphX = (pageWidth - graphWidth) / 2;
-                    doc.image(image, {
-                        fit: [400, 400],
-                        align: 'center',
-                        x: graphX
-                    });
-                    
-                    // Always add a new page for category details
-                    doc.addPage();
+                // Always add a new page for category details
+                doc.addPage();
 
-                    // Add category details
-                    doc.fontSize(14)
-                       .text('Category Details:', 60, doc.y, { underline: true })
-                       .moveDown(0.5);
+                // Add category details
+                doc.fontSize(14)
+                   .text('Category Details:', 60, doc.y, { underline: true })
+                   .moveDown(0.5);
 
-                    // Create category table
-                    let categoryTableTop = doc.y;
-                    const categoryTableLeft = 60;
-                    const categoryColWidth = 475 / 3; // 475 is the total table width, 3 columns
-                    const categoryRowHeight = 30;
-                    const headers = ['Category', 'Description', 'Spent'];
+                // Create category table
+                let categoryTableTop = doc.y;
+                const categoryTableLeft = 60;
+                const categoryColWidth = 475 / 3; // 475 is the total table width, 3 columns
+                const categoryRowHeight = 30;
+                const headers = ['Category', 'Description', 'Spent'];
 
-                    // Draw table headers
-                    doc.fontSize(12)
-                       .fillColor('#000000');
-                    
-                    // Draw all headers on the same line
-                    const headerY = categoryTableTop;
-                    headers.forEach((header, i) => {
-                        doc.text(header, categoryTableLeft + (categoryColWidth * i), headerY);
-                    });
+                // Draw table headers
+                doc.fontSize(12)
+                   .fillColor('#000000');
+                
+                // Draw all headers on the same line
+                const headerY = categoryTableTop;
+                headers.forEach((header, i) => {
+                    doc.text(header, categoryTableLeft + (categoryColWidth * i), headerY);
+                });
 
-                    // Draw header underline
-                    doc.moveTo(categoryTableLeft, headerY + 20)
-                       .lineTo(categoryTableLeft + 475, headerY + 20)
+                // Draw header underline
+                doc.moveTo(categoryTableLeft, headerY + 20)
+                   .lineTo(categoryTableLeft + 475, headerY + 20)
+                   .stroke();
+
+                // Process each category
+                let currentY = headerY + 30;
+                for (const category of categories) {
+                    // Check if we need a new page
+                    if (currentY > 700) {
+                        doc.addPage();
+                        // Redraw headers on new page
+                        doc.fontSize(12)
+                           .fillColor('#000000');
+                        
+                        // Draw all headers on the same line
+                        const newHeaderY = doc.y;
+                        headers.forEach((header, i) => {
+                            doc.text(header, categoryTableLeft + (categoryColWidth * i), newHeaderY);
+                        });
+                        doc.moveTo(categoryTableLeft, newHeaderY + 20)
+                           .lineTo(categoryTableLeft + 475, newHeaderY + 20)
+                           .stroke();
+                        currentY = newHeaderY + 30;
+                    }
+
+                    const spent = parseFloat(category.amount_spent) || 0;
+
+                    // Draw table row
+                    doc.fontSize(10)
+                       .text(category.category, categoryTableLeft, currentY, { width: categoryColWidth, align: 'left' })
+                       .text(category.description || 'No Description', categoryTableLeft + categoryColWidth, currentY, { width: categoryColWidth, align: 'left' })
+                       .text(`R${spent.toFixed(2)}`, categoryTableLeft + (categoryColWidth * 2), currentY, { width: categoryColWidth, align: 'left' });
+
+                    // Draw row separator
+                    doc.moveTo(categoryTableLeft, currentY + 20)
+                       .lineTo(categoryTableLeft + 475, currentY + 20)
                        .stroke();
 
-                    // Process each category
-                    let currentY = headerY + 30;
-                    for (const category of categories) {
-                        // Check if we need a new page
-                        if (currentY > 700) {
-                            doc.addPage();
-                            // Redraw headers on new page
-                            doc.fontSize(12)
-                               .fillColor('#000000');
-                            
-                            // Draw all headers on the same line
-                            const newHeaderY = doc.y;
-                            headers.forEach((header, i) => {
-                                doc.text(header, categoryTableLeft + (categoryColWidth * i), newHeaderY);
-                            });
-                            doc.moveTo(categoryTableLeft, newHeaderY + 20)
-                               .lineTo(categoryTableLeft + 475, newHeaderY + 20)
-                               .stroke();
-                            currentY = newHeaderY + 30;
-                        }
+                    currentY += categoryRowHeight;
+                }
 
-                        const spent = parseFloat(category.amount_spent) || 0;
-
-                        // Draw table row
-                        doc.fontSize(10)
-                           .text(category.category, categoryTableLeft, currentY, { width: categoryColWidth, align: 'left' })
-                           .text(category.description || 'No Description', categoryTableLeft + categoryColWidth, currentY, { width: categoryColWidth, align: 'left' })
-                           .text(`R${spent.toFixed(2)}`, categoryTableLeft + (categoryColWidth * 2), currentY, { width: categoryColWidth, align: 'left' });
-
-                        // Draw row separator
-                        doc.moveTo(categoryTableLeft, currentY + 20)
-                           .lineTo(categoryTableLeft + 475, currentY + 20)
-                           .stroke();
-
-                        currentY += categoryRowHeight;
-                    }
-
-                    // Add page break between projects, but not after the last project
-                    if (project !== projects[projects.length - 1]) {
-                        doc.addPage();
-                        // Reset position for next project
-                        doc.y = 50; // Reset to top margin
-                    }
-                } catch (error) {
-                    console.error('Error generating chart:', error);
-                    doc.fontSize(14)
-                       .text('Error generating chart. Please try again.', { align: 'center' })
-                       .moveDown();
+                // Add page break between projects, but not after the last project
+                if (project !== projects[projects.length - 1]) {
+                    doc.addPage();
+                    // Reset position for next project
+                    doc.y = 50; // Reset to top margin
                 }
             } catch (error) {
                 console.error(`Error processing project ${project.title}:`, error);
