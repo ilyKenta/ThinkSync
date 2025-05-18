@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import FundingWidget from '../FundingWidget';
 
@@ -118,17 +118,17 @@ describe('FundingWidget', () => {
         await waitFor(() => {
             expect(screen.getByText(/Test Project/)).toBeInTheDocument();
         });
-        // Use a function matcher to ignore all whitespace (including non-breaking spaces)
-        expect(
-          screen.getByText((content, node) =>
-            !!(node && node.textContent && node.textContent.replace(/\s|\u00A0/g, '') === 'R10000')
-          )
-        ).toBeInTheDocument();
-        expect(
-          screen.getAllByText((content, node) =>
-            !!(node && node.textContent && node.textContent.replace(/\s|\u00A0/g, '') === 'R5000')
-          ).length
-        ).toBeGreaterThan(0);
+        // Robustly check Total Awarded
+        const totalAwardedDt = screen.getByText('Total Awarded:');
+        const totalAwardedDd = totalAwardedDt.nextElementSibling;
+        expect(totalAwardedDd).toBeTruthy();
+        expect(totalAwardedDd && totalAwardedDd.textContent && totalAwardedDd.textContent.replace(/[\s\u00A0,]/g, '')).toBe('R10000');
+        // Robustly check Spent and Remaining (R 5,000)
+        const allDd = screen.getAllByRole('definition');
+        const fiveThousandCount = allDd.filter(dd =>
+          dd && dd.textContent && dd.textContent.replace(/[\s\u00A0,]/g, '') === 'R5000'
+        ).length;
+        expect(fiveThousandCount).toBeGreaterThan(0);
         expect(screen.getByText(/active/i)).toBeInTheDocument();
         expect(screen.getByText(/2024\/12\/31/)).toBeInTheDocument();
     });
