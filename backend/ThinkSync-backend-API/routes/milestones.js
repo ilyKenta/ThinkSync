@@ -379,7 +379,7 @@ router.get('/report/generate', async (req, res) => {
                         datalabels: {
                             color: '#fff',
                             font: {
-                                family: "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
+                                family: 'sans-serif',
                                 weight: 'bold',
                                 size: 24
                             },
@@ -393,7 +393,7 @@ router.get('/report/generate', async (req, res) => {
                             display: true,
                             text: 'Overall Milestone Status Distribution',
                             font: {
-                                family: "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
+                                family: 'sans-serif',
                                 size: 36,
                                 weight: 'bold'
                             },
@@ -404,7 +404,7 @@ router.get('/report/generate', async (req, res) => {
                             position: 'bottom',
                             labels: {
                                 font: {
-                                    family: "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
+                                    family: 'sans-serif',
                                     size: 24,
                                     weight: 'bold'
                                 },
