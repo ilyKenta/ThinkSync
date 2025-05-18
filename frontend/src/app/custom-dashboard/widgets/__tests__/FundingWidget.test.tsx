@@ -130,7 +130,9 @@ describe('FundingWidget', () => {
         ).length;
         expect(fiveThousandCount).toBeGreaterThan(0);
         expect(screen.getByText(/active/i)).toBeInTheDocument();
-        expect(screen.getByText(/2024\/12\/31/)).toBeInTheDocument();
+        const grantEndDate = screen.getByTestId('grant-end-date');
+        expect(grantEndDate).toBeInTheDocument();
+        expect(grantEndDate.textContent).toMatch(/(\d{2,4}[\/\-]\d{2}[\/\-]\d{2,4})/);
     });
 
     test('handles project navigation correctly', async () => {

@@ -439,7 +439,7 @@ export default function FundingWidget({ onDelete }: WidgetProps) {
                             <dd><em className={styles[`status${currentProject.funding.grant_status}`]}>{currentProject.funding.grant_status}</em></dd>
                             
                             <dt>Grant Ends:</dt>
-                            <dd>{currentProject.funding.grant_end_date ? new Date(currentProject.funding.grant_end_date).toLocaleDateString() : 'N/A'}</dd>
+                            <dd data-testid="grant-end-date">{currentProject.funding.grant_end_date ? new Date(currentProject.funding.grant_end_date).toLocaleDateString() : 'N/A'}</dd>
                         </dl>
                     </section>
 
