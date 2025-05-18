@@ -80,7 +80,12 @@ jest.mock('../routes/messages', () => {
   const express = require('express');
   const router = express.Router();
   router.get('/conversations', (req, res) => res.status(200).send());
-  return router;
+  return {
+    router,
+    initializeAzureStorage: jest.fn(),
+    storageClient: {},
+    containerClient: {}
+  };
 });
 
 // Now import the modules
