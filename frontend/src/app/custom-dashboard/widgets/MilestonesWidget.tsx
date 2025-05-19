@@ -15,6 +15,7 @@ import {
 } from 'recharts';
 import { createPortal } from 'react-dom';
 
+// Interface for Project data structure
 interface Project {
     project_ID: number;
     title: string;
@@ -28,19 +29,23 @@ interface Project {
     milestones: Milestone[];
 }
 
+// Interface for milestone summary data
 interface MilestoneSummary {
     status: string;
     count: number;
     percentage: number;
 }
 
+// Color mapping for different milestone statuses
 const STATUS_COLORS = {
     'Completed': '#4CAF50',
     'In Progress': '#2196F3',
     'Not Started': '#FF9800'
 };
 
+// MilestonesWidget component that displays and manages project milestones
 export default function MilestonesWidget({ onDelete }: WidgetProps) {
+    // State management for projects, UI, and forms
     const [projects, setProjects] = useState<Project[]>([]);
     const [currentProjectIndex, setCurrentProjectIndex] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
@@ -58,10 +63,12 @@ export default function MilestonesWidget({ onDelete }: WidgetProps) {
     });
     const router = useRouter();
 
+    // Fetch projects on component mount
     useEffect(() => {
         fetchProjects();
     }, []);
 
+    // Fetch projects and their milestones from the API
     const fetchProjects = async () => {
         try {
             console.log('Fetching projects...');
@@ -85,7 +92,7 @@ export default function MilestonesWidget({ onDelete }: WidgetProps) {
             
             const data = await response.json();
             
-            // Ensure projects have the correct structure
+            // Format project data to ensure correct structure
             const formattedProjects = data.projects.map((project: any) => ({
                 ...project,
                 milestones: project.milestones || [],
@@ -103,6 +110,7 @@ export default function MilestonesWidget({ onDelete }: WidgetProps) {
         }
     };
 
+    // Navigation handlers for project list
     const handleNextProject = () => {
         setCurrentProjectIndex((prev) => (prev + 1) % projects.length);
     };
@@ -111,10 +119,12 @@ export default function MilestonesWidget({ onDelete }: WidgetProps) {
         setCurrentProjectIndex((prev) => (prev - 1 + projects.length) % projects.length);
     };
 
+    // Handle milestone click to navigate to milestone details
     const handleMilestoneClick = (milestoneId: number) => {
         router.push(`/milestones/${milestoneId}?from=custom-dashboard`);
     };
 
+    // Handle milestone creation
     const handleCreateSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSubmitting(true);
@@ -163,7 +173,7 @@ export default function MilestonesWidget({ onDelete }: WidgetProps) {
         }
     };
 
-    // Download report handler
+    // Handle milestone report download
     const handleDownloadReport = async () => {
         try {
             const token = localStorage.getItem('jwt');
@@ -190,6 +200,7 @@ export default function MilestonesWidget({ onDelete }: WidgetProps) {
         }
     };
 
+    // Loading state
     if (isLoading) {
         return (
             <article className={styles.widgetContainer}>
@@ -202,6 +213,7 @@ export default function MilestonesWidget({ onDelete }: WidgetProps) {
         );
     }
 
+    // Error state
     if (error) {
         return (
             <article className={styles.widgetContainer}>
@@ -214,6 +226,7 @@ export default function MilestonesWidget({ onDelete }: WidgetProps) {
         );
     }
 
+    // Empty state
     if (projects.length === 0) {
         return (
             <article className={styles.widgetContainer}>
@@ -229,12 +242,15 @@ export default function MilestonesWidget({ onDelete }: WidgetProps) {
     const currentProject = projects[currentProjectIndex];
     const milestones = currentProject?.milestones || [];
 
+    // Main render
     return (
         <article className={styles.widgetContainer}>
             <header className={styles.widgetHeader}>
                 <h2 className={styles.widgetTitle}>Milestones</h2>
                 <button className={styles.deleteButton} onClick={onDelete} aria-label="Delete widget">×</button>
             </header>
+
+            {/* Download report button */}
             <button
                 className={styles.createBtn}
                 style={{ 
@@ -252,6 +268,7 @@ export default function MilestonesWidget({ onDelete }: WidgetProps) {
                 Download Report
             </button>
             
+            {/* Milestone progress overview with pie chart */}
             <section className={styles.milestoneSummary}>
                 <h3>Milestone Progress Overview</h3>
                 <figure className={styles.pieChartContainer}>
@@ -293,6 +310,7 @@ export default function MilestonesWidget({ onDelete }: WidgetProps) {
                 </figure>
             </section>
 
+            {/* Project information */}
             <section className={styles.projectInfo}>
                 <h3>{currentProject.title}</h3>
                 {currentProject.collaborators.length > 0 && (
@@ -302,6 +320,7 @@ export default function MilestonesWidget({ onDelete }: WidgetProps) {
                 )}
             </section>
 
+            {/* Milestone list */}
             {milestones.length > 0 ? (
                 <section className={styles.milestoneList}>
                     <table className={styles.milestoneTable}>
@@ -344,12 +363,14 @@ export default function MilestonesWidget({ onDelete }: WidgetProps) {
                 <p className={styles.noMilestones}>No milestones found for this project.</p>
             )}
 
+            {/* Navigation controls */}
             <nav className={styles.navigationButtons} aria-label="Project navigation">
                 <button onClick={handlePrevProject} disabled={currentProjectIndex === 0}>Previous Project</button>
                 <p>{currentProjectIndex + 1} of {projects.length}</p>
                 <button onClick={handleNextProject} disabled={currentProjectIndex === projects.length - 1}>Next Project</button>
             </nav>
 
+            {/* Action buttons */}
             <section className={styles.actionButtons}>
                 <button className={styles.createButton} onClick={() => setShowCreateForm(true)}>
                     <Plus size={16} />
@@ -357,6 +378,7 @@ export default function MilestonesWidget({ onDelete }: WidgetProps) {
                 </button>
             </section>
 
+            {/* Create milestone modal */}
             {showCreateForm && (
                 createPortal(
                     <aside className={styles.overlay}>

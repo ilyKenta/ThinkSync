@@ -8,6 +8,7 @@ import { ProjectsWidget, MilestonesWidget, FundingWidget } from './widgets';
 import AddWidgetButton from './components/AddWidgetButton';
 import { useRouter, usePathname } from 'next/navigation';
 
+// Define the Widget interface to type our widget data
 interface Widget {
     widget_ID: number;
     widget_type: 'projects' | 'milestones' | 'funding';
@@ -17,6 +18,7 @@ interface Widget {
     height: number;
 }
 
+// Props interface for the DraggableWidget component
 interface DraggableWidgetProps {
     widget: Widget;
     index: number;
@@ -24,7 +26,9 @@ interface DraggableWidgetProps {
     renderWidget: (widget: Widget) => React.ReactNode;
 }
 
+// DraggableWidget component that handles drag and drop functionality for widgets
 const DraggableWidget = ({ widget, index, moveWidget, renderWidget }: DraggableWidgetProps) => {
+    // Set up drag functionality using react-dnd
     const [{ isDragging }, drag] = useDrag({
         type: 'WIDGET',
         item: { index },
@@ -33,6 +37,7 @@ const DraggableWidget = ({ widget, index, moveWidget, renderWidget }: DraggableW
         }),
     });
 
+    // Set up drop functionality using react-dnd
     const [, drop] = useDrop({
         accept: 'WIDGET',
         hover: (item: { index: number }) => {
@@ -43,6 +48,7 @@ const DraggableWidget = ({ widget, index, moveWidget, renderWidget }: DraggableW
         },
     });
 
+    // Combine drag and drop refs into a single ref
     const ref = (node: HTMLDivElement | null) => {
         drag(drop(node));
     };
@@ -58,19 +64,25 @@ const DraggableWidget = ({ widget, index, moveWidget, renderWidget }: DraggableW
     );
 };
 
+// Main CustomDashboard component that manages the dashboard layout and widgets
 export default function CustomDashboard() {
+    // Initialize router and pathname for navigation
     const router = useRouter();
     const pathname = usePathname();
+
+    // State management for widgets, loading state, and unread messages
     const [widgets, setWidgets] = useState<Widget[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [unreadCount, setUnreadCount] = useState(0);
 
+    // Fetch widgets and unread count on component mount
     useEffect(() => {
         console.log('CustomDashboard: Component mounted');
         fetchWidgets();
         fetchUnreadCount();
     }, []);
 
+    // Fetch unread message count from the API
     const fetchUnreadCount = async () => {
         const token = localStorage.getItem('jwt');
         if (!token) return;
@@ -83,6 +95,7 @@ export default function CustomDashboard() {
         }
     };
 
+    // Fetch widgets from the API
     const fetchWidgets = async () => {
         try {
             const token = localStorage.getItem('jwt');
@@ -104,6 +117,7 @@ export default function CustomDashboard() {
         }
     };
 
+    // Handle adding a new widget to the dashboard
     const handleAddWidget = async (type: Widget['widget_type']) => {
         try {
             const token = localStorage.getItem('jwt');
@@ -132,6 +146,7 @@ export default function CustomDashboard() {
         }
     };
 
+    // Handle deleting a widget from the dashboard
     const handleDeleteWidget = async (widgetId: number) => {
         try {
             const token = localStorage.getItem('jwt');
@@ -148,6 +163,7 @@ export default function CustomDashboard() {
         }
     };
 
+    // Handle moving widgets (drag and drop functionality)
     const moveWidget = async (dragIndex: number, hoverIndex: number) => {
         const draggedWidget = widgets[dragIndex];
         const newWidgets = [...widgets];
@@ -155,7 +171,7 @@ export default function CustomDashboard() {
         newWidgets.splice(hoverIndex, 0, draggedWidget);
         setWidgets(newWidgets);
 
-        // Update positions in the database
+        // Update widget position in the database
         try {
             const token = localStorage.getItem('jwt');
             const response = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/dashboard/widgets/${draggedWidget.widget_ID}`, {
@@ -182,6 +198,7 @@ export default function CustomDashboard() {
         }
     };
 
+    // Render the appropriate widget component based on type
     const renderWidget = (widget: Widget) => {
         switch (widget.widget_type) {
             case 'projects':
@@ -195,18 +212,22 @@ export default function CustomDashboard() {
         }
     };
 
+    // Show loading state while fetching widgets
     if (isLoading) {
         return <main className={styles.loading}>Loading widgets...</main>;
     }
 
+    // Main render of the dashboard
     return (
         <DndProvider backend={HTML5Backend}>
             <main className={styles.container}>
+                {/* Sidebar navigation */}
                 <nav className={styles.sidebar}>
                     <h2>ThinkSync</h2>
                     <h3>DASHBOARD</h3>
 
                     <ul>
+                        {/* Navigation buttons for different sections */}
                         <li>
                             <button
                                 type="button"
@@ -241,6 +262,7 @@ export default function CustomDashboard() {
                                 className={pathname === "/messager" ? styles.activeTab : ""}
                             >
                                 Messager
+                                {/* Display unread message count badge */}
                                 {unreadCount > 0 && (
                                     <mark
                                         style={{
@@ -285,12 +307,14 @@ export default function CustomDashboard() {
                     </ul>
                 </nav>
 
+                {/* Main content area with widgets */}
                 <section className={styles.mainContent}>
                     <header className={styles.header}>
                         <h1>Custom Dashboard</h1>
                         <AddWidgetButton onAddWidget={handleAddWidget} />
                     </header>
                     <section className={styles.widgetList}>
+                        {/* Render draggable widgets */}
                         {widgets.map((widget, index) => (
                             <DraggableWidget
                                 key={widget.widget_ID}

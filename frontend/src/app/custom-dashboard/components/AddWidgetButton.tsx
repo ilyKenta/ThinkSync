@@ -3,19 +3,24 @@
 import { useState } from 'react';
 import styles from '../page.module.css';
 
+// Props interface for the AddWidgetButton component
 interface AddWidgetButtonProps {
     onAddWidget: (type: 'projects' | 'milestones' | 'funding') => void;
 }
 
+// AddWidgetButton component that provides a dropdown menu for adding new widgets
 export default function AddWidgetButton({ onAddWidget }: AddWidgetButtonProps) {
+    // State to control dropdown visibility
     const [isOpen, setIsOpen] = useState(false);
 
+    // Define available widget types and their display labels
     const widgetTypes = [
         { type: 'projects', label: 'My Projects' },
         { type: 'milestones', label: 'Milestones' },
         { type: 'funding', label: 'Funding' }
     ] as const;
 
+    // Handle widget addition
     const handleAddWidget = (type: 'projects' | 'milestones' | 'funding') => {
         console.log('AddWidgetButton: handleAddWidget called with type:', type);
         try {
@@ -27,6 +32,7 @@ export default function AddWidgetButton({ onAddWidget }: AddWidgetButtonProps) {
         setIsOpen(false);
     };
 
+    // Toggle dropdown visibility
     const toggleDropdown = () => {
         console.log('AddWidgetButton: Toggling dropdown, current state:', isOpen);
         setIsOpen(!isOpen);
@@ -34,12 +40,14 @@ export default function AddWidgetButton({ onAddWidget }: AddWidgetButtonProps) {
 
     return (
         <section className={styles.addWidgetContainer}>
+            {/* Main button to open dropdown */}
             <button
                 className={styles.addWidgetButton}
                 onClick={toggleDropdown}
             >
                 Add Widget
             </button>
+            {/* Dropdown menu with widget options */}
             {isOpen && (
                 <section className={styles.widgetDropdown}>
                     {widgetTypes.map(({ type, label }) => (

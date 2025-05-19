@@ -10,7 +10,9 @@ import EditProjectForm from '../../edit-project/editProjectForm';
 import InviteCollaborators from '../../components/InviteCollaborators';
 import { FaUserPlus } from 'react-icons/fa';
 
+// ProjectsWidget component that displays and manages user's projects
 export default function ProjectsWidget({ onDelete }: WidgetProps) {
+    // State management for projects and UI
     const [projects, setProjects] = useState<Project[]>([]);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
@@ -32,10 +34,12 @@ export default function ProjectsWidget({ onDelete }: WidgetProps) {
     });
     const router = useRouter();
 
+    // Fetch projects on component mount
     useEffect(() => {
         fetchProjects();
     }, []);
 
+    // Fetch projects from the API
     const fetchProjects = async () => {
         try {
             console.log('Fetching projects...');
@@ -69,6 +73,7 @@ export default function ProjectsWidget({ onDelete }: WidgetProps) {
         }
     };
 
+    // Navigation handlers for project list
     const handleNext = () => {
         setCurrentIndex((prev) => (prev + 1) % projects.length);
     };
@@ -77,6 +82,7 @@ export default function ProjectsWidget({ onDelete }: WidgetProps) {
         setCurrentIndex((prev) => (prev - 1 + projects.length) % projects.length);
     };
 
+    // Handle project creation
     const handleCreate = (
         projectName: string,
         projectDesc: string,
@@ -99,6 +105,7 @@ export default function ProjectsWidget({ onDelete }: WidgetProps) {
         setShowReqForm(true);
     };
 
+    // Handle project editing
     const handleEdit = (updatedProject: Project) => {
         setProjects((prev) =>
             prev.map((p) =>
@@ -111,6 +118,7 @@ export default function ProjectsWidget({ onDelete }: WidgetProps) {
         setEditProject(null);
     };
 
+    // Handle project deletion
     const handleDelete = async (projectId: string) => {
         try {
             const token = localStorage.getItem('jwt');
@@ -145,12 +153,14 @@ export default function ProjectsWidget({ onDelete }: WidgetProps) {
         }
     };
 
+    // Handle collaborator invitation
     const handleInviteClick = (e: React.MouseEvent) => {
         e.stopPropagation();
         setInviteProject(currentProject);
         setInviteModalOpen(true);
     };
 
+    // Loading state
     if (isLoading) {
         return (
             <article className={styles.widgetContainer}>
@@ -163,6 +173,7 @@ export default function ProjectsWidget({ onDelete }: WidgetProps) {
         );
     }
 
+    // Error state
     if (error) {
         return (
             <article className={styles.widgetContainer}>
@@ -175,6 +186,7 @@ export default function ProjectsWidget({ onDelete }: WidgetProps) {
         );
     }
 
+    // Empty state
     if (projects.length === 0) {
         return (
             <article className={styles.widgetContainer}>
@@ -192,6 +204,7 @@ export default function ProjectsWidget({ onDelete }: WidgetProps) {
 
     const currentProject = projects[currentIndex];
 
+    // Main render
     return (
         <article className={styles.widgetContainer}>
             <header className={styles.widgetHeader}>
@@ -217,6 +230,7 @@ export default function ProjectsWidget({ onDelete }: WidgetProps) {
                             </dd>
                         </dl>
 
+                        {/* Display latest review if available */}
                         {currentProject.reviews && currentProject.reviews.length > 0 && (
                             <section className={styles.reviewList}>
                                 <h4 className={styles.reviewListTitle}>Latest Review</h4>
@@ -230,11 +244,15 @@ export default function ProjectsWidget({ onDelete }: WidgetProps) {
                     </section>
                 </footer>
             </section>
+
+            {/* Navigation controls */}
             <nav className={styles.navigationButtons} aria-label="Project navigation">
                 <button onClick={handlePrev} disabled={currentIndex === 0}>Previous</button>
                 <p>{currentIndex + 1} of {projects.length}</p>
                 <button onClick={handleNext} disabled={currentIndex === projects.length - 1}>Next</button>
             </nav>
+
+            {/* Action buttons */}
             <section className={styles.actionButtons}>
                 <button className={styles.createButton} onClick={() => setShowCreateForm(true)}>
                     + Create Project
@@ -267,6 +285,8 @@ export default function ProjectsWidget({ onDelete }: WidgetProps) {
                     🗑️
                 </button>
             </section>
+
+            {/* Modal forms */}
             {showCreateForm && (
                 <CreateForm
                     onClose={() => {
