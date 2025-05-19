@@ -27,6 +27,8 @@ export default function EditProjectForm({
   onEdit,
   initialValues,
 }: EditProjectFormProps) {
+  // setting up all the variables we need to store the form data
+  // we use the || operator to provide a fallback value in case the initial value is missing
   const [title, setTitle] = useState(
     initialValues.title || initialValues.name || ""
   );
@@ -39,6 +41,8 @@ export default function EditProjectForm({
   );
   const [start_date, setStart] = useState(initialValues.start_date || "");
   const [end_date, setEnd] = useState(initialValues.end_date || "");
+  // this is a bit tricky - we check if funding_available exists before using it
+  // if it doesn't exist, we default to false
   const [funding_available, setFunding] = useState(
     initialValues.funding_available !== undefined
       ? initialValues.funding_available
@@ -53,16 +57,21 @@ export default function EditProjectForm({
   );
   const [mounted, setMounted] = useState(false);
 
+  // this runs when the component first appears
+  // it adds a class to the body to prevent scrolling while the modal is open
+  // and then removes it when the component is closed
   useEffect(() => {
     setMounted(true);
     document.body.classList.add('modal-open');
     
+    // cleanup function that runs when component is removed
     return () => {
       document.body.classList.remove('modal-open');
     };
   }, []);
 
-  // Update state when initialValues change
+  // Update state when initialValues change - this is important if props change without component remounting
+  // for example if we edit a different project without closing the modal
   useEffect(() => {
     setTitle(initialValues.title || initialValues.name || "");
     setDescription(initialValues.description || "");
@@ -78,28 +87,36 @@ export default function EditProjectForm({
     setRequirements(initialValues.requirements || []);
   }, [initialValues]);
 
+  // this function runs when the user submits the form
+  // instead of actually saving right away, we just move to the requirements part
   const handleProjectSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault(); // stops the page from refreshing when form is submitted
     setError(null);
     setSuccess(false);
 
-    // Show the requirements form
+    // Show the requirements form - we don't save yet, just move to next part
     setShowRequirementsForm(true);
   };
 
-  // Format date for input field
+  // Helper function to format date for the date input field
+  // Dates in HTML inputs need to be in YYYY-MM-DD format
+  // this converts whatever date format we have to that format
   const formatDateForInput = (dateString: string) => {
     if (!dateString) return "";
     const date = new Date(dateString);
-    return date.toISOString().split("T")[0];
+    return date.toISOString().split("T")[0]; // gets the date part only, removes the time
   };
 
+  // If we're showing the requirements form, return that instead of this form
+  // We do this conditional rendering so we can switch between both forms
   if (showRequirementsForm) {
+    // Package up all our project data to pass to the requirements form
     const projectData = {
       title,
       description,
       goals,
       research_areas,
+      // Format dates in YYYY-MM-DD format for the API
       start_date: new Date(start_date).toISOString().split("T")[0],
       end_date: new Date(end_date).toISOString().split("T")[0],
       funding_available,
@@ -111,7 +128,7 @@ export default function EditProjectForm({
         projectData={projectData}
         requirements={requirements}
         onClose={() => {
-          setShowRequirementsForm(false);
+          setShowRequirementsForm(false); // reset the form state if closed
           onClose();
         }}
         onEdit={onEdit}
@@ -239,5 +256,7 @@ export default function EditProjectForm({
     </main>
   );
 
+  // Use createPortal to render the modal outside the normal DOM hierarchy
+  // This helps with z-index and styling so the modal appears on top of everything
   return createPortal(modalContent, document.body);
 }

@@ -13,6 +13,7 @@ import Link from "next/link";
 
 import styles from "./Milestones.module.css";
 
+// this is like a template that says what info each milestone should have
 interface Milestone {
   id: string;
   title: string;
@@ -23,7 +24,7 @@ interface Milestone {
 
   status: string;
   assigned_user_ID: string;
-  assigned_user_fname?: string;
+  assigned_user_fname?: string; // the ? means these might be empty sometimes
   assigned_user_sname?: string;
 }
 
@@ -35,19 +36,22 @@ interface Project {
 export default function MilestonesPage() {
   const router = useRouter();
   const pathname = usePathname();
+  // store all milestones from API
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [loading, setLoading] = useState(true);
+  // holds data for the pie chart showing milestone status counts
   const [statusSummary, setStatusSummary] = useState<
     { status: string; count: number; percentage: number }[]
   >([]);
   const [error, setError] = useState<string | null>(null);
+  // keeps track of unread messages for the notification badge
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
-    // Fetch all milestones from mock data
+    // this runs when the page first loads to get all the milestone data
     const fetchMilestones = async () => {
       try {
-        // This will be replaced with actual API call later
+        // get the auth token to prove we're logged in
         const token = localStorage.getItem('jwt');
         const response = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/milestones`, {
           headers: {
@@ -55,7 +59,9 @@ export default function MilestonesPage() {
           }
         });
         const data = await response.json();
-        // Flatten milestones from all projects and map to the Milestone interface
+        
+        // this part is complicated! it takes all the projects, gets their milestones,
+        // and puts them in a flat list with the right format we need
         const milestones = data.projects.flatMap((project: { milestones: any; project_ID: any; title: any; }) =>
           (project.milestones || []).map((milestone: { milestone_ID: any; title: any; description: any; expected_completion_date: any; assigned_user_ID: any; status: any; assigned_user_fname: any; assigned_user_sname: any; }) => ({
             id: String(milestone.milestone_ID),
@@ -71,6 +77,7 @@ export default function MilestonesPage() {
           }))
         );
 
+        // get the summary data for our pie chart
         const summary = data.summary;
         setStatusSummary(summary);
 
@@ -78,6 +85,7 @@ export default function MilestonesPage() {
         setMilestones(milestones);
         setLoading(false);
       } catch (err) {
+        // if something goes wrong, show an error
         setError(err instanceof Error ? err.message : "An error occurred");
         console.error("Error fetching milestones:", err);
 
@@ -86,7 +94,7 @@ export default function MilestonesPage() {
     };
     fetchMilestones();
 
-    // Fetch unread messages count
+    // also get how many unread messages we have for the notification
     const fetchUnread = async () => {
       const token = localStorage.getItem('jwt');
       if (!token) return;
@@ -104,12 +112,17 @@ export default function MilestonesPage() {
     fetchUnread();
   }, []);
 
-  // Group milestones by project
+  // Group milestones by project so we can show them organized by project
+  // this is using the reduce function which is a bit complicated
+  // it creates an object where each key is a project name
+  // and the value is an array of milestones for that project
   const groupedMilestones = milestones.reduce<Record<string, Milestone[]>>(
     (acc, milestone) => {
+      // if this is the first milestone for this project, create an empty array
       if (!acc[milestone.projectName]) {
         acc[milestone.projectName] = [];
       }
+      // add the milestone to the right project's array
       acc[milestone.projectName].push(milestone);
       return acc;
     },
@@ -231,25 +244,32 @@ export default function MilestonesPage() {
               <button
                 onClick={async () => {
                   try {
+                    // get our login token
                     const token = localStorage.getItem('jwt');
                     console.log('Attempting to download report...');
+                    // ask the server to generate a PDF report
                     const response = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/milestones/report/generate`, {
                       headers: {
                         'Authorization': `Bearer ${token}`
                       }
                     });
                     
+                    // show error if something went wrong
                     if (!response.ok) {
                       const errorData = await response.text();
                       console.error('Server response:', response.status, errorData);
                       throw new Error(`Failed to generate report: ${response.status} ${errorData}`);
                     }
 
+                    // get the PDF file as a blob (binary data)
                     const blob = await response.blob();
                     console.log('Received blob:', blob.type, blob.size);
                     
+                    // convert the blob to a URL we can download
                     const url = window.URL.createObjectURL(blob);
                     
+                    // this is a trick to trigger a file download
+                    // we create a link element, click it, then remove it
                     const link = document.createElement('a');
                     link.href = url;
                     link.download = 'milestones-report.pdf';
@@ -258,6 +278,7 @@ export default function MilestonesPage() {
                     link.click();
                     document.body.removeChild(link);
                     
+                    // clean up to free memory
                     window.URL.revokeObjectURL(url);
                   } catch (err) {
                     console.error('Error downloading report:', err);
@@ -342,6 +363,8 @@ export default function MilestonesPage() {
                             </td>
                             <td
                               className={`${styles.milestoneStatus} ${
+                                // this changes the styling based on milestone status
+                                // it uses conditional (ternary) operators to pick the right CSS class
                                 milestone.status === "Completed"
                                   ? styles.completed
                                   : milestone.status === "In Progress"
@@ -365,31 +388,33 @@ export default function MilestonesPage() {
         </section>
         <aside className={styles.chartContainer}>
           <h3 className={styles.chartTitle}>Milestone Progress Overview</h3>
+          {/* This is the pie chart that shows milestone status distribution */}
           <PieChart width={400} height={300}>
             <Pie
-              data={statusSummary}
-              dataKey="count"
-              nameKey="status"
-              cx="50%"
-              cy="50%"
+              data={statusSummary} // the data comes from our API
+              dataKey="count" // use the count property for the size of each slice
+              nameKey="status" // use status property for the name of each slice
+              cx="50%" // center horizontally
+              cy="50%" // center vertically
               outerRadius={80}
-              label
+              label // show labels
             >
+              {/* set different colors for different statuses */}
               {statusSummary.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
                   fill={
                     entry.status === "Completed"
-                      ? "#4CAF50"
+                      ? "#4CAF50" // green for completed
                       : entry.status === "In Progress"
-                      ? "#2196F3"
-                      : "#FF9800"
+                      ? "#2196F3" // blue for in progress
+                      : "#FF9800" // orange for not started
                   }
                 />
               ))}
             </Pie>
-            <Tooltip />
-            <Legend />
+            <Tooltip /> {/* show details when hovering */}
+            <Legend /> {/* show the legend */}
           </PieChart>
         </aside>
       </section>
