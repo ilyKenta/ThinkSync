@@ -14,56 +14,119 @@ interface Proposal {
   project_ID: string;
 }
 
+// Validation schema for API response
+interface ProjectData {
+  project_ID: string;
+  title: string;
+  researcher_fname: string;
+  researcher_sname: string;
+  research_areas?: string;
+  description?: string;
+}
+
 const SubmittedProposalsPage = () => {
   const [proposals, setProposals] = useState<Proposal[]>([]);
-  const [selected, setSelected] = useState<Proposal | null>(null);
+  const [selectedProposal, setSelectedProposal] = useState<string | null>(null);
+  const [showAssignReviewer, setShowAssignReviewer] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [assignModalOpen, setAssignModalOpen] = useState(false);
-  const [assignProject, setAssignProject] = useState<any | null>(null);
+
+  // Validate project data structure
+  const validateProjectData = (project: any): project is ProjectData => {
+    return (
+      typeof project === 'object' &&
+      project !== null &&
+      typeof project.project_ID === 'string' &&
+      typeof project.title === 'string' &&
+      typeof project.researcher_fname === 'string' &&
+      typeof project.researcher_sname === 'string' &&
+      (!project.research_areas || typeof project.research_areas === 'string') &&
+      (!project.description || typeof project.description === 'string')
+    );
+  };
+
+  // Validate mapped proposal data
+  const validateProposal = (proposal: any): proposal is Proposal => {
+    return (
+      typeof proposal === 'object' &&
+      proposal !== null &&
+      typeof proposal.id === 'string' &&
+      typeof proposal.title === 'string' &&
+      typeof proposal.researcher === 'string' &&
+      typeof proposal.researchAreas === 'string' &&
+      typeof proposal.summary === 'string' &&
+      typeof proposal.project_ID === 'string'
+    );
+  };
+
+  const fetchProposals = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const token = localStorage.getItem('jwt');
+      if (!token) {
+        throw new Error('Authentication required');
+      }
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/admin/projects/pending`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (!data || !Array.isArray(data.projects)) {
+        throw new Error('Invalid response format from server');
+      }
+
+      // Validate and map the projects data
+      const mappedProposals = data.projects
+        .filter((project: any) => validateProjectData(project))
+        .map((project: ProjectData) => ({
+          id: project.project_ID,
+          title: project.title.trim(),
+          researcher: `${project.researcher_fname.trim()} ${project.researcher_sname.trim()}`,
+          researchAreas: project.research_areas?.trim() || "No research areas specified",
+          summary: project.description?.trim() || '',
+          project_ID: project.project_ID
+        }))
+        .filter(validateProposal);
+
+      if (mappedProposals.length === 0) {
+        throw new Error('No valid proposals found');
+      }
+
+      setProposals(mappedProposals);
+    } catch (err: any) {
+      setError(err.message || 'An error occurred while fetching proposals');
+      setProposals([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchProposals = async () => {
-      try {
-        const token = localStorage.getItem('jwt');
-        if (!token) {
-          throw new Error('No access token found');
-        }
-
-        const response = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/admin/projects/pending`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch proposals');
-        }
-
-        const data = await response.json();
-        setProposals(data.projects.map((project: any) => ({
-          id: project.project_ID,
-          title: project.title,
-          researcher: `${project.researcher_fname} ${project.researcher_sname}`,
-          researchAreas: project.research_areas || "No research areas specified",
-          summary: project.description || '',
-          project_ID: project.project_ID
-        })));
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
-        console.error('Error fetching proposals:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchProposals();
   }, []);
 
-  const handleAssignClick = (e: React.MouseEvent, proposal: any) => {
-    e.stopPropagation();
-    setAssignProject(proposal);
-    setAssignModalOpen(true);
+  const handleAssignReviewer = (proposalId: string) => {
+    if (!proposalId || typeof proposalId !== 'string') {
+      setError('Invalid proposal ID');
+      return;
+    }
+    setSelectedProposal(proposalId);
+    setShowAssignReviewer(true);
+  };
+
+  const handleAssignSuccess = () => {
+    fetchProposals();
   };
 
   if (loading) {
@@ -105,7 +168,7 @@ const SubmittedProposalsPage = () => {
                   key={proposal.id}
                   style={{
                     background:
-                      selected?.id === proposal.id ? "#e6f0fa" : undefined,
+                      selectedProposal === proposal.id ? "#e6f0fa" : undefined,
                   }}
                 >
                   <td style={{ padding: 12 }}>{proposal.title}</td>
@@ -122,7 +185,7 @@ const SubmittedProposalsPage = () => {
                         borderRadius: 6,
                         padding: "6px 16px",
                       }}
-                      onClick={() => setSelected(proposal)}
+                      onClick={() => handleAssignReviewer(proposal.id)}
                     >
                       View
                     </button>
@@ -137,7 +200,7 @@ const SubmittedProposalsPage = () => {
                         borderRadius: 6,
                         padding: "6px 16px",
                       }}
-                      onClick={(e) => handleAssignClick(e, proposal)}
+                      onClick={() => handleAssignReviewer(proposal.id)}
                       title="Assign reviewer"
                     >
                       Assign
@@ -148,7 +211,7 @@ const SubmittedProposalsPage = () => {
             </tbody>
           </table>
           {/* Proposal Details */}
-          {selected && (
+          {selectedProposal && (
             <section
               data-testid="proposal-details"
               style={{
@@ -160,29 +223,30 @@ const SubmittedProposalsPage = () => {
                 minWidth: 320,
               }}
             >
-              <h2>{selected.title}</h2>
+              <h2>{proposals.find(p => p.id === selectedProposal)?.title}</h2>
               <p>
-                <strong>Researcher:</strong> {selected.researcher}
+                <strong>Researcher:</strong> {proposals.find(p => p.id === selectedProposal)?.researcher}
               </p>
               <p>
                 <strong>Research Areas:</strong>{" "}
-                {selected.researchAreas}
+                {proposals.find(p => p.id === selectedProposal)?.researchAreas}
               </p>
               <p>
-                <strong>Summary:</strong> {selected.summary}
+                <strong>Summary:</strong> {proposals.find(p => p.id === selectedProposal)?.summary}
               </p>
               {/* Add more details as needed */}
             </section>
           )}
         </section>
       </section>
-      {assignModalOpen && assignProject && (
+      {showAssignReviewer && selectedProposal && (
         <AssignReviewers
-          projectId={assignProject.project_ID}
+          projectId={selectedProposal}
           onClose={() => {
-            setAssignModalOpen(false);
-            setAssignProject(null);
+            setShowAssignReviewer(false);
+            setSelectedProposal(null);
           }}
+          onAssignSuccess={handleAssignSuccess}
         />
       )}
     </main>

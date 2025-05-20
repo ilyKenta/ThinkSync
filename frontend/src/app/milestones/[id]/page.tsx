@@ -58,6 +58,15 @@ export default function MilestoneDetailsPage({
   const [submitting, setSubmitting] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
 
+  // Add validation state
+  const [validationErrors, setValidationErrors] = useState<{
+    title?: string;
+    description?: string;
+    dueDate?: string;
+    status?: string;
+    assigned_user_ID?: string;
+  }>({});
+
   // useEffect runs on mount and when the id changes
   useEffect(() => {
     const fetchMilestoneDetails = async () => {
@@ -99,6 +108,68 @@ export default function MilestoneDetailsPage({
     fetchMilestoneDetails();
   }, [id]);
 
+  // Validate form inputs
+  const validateForm = () => {
+    if (!milestone) return false;
+    
+    const errors: typeof validationErrors = {};
+    let isValid = true;
+
+    // Validate title
+    if (!milestone.title.trim()) {
+      errors.title = "Title is required";
+      isValid = false;
+    } else if (milestone.title.length > 100) {
+      errors.title = "Title must be less than 100 characters";
+      isValid = false;
+    } else if (!/^[a-zA-Z0-9\s\-_.,&()]+$/.test(milestone.title)) {
+      errors.title = "Title contains invalid characters. Only letters, numbers, spaces, and basic punctuation are allowed";
+      isValid = false;
+    }
+
+    // Validate description
+    if (!milestone.description.trim()) {
+      errors.description = "Description is required";
+      isValid = false;
+    } else if (milestone.description.length > 500) {
+      errors.description = "Description must be less than 500 characters";
+      isValid = false;
+    }
+
+    // Validate due date
+    if (!milestone.dueDate) {
+      errors.dueDate = "Due date is required";
+      isValid = false;
+    } else {
+      const selectedDate = new Date(milestone.dueDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (selectedDate < today) {
+        errors.dueDate = "Due date cannot be in the past";
+        isValid = false;
+      }
+    }
+
+    // Validate status
+    if (!milestone.status) {
+      errors.status = "Status is required";
+      isValid = false;
+    } else if (!["Not Started", "In Progress", "Completed"].includes(milestone.status)) {
+      errors.status = "Invalid status selected";
+      isValid = false;
+    }
+
+    // Validate assigned user (optional)
+    if (milestone.assigned_user_ID && !collaborators.some(c => c.user_ID === milestone.assigned_user_ID)) {
+      errors.assigned_user_ID = "Invalid collaborator selected";
+      isValid = false;
+    }
+
+    setValidationErrors(errors);
+    return isValid;
+  };
+
   // Handle form submission for updating milestone
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,6 +177,13 @@ export default function MilestoneDetailsPage({
     
     setSubmitting(true);
     setEditError(null);
+    setValidationErrors({});
+
+    // Validate form before submission
+    if (!validateForm()) {
+      setSubmitting(false);
+      return;
+    }
 
     try {
       const token = localStorage.getItem('jwt');
@@ -120,7 +198,7 @@ export default function MilestoneDetailsPage({
           description: milestone.description.trim(),
           expected_completion_date: milestone.dueDate.split('T')[0],
           assigned_user_ID: milestone.assigned_user_ID || null,
-          status: milestone.status || 'Not Started'
+          status: milestone.status
         })
       });
 
@@ -346,38 +424,50 @@ export default function MilestoneDetailsPage({
                 <label className={styles.label}>Title</label>
                 <input
                   type="text"
-                  className={styles.input}
+                  className={`${styles.input} ${validationErrors.title ? styles.inputError : ''}`}
                   value={milestone.title}
                   onChange={(e) =>
                     setMilestone({ ...milestone, title: e.target.value })
                   }
+                  maxLength={100}
                   required
                 />
+                {validationErrors.title && (
+                  <p className={styles.errorMessage}>{validationErrors.title}</p>
+                )}
 
                 <label className={styles.label}>Description</label>
                 <textarea
-                  className={styles.input}
+                  className={`${styles.input} ${validationErrors.description ? styles.inputError : ''}`}
                   value={milestone.description}
                   onChange={(e) =>
                     setMilestone({ ...milestone, description: e.target.value })
                   }
+                  maxLength={500}
                   required
                 />
+                {validationErrors.description && (
+                  <p className={styles.errorMessage}>{validationErrors.description}</p>
+                )}
 
                 <label className={styles.label}>Due Date</label>
                 <input
                   type="date"
-                  className={styles.input}
+                  className={`${styles.input} ${validationErrors.dueDate ? styles.inputError : ''}`}
                   value={milestone.dueDate.split('T')[0]}
                   onChange={(e) =>
                     setMilestone({ ...milestone, dueDate: e.target.value })
                   }
+                  min={new Date().toISOString().split('T')[0]}
                   required
                 />
+                {validationErrors.dueDate && (
+                  <p className={styles.errorMessage}>{validationErrors.dueDate}</p>
+                )}
 
                 <label className={styles.label}>Status</label>
                 <select
-                  className={styles.input}
+                  className={`${styles.input} ${validationErrors.status ? styles.inputError : ''}`}
                   value={milestone.status}
                   onChange={(e) =>
                     setMilestone({ ...milestone, status: e.target.value })
@@ -388,10 +478,13 @@ export default function MilestoneDetailsPage({
                   <option value="In Progress">In Progress</option>
                   <option value="Completed">Completed</option>
                 </select>
+                {validationErrors.status && (
+                  <p className={styles.errorMessage}>{validationErrors.status}</p>
+                )}
 
                 <label className={styles.label}>Assign To</label>
                 <select
-                  className={styles.input}
+                  className={`${styles.input} ${validationErrors.assigned_user_ID ? styles.inputError : ''}`}
                   value={milestone.assigned_user_ID || ""}
                   onChange={(e) =>
                     setMilestone({ ...milestone, assigned_user_ID: e.target.value || null })
@@ -404,6 +497,9 @@ export default function MilestoneDetailsPage({
                     </option>
                   ))}
                 </select>
+                {validationErrors.assigned_user_ID && (
+                  <p className={styles.errorMessage}>{validationErrors.assigned_user_ID}</p>
+                )}
 
                 <nav className={styles.buttonRow}>
                   <button

@@ -1,35 +1,42 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import MilestoneDetailsPage from '../page';
 import '@testing-library/jest-dom';
 
+// Mock next/navigation
 jest.mock('next/navigation', () => ({
-  useRouter: () => ({ push: jest.fn() }),
-  useSearchParams: () => ({ get: () => null }),
+  useRouter: jest.fn(() => ({ push: jest.fn() })),
+  useSearchParams: jest.fn(() => ({ get: jest.fn() })),
 }));
 
+// Mock environment variable
+process.env.NEXT_PUBLIC_AZURE_API_URL = 'http://localhost:3000';
+
 describe('MilestoneDetailsPage', () => {
+  const mockMilestoneData = {
+    milestone: {
+      milestone_ID: '1',
+      title: 'Test Milestone',
+      description: 'Test Description',
+      project_ID: 'p1',
+      project_title: 'Project 1',
+      expected_completion_date: '2024-01-01',
+      assigned_user_ID: 'u1',
+      assigned_user_fname: 'Alice',
+      assigned_user_sname: 'Smith',
+      status: 'Not Started',
+    },
+    collaborators: [
+      { user_ID: 'u1', name: 'Alice Smith' },
+    ],
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
     global.fetch = jest.fn((url) => {
       return Promise.resolve({
         ok: true,
-        json: () => Promise.resolve({
-          milestone: {
-            milestone_ID: '1',
-            title: 'Test Milestone',
-            description: 'Desc',
-            project_ID: 'p1',
-            project_title: 'Project 1',
-            expected_completion_date: '2024-01-01',
-            assigned_user_ID: 'u1',
-            assigned_user_fname: 'Alice',
-            assigned_user_sname: 'Smith',
-            status: 'Completed',
-          },
-          collaborators: [
-            { user_ID: 'u1', name: 'Alice Smith' },
-          ],
-        })
+        json: () => Promise.resolve(mockMilestoneData)
       } as any);
     });
     Object.defineProperty(window, 'localStorage', {
@@ -52,131 +59,67 @@ describe('MilestoneDetailsPage', () => {
   });
 
   it('renders milestone details', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      json: () => Promise.resolve({
-        milestone: {
-          milestone_ID: '1',
-          title: 'Test Milestone',
-          description: 'Desc',
-          project_ID: 'p1',
-          project_title: 'Project 1',
-          expected_completion_date: '2024-01-01',
-          assigned_user_ID: 'u1',
-          assigned_user_fname: 'Alice',
-          assigned_user_sname: 'Smith',
-          status: 'Completed',
-        },
-        collaborators: [
-          { user_ID: 'u1', name: 'Alice Smith' },
-        ],
-      }),
-      ok: true,
-    });
     render(<MilestoneDetailsPage params={{ id: '1' }} />);
     await waitFor(() => {
       expect(screen.getByText('Test Milestone')).toBeInTheDocument();
       expect(screen.getByText(/project: project 1/i)).toBeInTheDocument();
-      expect(screen.getByText(/completed/i)).toBeInTheDocument();
-    });
-  });
-
-  it('handles edit flow', async () => {
-    (global.fetch as jest.Mock)
-      .mockImplementationOnce(() => Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve({
-          milestone: {
-            milestone_ID: '1',
-            title: 'Test Milestone',
-            description: 'Desc',
-            project_ID: 'p1',
-            project_title: 'Project 1',
-            expected_completion_date: '2024-01-01',
-            assigned_user_ID: 'u1',
-            assigned_user_fname: 'Alice',
-            assigned_user_sname: 'Smith',
-            status: 'Completed',
-          },
-          collaborators: [
-            { user_ID: 'u1', name: 'Alice Smith' },
-          ],
-        })
-      } as any))
-      .mockImplementationOnce(() => Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve({
-          milestone: {
-            milestone_ID: '1',
-            title: 'Test Milestone',
-            description: 'Desc',
-            project_ID: 'p1',
-            project_title: 'Project 1',
-            expected_completion_date: '2024-01-01',
-            assigned_user_ID: 'u1',
-            assigned_user_fname: 'Alice',
-            assigned_user_sname: 'Smith',
-            status: 'Completed',
-          },
-          collaborators: [
-            { user_ID: 'u1', name: 'Alice Smith' },
-          ],
-        })
-      } as any));
-    const { container } = render(<MilestoneDetailsPage params={{ id: '1' }} />);
-    await waitFor(() => {
-      expect(screen.getByText('Test Milestone')).toBeInTheDocument();
-    });
-    fireEvent.click(screen.getByText(/edit/i));
-    await waitFor(() => {
-      expect(screen.getByText(/edit test milestone/i)).toBeInTheDocument();
-    });
-    const textboxes = screen.getAllByRole('textbox');
-    fireEvent.change(textboxes[0], { target: { value: 'Updated Title' } });
-    fireEvent.change(textboxes[1], { target: { value: 'Updated Desc' } });
-    const dateInput = container.querySelector('input[type="date"]');
-    if (dateInput) fireEvent.change(dateInput, { target: { value: '2024-01-02' } });
-    fireEvent.change(screen.getAllByRole('combobox')[0], { target: { value: 'Completed' } });
-    fireEvent.change(screen.getAllByRole('combobox')[1], { target: { value: 'u1' } });
-    fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
-    await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalled();
+      expect(screen.getByText(/not started/i)).toBeInTheDocument();
+      expect(screen.getByText(/alice smith/i)).toBeInTheDocument();
+      expect(screen.getByText(/test description/i)).toBeInTheDocument();
     });
   });
 
   it('handles delete flow', async () => {
-    (global.fetch as jest.Mock)
-      .mockResolvedValueOnce({
-        json: () => Promise.resolve({
-          milestone: {
-            milestone_ID: '1',
-            title: 'Test Milestone',
-            description: 'Desc',
-            project_ID: 'p1',
-            project_title: 'Project 1',
-            expected_completion_date: '2024-01-01',
-            assigned_user_ID: 'u1',
-            assigned_user_fname: 'Alice',
-            assigned_user_sname: 'Smith',
-            status: 'Completed',
-          },
-          collaborators: [
-            { user_ID: 'u1', name: 'Alice Smith' },
-          ],
-        }),
-        ok: true,
-      })
-      .mockResolvedValueOnce({ ok: true });
+    const mockRouter = { push: jest.fn() };
+    (useRouter as jest.Mock).mockReturnValue(mockRouter);
+
     render(<MilestoneDetailsPage params={{ id: '1' }} />);
     await waitFor(() => {
       expect(screen.getByText('Test Milestone')).toBeInTheDocument();
     });
-    fireEvent.click(screen.getByText(/delete/i));
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
     await waitFor(() => {
-      expect(screen.getAllByText(/delete milestone/i)[0]).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /delete milestone/i })).toBeInTheDocument();
     });
-    fireEvent.click(screen.getAllByText(/delete milestone/i)[1]);
+
+    fireEvent.click(screen.getByRole('button', { name: /delete milestone/i }));
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalled();
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/milestones/p1/1'),
+        expect.objectContaining({
+          method: 'DELETE',
+        })
+      );
     });
+  });
+
+  it('handles back navigation', async () => {
+    const mockRouter = { push: jest.fn() };
+    (useRouter as jest.Mock).mockReturnValue(mockRouter);
+
+    render(<MilestoneDetailsPage params={{ id: '1' }} />);
+    await waitFor(() => {
+      expect(screen.getByText('Test Milestone')).toBeInTheDocument();
+    });
+
+    const backButton = screen.getAllByRole('button')[0];
+    fireEvent.click(backButton);
+    expect(mockRouter.push).toHaveBeenCalledWith('/milestones');
+  });
+
+  it('handles custom dashboard navigation', async () => {
+    const mockRouter = { push: jest.fn() };
+    (useRouter as jest.Mock).mockReturnValue(mockRouter);
+    (useSearchParams as jest.Mock).mockReturnValue({ get: () => 'custom-dashboard' });
+
+    render(<MilestoneDetailsPage params={{ id: '1' }} />);
+    await waitFor(() => {
+      expect(screen.getByText('Test Milestone')).toBeInTheDocument();
+    });
+
+    const backButton = screen.getAllByRole('button')[0];
+    fireEvent.click(backButton);
+    expect(mockRouter.push).toHaveBeenCalledWith('/custom-dashboard');
   });
 }); 

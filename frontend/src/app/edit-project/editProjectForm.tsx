@@ -94,6 +94,115 @@ export default function EditProjectForm({
     setError(null);
     setSuccess(false);
 
+    // Get current date at midnight for comparison
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Convert string dates to Date objects for comparison
+    const startDate = start_date ? new Date(start_date) : null;
+    const endDate = end_date ? new Date(end_date) : null;
+
+    // Validate project name
+    if (!title.trim()) {
+      const titleInput = document.getElementById('projName') as HTMLInputElement;
+      titleInput.setCustomValidity('Project name is required');
+      titleInput.reportValidity();
+      return;
+    }
+    if (title.length > 100) {
+      const titleInput = document.getElementById('projName') as HTMLInputElement;
+      titleInput.setCustomValidity('Project name must be less than 100 characters');
+      titleInput.reportValidity();
+      return;
+    }
+    // Check for special characters in project name
+    if (!/^[a-zA-Z0-9\s\-_.,&()]+$/.test(title)) {
+      const titleInput = document.getElementById('projName') as HTMLInputElement;
+      titleInput.setCustomValidity('Project name contains invalid characters. Only letters, numbers, spaces, and basic punctuation are allowed');
+      titleInput.reportValidity();
+      return;
+    }
+
+    // Validate description
+    if (!description.trim()) {
+      const descInput = document.getElementById('projectDesc') as HTMLInputElement;
+      descInput.setCustomValidity('Project description is required');
+      descInput.reportValidity();
+      return;
+    }
+    if (description.length > 1000) {
+      const descInput = document.getElementById('projectDesc') as HTMLInputElement;
+      descInput.setCustomValidity('Description must be less than 1000 characters');
+      descInput.reportValidity();
+      return;
+    }
+
+    // Validate goals
+    if (!goals.trim()) {
+      const goalsInput = document.getElementById('goals') as HTMLInputElement;
+      goalsInput.setCustomValidity('Goals are required');
+      goalsInput.reportValidity();
+      return;
+    }
+    if (goals.length > 500) {
+      const goalsInput = document.getElementById('goals') as HTMLInputElement;
+      goalsInput.setCustomValidity('Goals must be less than 500 characters');
+      goalsInput.reportValidity();
+      return;
+    }
+
+    // Validate research areas
+    if (!research_areas.trim()) {
+      const resAreaInput = document.getElementById('setResArea') as HTMLInputElement;
+      resAreaInput.setCustomValidity('Research area is required');
+      resAreaInput.reportValidity();
+      return;
+    }
+    if (research_areas.length > 200) {
+      const resAreaInput = document.getElementById('setResArea') as HTMLInputElement;
+      resAreaInput.setCustomValidity('Research area must be less than 200 characters');
+      resAreaInput.reportValidity();
+      return;
+    }
+
+    // Validate start date
+    if (!start_date) {
+      const startInput = document.getElementById('setStart') as HTMLInputElement;
+      startInput.setCustomValidity('Start date is required');
+      startInput.reportValidity();
+      return;
+    }
+
+    // Validate end date
+    if (!end_date) {
+      const endInput = document.getElementById('setEnd') as HTMLInputElement;
+      endInput.setCustomValidity('End date is required');
+      endInput.reportValidity();
+      return;
+    }
+    if (startDate && endDate && endDate < startDate) {
+      const endInput = document.getElementById('setEnd') as HTMLInputElement;
+      endInput.setCustomValidity('End date must be after start date');
+      endInput.reportValidity();
+      return;
+    }
+
+    // Clear any previous validation messages
+    const inputs = document.querySelectorAll('input');
+    inputs.forEach(input => input.setCustomValidity(''));
+
+    // Sanitize inputs before proceeding
+    const sanitizedTitle = title.trim();
+    const sanitizedDescription = description.trim();
+    const sanitizedGoals = goals.trim();
+    const sanitizedResearchAreas = research_areas.trim();
+
+    // Update state with sanitized values
+    setTitle(sanitizedTitle);
+    setDescription(sanitizedDescription);
+    setGoals(sanitizedGoals);
+    setResArea(sanitizedResearchAreas);
+
     // Show the requirements form - we don't save yet, just move to next part
     setShowRequirementsForm(true);
   };

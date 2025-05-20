@@ -48,6 +48,8 @@ const Page = () => {
   const [attachments, setAttachments] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showCompose, setShowCompose] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
     const fetchMessages = async () => {
       try {
@@ -101,6 +103,17 @@ const Page = () => {
     e.preventDefault();
     const token = localStorage.getItem("jwt");
     
+    // Validate message content
+    if (!newMessage.body.trim()) {
+      setError("Message cannot be empty");
+      return;
+    }
+
+    if (newMessage.body.length > 1000) {
+      setError("Message must be less than 1000 characters");
+      return;
+    }
+
     try {
       // First, send the message
       const messageResponse = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/messages`, {
@@ -112,14 +125,16 @@ const Page = () => {
         body: JSON.stringify({
           receiver_ID: newMessage.receiver_ID,
           subject: newMessage.subject,
-          body: newMessage.body,
+          body: newMessage.body.trim(),
           project_ID: newMessage.project_ID,
         }),
       });
 
       if (!messageResponse.ok) {
-        throw new Error("Failed to send message");
+        const errorData = await messageResponse.json();
+        throw new Error(errorData.error || "Failed to send message");
       }
+
       // Refresh messages after successful send
       const updatedMessages = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/messages`, {
         headers: {
@@ -135,7 +150,7 @@ const Page = () => {
       }
     } catch (error) {
       console.error("Error sending message:", error);
-      alert("Failed to send message. Please try again.");
+      setError(error instanceof Error ? error.message : "Failed to send message");
     }
   };
 
@@ -497,8 +512,10 @@ const Page = () => {
                       receiver_ID: selectedUser,
                     })
                   }
+                  maxLength={1000}
                   required
                 />
+                {error && <p className={styles.errorMessage}>{error}</p>}
                 <section className={styles.buttonGroup}>
                   <button type="submit">Send</button>
                 </section>

@@ -79,6 +79,20 @@ export default function Page() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Remove modal state
+  const [validationErrors, setValidationErrors] = useState<{
+    total_awarded?: string;
+    grant_status?: string;
+    grant_end_date?: string;
+    categories?: {
+      [key: number]: {
+        description?: string;
+        amount_spent?: string;
+      }
+    }
+  }>({});
 
   useEffect(() => {
     // Fetch all projects with funding data
@@ -183,10 +197,116 @@ export default function Page() {
     }
   };
 
+  // Modify validateForm to require amounts greater than 0
+  const validateForm = () => {
+    if (!editData) return false;
+    
+    const errors: typeof validationErrors = {};
+    let isValid = true;
+    const errorMessages: string[] = [];
+
+    // Validate total awarded amount
+    if (typeof editData.funding?.total_awarded !== 'number' || editData.funding.total_awarded <= 0) {
+      errors.total_awarded = "Total awarded amount must be greater than 0";
+      errorMessages.push("Total awarded amount must be greater than 0");
+      isValid = false;
+    }
+
+    // Validate grant status
+    if (!editData.funding?.grant_status || !["active", "completed", "expired", "cancelled"].includes(editData.funding.grant_status.toLowerCase())) {
+      errors.grant_status = "Invalid grant status selected";
+      errorMessages.push("Invalid grant status selected");
+      isValid = false;
+    }
+
+    // Validate grant end date
+    if (!editData.funding?.grant_end_date) {
+      errors.grant_end_date = "Grant end date is required";
+      errorMessages.push("Grant end date is required");
+      isValid = false;
+    } else {
+      const endDate = new Date(editData.funding.grant_end_date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      endDate.setHours(0, 0, 0, 0);
+
+      if (isNaN(endDate.getTime())) {
+        errors.grant_end_date = "Invalid date format";
+        errorMessages.push("Invalid date format for grant end date");
+        isValid = false;
+      } else if (editData.funding.grant_status.toLowerCase() === 'active' && endDate < today) {
+        errors.grant_end_date = "Grant end date cannot be in the past for active grants";
+        errorMessages.push("Grant end date cannot be in the past for active grants");
+        isValid = false;
+      }
+    }
+
+    // Validate categories if they exist
+    if (editData.categories && editData.categories.length > 0) {
+      errors.categories = {};
+      let totalSpent = 0;
+
+      editData.categories.forEach((cat, index) => {
+        const categoryErrors: { description?: string; amount_spent?: string } = {};
+
+        // Validate description
+        if (cat.description && cat.description.length > 200) {
+          categoryErrors.description = "Description must be less than 200 characters";
+          errorMessages.push(`Category ${index + 1}: Description must be less than 200 characters`);
+          isValid = false;
+        }
+
+        // Validate amount spent
+        const amount = Number(cat.amount_spent);
+        if (isNaN(amount) || amount <= 0) {
+          categoryErrors.amount_spent = "Amount spent must be greater than 0";
+          errorMessages.push(`Category ${index + 1}: Amount spent must be greater than 0`);
+          isValid = false;
+        }
+
+        // Validate category type
+        if (!["Personnel", "Equipment", "Consumables"].includes(cat.category)) {
+          categoryErrors.amount_spent = "Invalid category type";
+          errorMessages.push(`Category ${index + 1}: Invalid category type`);
+          isValid = false;
+        }
+
+        totalSpent += amount || 0;
+
+        if (Object.keys(categoryErrors).length > 0) {
+          errors.categories![index] = categoryErrors;
+        }
+      });
+
+      // Validate total spent against total awarded
+      if (editData.funding?.total_awarded && totalSpent > editData.funding.total_awarded) {
+        errors.total_awarded = "Total amount spent across categories cannot exceed total awarded amount";
+        errorMessages.push("Total amount spent across categories cannot exceed total awarded amount");
+        isValid = false;
+      }
+    }
+
+    setValidationErrors(errors);
+    if (!isValid) {
+      alert(errorMessages.join('\n'));
+    }
+    return isValid;
+  };
+
   const handleConfirmEdit = async () => {
     if (!editData || !editProjectId) return;
 
     try {
+      setSubmitting(true);
+      setError(null);
+      setValidationErrors({});
+
+      // Validate form before submission
+      if (!validateForm()) {
+        setSubmitting(false);
+        return;
+      }
+
       const token = localStorage.getItem('jwt');
       const project = projects.find(p => p.project_ID === editProjectId);
       
@@ -320,6 +440,8 @@ export default function Page() {
       setEditData(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -760,6 +882,17 @@ export default function Page() {
                   )}
                 </footer>
 
+                {deleteProjectId === project.project_ID && (
+                  <section className={styles.editModal} aria-labelledby={`delete-title-${project.project_ID}`}>
+                    <h4 id={`delete-title-${project.project_ID}`}>Confirm Deletion</h4>
+                    <p>Are you sure you want to delete funding for <strong>{project.title}</strong>?</p>
+                    <nav className={styles.modalButtons}>
+                      <button type="button" onClick={() => handleDelete(project.project_ID)}>Yes, Delete</button>
+                      <button type="button" onClick={() => setDeleteProjectId(null)}>Cancel</button>
+                    </nav>
+                  </section>
+                )}
+
                 {editProjectId === project.project_ID && editData && (
                   <section className={styles.editModal} aria-labelledby={`edit-title-${project.project_ID}`}>
                     <h4 id={`edit-title-${project.project_ID}`}>{project.funding ? "Edit Funding" : "Initialize Funding"}</h4>
@@ -770,6 +903,8 @@ export default function Page() {
                         <input
                           id={`total-awarded-${project.project_ID}`}
                           type="number"
+                          min="0"
+                          step="0.01"
                           value={editData.funding?.total_awarded || 0}
                           onChange={(e) =>
                             setEditData({
@@ -784,6 +919,8 @@ export default function Page() {
                               }
                             })
                           }
+                          className={validationErrors.total_awarded ? styles.inputError : ''}
+                          data-testid={`funding-total-awarded-${project.project_ID}`}
                         />
 
                         <label htmlFor={`status-${project.project_ID}`}>Status</label>
@@ -794,14 +931,17 @@ export default function Page() {
                             setEditData({
                               ...editData,
                               funding: {
+                                ...(editData.funding || {}),
                                 grant_status: e.target.value.toLowerCase(),
-                                total_awarded: (editData.funding && typeof editData.funding.total_awarded === 'number') ? editData.funding.total_awarded : 0,
-                                amount_spent: (editData.funding && typeof editData.funding.amount_spent === 'number') ? editData.funding.amount_spent : 0,
-                                amount_remaining: (editData.funding && typeof editData.funding.amount_remaining === 'number') ? editData.funding.amount_remaining : 0,
-                                grant_end_date: (editData.funding && typeof editData.funding.grant_end_date === 'string') ? editData.funding.grant_end_date : new Date().toISOString().split("T")[0]
+                                total_awarded: editData.funding?.total_awarded || 0,
+                                amount_spent: editData.funding?.amount_spent || 0,
+                                amount_remaining: editData.funding?.amount_remaining || 0,
+                                grant_end_date: editData.funding?.grant_end_date || new Date().toISOString().split("T")[0]
                               }
                             })
                           }
+                          className={validationErrors.grant_status ? styles.inputError : ''}
+                          data-testid={`funding-status-${project.project_ID}`}
                         >
                           <option value="active">Active</option>
                           <option value="completed">Completed</option>
@@ -827,9 +967,10 @@ export default function Page() {
                               }
                             })
                           }
+                          className={validationErrors.grant_end_date ? styles.inputError : ''}
+                          data-testid={`funding-end-date-${project.project_ID}`}
                         />
                       </fieldset>
-
                       {editData.funding_initialized && (
                         <fieldset>
                           <legend>Funding Categories</legend>
@@ -910,17 +1051,6 @@ export default function Page() {
                         <button type="button" onClick={() => setEditProjectId(null)}>Cancel</button>
                       </nav>
                     </form>
-                  </section>
-                )}
-
-                {deleteProjectId === project.project_ID && (
-                  <section className={styles.editModal} aria-labelledby={`delete-title-${project.project_ID}`}>
-                    <h4 id={`delete-title-${project.project_ID}`}>Confirm Deletion</h4>
-                    <p>Are you sure you want to delete funding for <strong>{project.title}</strong>?</p>
-                    <nav className={styles.modalButtons}>
-                      <button type="button" onClick={() => handleDelete(project.project_ID)}>Yes, Delete</button>
-                      <button type="button" onClick={() => setDeleteProjectId(null)}>Cancel</button>
-                    </nav>
                   </section>
                 )}
               </article>

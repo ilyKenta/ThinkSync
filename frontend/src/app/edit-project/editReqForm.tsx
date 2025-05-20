@@ -79,6 +79,59 @@ export default function EditReqForm({
     setLoading(true); // show loading state
     setError(null); // clear any previous errors
 
+    // Validate skill
+    if (!skill.trim()) {
+      setError('Skill is required');
+      setLoading(false);
+      return;
+    }
+    if (skill.length > 100) {
+      setError('Skill must be less than 100 characters');
+      setLoading(false);
+      return;
+    }
+    if (!/^[a-zA-Z0-9\s\-_.,&()]+$/.test(skill)) {
+      setError('Skill contains invalid characters. Only letters, numbers, spaces, and basic punctuation are allowed');
+      setLoading(false);
+      return;
+    }
+
+    // Validate role
+    if (!reqrole.trim()) {
+      setError('Role is required');
+      setLoading(false);
+      return;
+    }
+    if (reqrole.length > 100) {
+      setError('Role must be less than 100 characters');
+      setLoading(false);
+      return;
+    }
+    if (!/^[a-zA-Z0-9\s\-_.,&()]+$/.test(reqrole)) {
+      setError('Role contains invalid characters. Only letters, numbers, spaces, and basic punctuation are allowed');
+      setLoading(false);
+      return;
+    }
+
+    // Validate technical requirements
+    if (!techReq.trim()) {
+      setError('Technical requirements are required');
+      setLoading(false);
+      return;
+    }
+    if (techReq.length > 500) {
+      setError('Technical requirements must be less than 500 characters');
+      setLoading(false);
+      return;
+    }
+
+    // Validate experience level
+    if (!experience) {
+      setError('Experience level is required');
+      setLoading(false);
+      return;
+    }
+
     try {
       // Get authentication token from browser storage
       const token = localStorage.getItem("jwt");
@@ -86,15 +139,20 @@ export default function EditReqForm({
         throw new Error('No access token found');
       }
 
+      // Sanitize inputs
+      const sanitizedSkill = skill.trim();
+      const sanitizedRole = reqrole.trim();
+      const sanitizedTechReq = techReq.trim();
+
       // Build the data structure we need to send to the API
       const payload = {
         project: projectData, // project details passed from previous form
         requirements: [{
-          // form field values
-          skill_required: skill,
+          // form field values with sanitized data
+          skill_required: sanitizedSkill,
           experience_level: experience.toLowerCase(), // make sure it's lowercase for consistency
-          role: reqrole,
-          technical_requirements: techReq,
+          role: sanitizedRole,
+          technical_requirements: sanitizedTechReq,
         }]
       };
 
@@ -149,6 +207,7 @@ export default function EditReqForm({
             value={skill}
             onChange={(e) => setSkill(e.target.value)}
             required
+            maxLength={100}
           />
           <label htmlFor="explvl">Level of experience</label>
           <select
@@ -157,6 +216,7 @@ export default function EditReqForm({
             className="drop-down"
             value={experience}
             onChange={(e) => setExp(e.target.value)}
+            required
           >
             <option value=""></option>
             <option value="beginner">Beginner</option>
@@ -170,6 +230,7 @@ export default function EditReqForm({
             value={reqrole}
             onChange={(e) => setRole(e.target.value)}
             required
+            maxLength={100}
           />
           <label htmlFor="techReq">Technical Requirements</label>
           <input
@@ -178,15 +239,28 @@ export default function EditReqForm({
             value={techReq}
             onChange={(e) => setReq(e.target.value)}
             required
+            maxLength={500}
           />
+          {error && (
+            <div style={{ color: 'red', marginTop: '10px', marginBottom: '10px' }}>
+              {error}
+            </div>
+          )}
           <button 
             type="submit" 
             disabled={loading}
-            style={{ backgroundColor: 'black', color: 'white', border: 'none', borderRadius: 'var(--button-radius)', fontSize: 20, fontWeight: 600 }}
+            style={{ 
+              backgroundColor: 'black', 
+              color: 'white', 
+              border: 'none', 
+              borderRadius: 'var(--button-radius)', 
+              fontSize: 20, 
+              fontWeight: 600,
+              opacity: loading ? 0.7 : 1
+            }}
           >
             {loading ? "Saving..." : "Save Changes"}
           </button>
-          {error && <section style={{ color: "red", marginTop: 8 }}>{error}</section>}
         </form>
       </section>
     </section>

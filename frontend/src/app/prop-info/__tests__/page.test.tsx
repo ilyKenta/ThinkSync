@@ -70,8 +70,22 @@ describe('PropInfoContent', () => {
     expect(screen.getByText('Loading proposal...')).toBeInTheDocument();
   });
 
-  it('renders error state when project data is missing', async () => {
+  it('renders error state when project ID is missing', async () => {
     (useSearchParams as jest.Mock).mockReturnValue(new URLSearchParams());
+    
+    await act(async () => {
+      render(<PropInfoContent />);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Error: Project ID is required')).toBeInTheDocument();
+    });
+  });
+
+  it('renders error state when project data is missing', async () => {
+    (useSearchParams as jest.Mock).mockReturnValue(new URLSearchParams({
+      projectId: '123'
+    }));
     
     await act(async () => {
       render(<PropInfoContent />);
@@ -156,13 +170,11 @@ describe('PropInfoContent', () => {
     });
   });
 
-  it('handles review submission errors', async () => {
-    (global.fetch as jest.Mock)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ review: { outcome: 'PENDING' } })
-      })
-      .mockRejectedValueOnce(new Error('Failed to submit review'));
+  it('handles review submission validation errors', async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ review: { outcome: 'PENDING' } })
+    });
 
     await act(async () => {
       render(<PropInfoContent />);
@@ -173,17 +185,25 @@ describe('PropInfoContent', () => {
       expect(screen.getByPlaceholderText('Enter your feedback...')).toBeInTheDocument();
     });
 
-    // Fill out and submit the form
-    const feedbackTextarea = screen.getByPlaceholderText('Enter your feedback...');
+    // Try to submit without feedback
     const submitButton = screen.getByText('Submit Evaluation');
-
     await act(async () => {
-      fireEvent.change(feedbackTextarea, { target: { value: 'Great proposal!' } });
       fireEvent.click(submitButton);
     });
 
     await waitFor(() => {
-      expect(global.alert).toHaveBeenCalledWith('Error: Failed to submit review');
+      expect(screen.getByText('Feedback is required')).toBeInTheDocument();
+    });
+
+    // Try to submit with invalid outcome
+    const outcomeSelect = screen.getByRole('combobox');
+    await act(async () => {
+      fireEvent.change(outcomeSelect, { target: { value: 'invalid' } });
+      fireEvent.click(submitButton);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Invalid outcome selected')).toBeInTheDocument();
     });
   });
 

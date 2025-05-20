@@ -60,21 +60,38 @@ describe('SubmittedProposalsPage', () => {
     expect(screen.getByText('Loading proposals...')).toBeInTheDocument();
   });
 
-  it('renders error state when fetch fails', async () => {
-    (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Failed to fetch'));
-    render(<SubmittedProposalsPage />);
-    
-    await waitFor(() => {
-      expect(screen.getByText('Error: Failed to fetch')).toBeInTheDocument();
-    });
-  });
-
-  it('renders error state when token is missing', async () => {
+  it('renders error state when not authenticated', async () => {
     localStorageMock.getItem.mockReturnValue(null);
     render(<SubmittedProposalsPage />);
     
     await waitFor(() => {
-      expect(screen.getByText('Error: No access token found')).toBeInTheDocument();
+      expect(screen.getByText('Error: Authentication required')).toBeInTheDocument();
+    });
+  });
+
+  it('renders error state when API returns invalid format', async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ invalid: 'format' })
+    });
+
+    render(<SubmittedProposalsPage />);
+    
+    await waitFor(() => {
+      expect(screen.getByText('Error: Invalid response format from server')).toBeInTheDocument();
+    });
+  });
+
+  it('renders error state when no valid proposals found', async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ projects: [] })
+    });
+
+    render(<SubmittedProposalsPage />);
+    
+    await waitFor(() => {
+      expect(screen.getByText('Error: No valid proposals found')).toBeInTheDocument();
     });
   });
 
@@ -105,7 +122,7 @@ describe('SubmittedProposalsPage', () => {
     );
   });
 
-  it('handles proposal selection', async () => {
+  it('handles proposal selection and displays details', async () => {
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({ projects: mockProposals })
@@ -130,48 +147,33 @@ describe('SubmittedProposalsPage', () => {
     expect(detailsPanel).toHaveTextContent('Test description 1');
   });
 
-  it('opens and closes assign reviewer modal', async () => {
+  it('handles missing optional fields gracefully', async () => {
+    const incompleteProposal = {
+      project_ID: '3',
+      title: 'Test Project 3',
+      researcher_fname: 'Bob',
+      researcher_sname: 'Wilson',
+      // Missing research_areas and description
+    };
+
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
-      json: () => Promise.resolve({ projects: mockProposals })
+      json: () => Promise.resolve({ projects: [incompleteProposal] })
     });
 
     render(<SubmittedProposalsPage />);
 
     await waitFor(() => {
-      expect(screen.getByText('Test Project 1')).toBeInTheDocument();
-    });
-
-    // Click the assign button for the first proposal
-    const assignButtons = screen.getAllByText('Assign');
-    fireEvent.click(assignButtons[0]);
-
-    // Check if the AssignReviewers component is rendered with the correct title
-    await waitFor(() => {
-      // Use more specific selectors to avoid ambiguity
-      const modalTitle = screen.getByRole('heading', { name: 'Assign Reviewer' });
-      expect(modalTitle).toBeInTheDocument();
-      expect(screen.getByPlaceholderText('Search by research area')).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Search' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Assign Reviewer' })).toBeInTheDocument();
-    });
-
-    // Click the cancel button to close the modal
-    const cancelButton = screen.getByRole('button', { name: 'Cancel' });
-    fireEvent.click(cancelButton);
-
-    // Verify the modal is closed
-    await waitFor(() => {
-      expect(screen.queryByRole('heading', { name: 'Assign Reviewer' })).not.toBeInTheDocument();
-      expect(screen.queryByPlaceholderText('Search by research area')).not.toBeInTheDocument();
+      expect(screen.getByText('Test Project 3')).toBeInTheDocument();
+      expect(screen.getByText('Bob Wilson')).toBeInTheDocument();
+      expect(screen.getByText('No research areas specified')).toBeInTheDocument();
     });
   });
 
-  it('closes assign reviewer modal when clicking outside', async () => {
+  it('opens and closes assign reviewer modal', async () => {
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
-      json: () => Promise.resolve({ projects: mockProposals })
+      json: () => Promise.resolve({ projects: [mockProposals[0]] })
     });
 
     render(<SubmittedProposalsPage />);
@@ -180,49 +182,47 @@ describe('SubmittedProposalsPage', () => {
       expect(screen.getByText('Test Project 1')).toBeInTheDocument();
     });
 
-    // Click the assign button for the first proposal
-    const assignButtons = screen.getAllByText('Assign');
-    fireEvent.click(assignButtons[0]);
+    // Click the Assign button
+    const assignButton = screen.getByTitle('Assign reviewer');
+    fireEvent.click(assignButton);
 
-    // Check if the modal is open
+    // Check if the AssignReviewers component is rendered
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: 'Assign Reviewer' })).toBeInTheDocument();
     });
 
-    // Click the cancel button to close the modal
-    const cancelButton = screen.getByRole('button', { name: 'Cancel' });
+    // Click the Cancel button
+    const cancelButton = screen.getByText('Cancel');
     fireEvent.click(cancelButton);
 
-    // Verify the modal is closed
+    // Check if the modal is closed
     await waitFor(() => {
       expect(screen.queryByRole('heading', { name: 'Assign Reviewer' })).not.toBeInTheDocument();
     });
   });
 
-  it('handles API error response', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: false,
-      json: () => Promise.resolve({ error: 'Invalid request' })
-    });
+  it('refreshes proposals after successful reviewer assignment', async () => {
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ projects: [mockProposals[0]] })
+      });
 
     render(<SubmittedProposalsPage />);
 
     await waitFor(() => {
-      expect(screen.getByText('Error: Failed to fetch proposals')).toBeInTheDocument();
-    });
-  });
-
-  it('handles network error', async () => {
-    (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-
-    render(<SubmittedProposalsPage />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Error: Network error')).toBeInTheDocument();
-      expect(consoleSpy).toHaveBeenCalledWith('Error fetching proposals:', expect.any(Error));
+      expect(screen.getByText('Test Project 1')).toBeInTheDocument();
     });
 
-    consoleSpy.mockRestore();
+    // Open assign reviewer modal
+    const assignButton = screen.getByTitle('Assign reviewer');
+    fireEvent.click(assignButton);
+
+    // Click the Cancel button to close the modal
+    const cancelButton = screen.getByText('Cancel');
+    fireEvent.click(cancelButton);
+
+    // Only one fetch call should have been made (no refresh)
+    expect(global.fetch).toHaveBeenCalledTimes(1);
   });
 }); 

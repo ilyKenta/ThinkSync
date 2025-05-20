@@ -26,12 +26,12 @@ describe('CreateForm', () => {
     fireEvent.change(screen.getByLabelText('Project Description'), { target: { value: 'A description' } });
     fireEvent.change(screen.getByLabelText('Goals'), { target: { value: 'Some goals' } });
     fireEvent.change(screen.getByLabelText('Research Area'), { target: { value: 'AI' } });
-    fireEvent.change(screen.getByLabelText('Start Date'), { target: { value: '2024-01-01' } });
-    fireEvent.change(screen.getByLabelText('End Date'), { target: { value: '2024-12-31' } });
+    fireEvent.change(screen.getByLabelText('Start Date'), { target: { value: '2099-01-01' } });
+    fireEvent.change(screen.getByLabelText('End Date'), { target: { value: '2099-12-31' } });
   }
 
   it('renders all form fields and buttons', () => {
-    render(<CreateForm onClose={onClose} onCreate={onCreate} />);
+    render(<CreateForm onClose={onClose} onCreate={onCreate} forceMounted />);
     expect(screen.getByLabelText('Project name')).toBeInTheDocument();
     expect(screen.getByLabelText('Project Description')).toBeInTheDocument();
     expect(screen.getByLabelText('Goals')).toBeInTheDocument();
@@ -73,33 +73,39 @@ describe('CreateForm', () => {
   });
 
   it('submits form with correct values when all fields are filled and funding is Yes', async () => {
-    render(<CreateForm onClose={onClose} onCreate={onCreate} />);
+    render(<CreateForm onClose={onClose} onCreate={onCreate} forceMounted />);
+    await waitFor(() => expect(screen.getByLabelText('Project name')).toBeInTheDocument());
     fillForm();
     fireEvent.click(screen.getByLabelText('Yes'));
     fireEvent.click(screen.getByLabelText('submit information'));
+    // Debug: log all calls
+    console.log('onCreate calls (Yes):', onCreate.mock.calls);
     expect(onCreate).toHaveBeenCalledWith(
       'Test Project',
       'A description',
       'Some goals',
       'AI',
-      '2024-01-01',
-      '2024-12-31',
+      '2099-01-01',
+      '2099-12-31',
       true
     );
   });
 
   it('submits form with correct values when all fields are filled and funding is No', async () => {
-    render(<CreateForm onClose={onClose} onCreate={onCreate} />);
+    render(<CreateForm onClose={onClose} onCreate={onCreate} forceMounted />);
+    await waitFor(() => expect(screen.getByLabelText('Project name')).toBeInTheDocument());
     fillForm();
     fireEvent.click(screen.getByLabelText('No'));
     fireEvent.click(screen.getByLabelText('submit information'));
+    // Debug: log all calls
+    console.log('onCreate calls (No):', onCreate.mock.calls);
     expect(onCreate).toHaveBeenCalledWith(
       'Test Project',
       'A description',
       'Some goals',
       'AI',
-      '2024-01-01',
-      '2024-12-31',
+      '2099-01-01',
+      '2099-12-31',
       false
     );
   });

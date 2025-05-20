@@ -66,17 +66,26 @@ describe('ComposeMessage', () => {
 
   it('shows alert if trying to send without selecting a user', async () => {
     render(<ComposeMessage onClose={onClose} />);
-    fireEvent.change(screen.getByPlaceholderText('Search users...'), { target: { value: 'Al' } });
-    fireEvent.change(screen.getByPlaceholderText('Search projects...'), { target: { value: 'Proj' } });
-    // Use the third textbox for subject (first two are search inputs)
+
+    // Fill in the form
+    fireEvent.change(screen.getByPlaceholderText('Search users...'), {
+      target: { value: 'Al' }
+    });
+    fireEvent.change(screen.getByPlaceholderText('Search projects...'), {
+      target: { value: 'Proj' }
+    });
     const subjectInput = screen.getAllByRole('textbox')[2];
     fireEvent.change(subjectInput, { target: { value: 'Subject' } });
-    // Use the textarea for message
-    const bodyInput = document.querySelector('textarea');
-    fireEvent.change(bodyInput!, { target: { value: 'Body' } });
+    const messageInput = document.querySelector('textarea');
+    if (!messageInput) throw new Error('Message textarea not found');
+    fireEvent.change(messageInput, { target: { value: 'Body' } });
+
+    // Try to send without selecting a user
     fireEvent.click(screen.getByText('Send'));
+
+    // Check if the error message is displayed
     await waitFor(() => {
-      expect(global.alert).toHaveBeenCalledWith('Please select a recipient');
+      expect(screen.getByText('Please select a recipient')).toBeInTheDocument();
     });
   });
 
@@ -136,9 +145,10 @@ describe('ComposeMessage', () => {
     const subjectInput = screen.getAllByRole('textbox')[2];
     fireEvent.change(subjectInput, { target: { value: 'Test Subject' } });
     expect(subjectInput).toHaveValue('Test Subject');
-    const bodyInput = document.querySelector('textarea');
-    fireEvent.change(bodyInput!, { target: { value: 'Test Body' } });
-    expect(bodyInput).toHaveValue('Test Body');
+    const messageInput = document.querySelector('textarea');
+    if (!messageInput) throw new Error('Message textarea not found');
+    fireEvent.change(messageInput, { target: { value: 'Test Body' } });
+    expect(messageInput).toHaveValue('Test Body');
   });
 
   it('validates file attachments (type, size, count)', () => {
@@ -172,61 +182,91 @@ describe('ComposeMessage', () => {
   });
 
   it('sends message successfully', async () => {
-    // Mock fetch for user search and send
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => [{ user_ID: 1, fname: 'Alice', sname: 'Smith' }],
+    // Mock successful API response
+    global.fetch = jest.fn().mockImplementation((url) => {
+      if (url.includes('search-users')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve([
+            { user_ID: 1, fname: 'Alice', sname: 'Smith' }
+          ])
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ message: 'Message sent successfully!' })
+      });
     });
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({}),
-    });
+
     render(<ComposeMessage onClose={onClose} />);
-    // Select user
-    fireEvent.change(screen.getByPlaceholderText('Search users...'), { target: { value: 'Al' } });
-    await waitFor(() => {
-      expect(screen.getByText('Alice Smith')).toBeInTheDocument();
+
+    // Fill in the form
+    fireEvent.change(screen.getByPlaceholderText('Search users...'), {
+      target: { value: 'Alice' }
     });
-    fireEvent.click(screen.getByText('Alice Smith'));
-    // Fill subject/body
+
+    // Wait for and select the user
+    const userButton = await screen.findByText('Alice Smith');
+    fireEvent.click(userButton);
+
     const subjectInput = screen.getAllByRole('textbox')[2];
     fireEvent.change(subjectInput, { target: { value: 'Test Subject' } });
-    const bodyInput = document.querySelector('textarea');
-    fireEvent.change(bodyInput!, { target: { value: 'Test Body' } });
-    // Send
+    const messageInput = document.querySelector('textarea');
+    if (!messageInput) throw new Error('Message textarea not found');
+    fireEvent.change(messageInput, { target: { value: 'Test Body' } });
+
+    // Send the message
     fireEvent.click(screen.getByText('Send'));
+
+    // Check if the modal is closed
     await waitFor(() => {
-      expect(global.alert).toHaveBeenCalledWith('Message sent successfully!');
       expect(onClose).toHaveBeenCalled();
     });
   });
 
   it('shows alert on send error', async () => {
-    // Mock fetch for user search and send
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => [{ user_ID: 1, fname: 'Alice', sname: 'Smith' }],
+    // Mock failed API response
+    global.fetch = jest.fn().mockImplementation((url) => {
+      if (url.includes('search-users')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve([
+            { user_ID: 1, fname: 'Alice', sname: 'Smith' }
+          ])
+        });
+      }
+      return Promise.resolve({
+        ok: false,
+        json: () => Promise.resolve({ error: 'Failed to send message' })
+      });
     });
-    mockFetch.mockResolvedValueOnce({
-      ok: false,
-      json: async () => ({}),
-    });
+
     render(<ComposeMessage onClose={onClose} />);
-    // Select user
-    fireEvent.change(screen.getByPlaceholderText('Search users...'), { target: { value: 'Al' } });
-    await waitFor(() => {
-      expect(screen.getByText('Alice Smith')).toBeInTheDocument();
+
+    // Fill in the form
+    fireEvent.change(screen.getByPlaceholderText('Search users...'), {
+      target: { value: 'Alice' }
     });
-    fireEvent.click(screen.getByText('Alice Smith'));
-    // Fill subject/body
+
+    // Wait for and select the user
+    const userButton = await screen.findByText('Alice Smith');
+    fireEvent.click(userButton);
+
     const subjectInput = screen.getAllByRole('textbox')[2];
     fireEvent.change(subjectInput, { target: { value: 'Test Subject' } });
-    const bodyInput = document.querySelector('textarea');
-    fireEvent.change(bodyInput!, { target: { value: 'Test Body' } });
-    // Send
+    const messageInput = document.querySelector('textarea');
+    if (!messageInput) throw new Error('Message textarea not found');
+    fireEvent.change(messageInput, { target: { value: 'Test Body' } });
+
+    // Try to send the message
     fireEvent.click(screen.getByText('Send'));
+
+    // Check if the error message is displayed
     await waitFor(() => {
-      expect(global.alert).toHaveBeenCalledWith('Failed to send message');
+      expect(screen.getByText('Failed to send message')).toBeInTheDocument();
     });
+
+    // Verify that onClose was not called
+    expect(onClose).not.toHaveBeenCalled();
   });
 }); 

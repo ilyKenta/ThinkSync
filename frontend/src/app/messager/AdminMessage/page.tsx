@@ -48,6 +48,7 @@ const Page = () => {
   const [attachments, setAttachments] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showCompose, setShowCompose] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   const fetchMessages = async () => {
     const token = localStorage.getItem("jwt");
@@ -72,32 +73,51 @@ const Page = () => {
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     const token = localStorage.getItem("jwt");
-    const formData = new FormData();
 
-    Object.entries(newMessage).forEach(([key, value]) => {
-      formData.append(key, value);
-    });
+    // Validate message content
+    if (!newMessage.body.trim()) {
+      setError("Message cannot be empty");
+      return;
+    }
 
-    attachments.forEach((file) => {
-      formData.append("attachments", file);
-    });
+    if (newMessage.body.length > 1000) {
+      setError("Message must be less than 1000 characters");
+      return;
+    }
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/messages`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      body: formData,
-    });
+    try {
+      const formData = new FormData();
 
-    if (response.ok) {
-      alert("Message sent!");
+      Object.entries(newMessage).forEach(([key, value]) => {
+        formData.append(key, value.trim());
+      });
+
+      attachments.forEach((file) => {
+        formData.append("attachments", file);
+      });
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/messages`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to send message");
+      }
+
       setNewMessage({ receiver_ID: "", subject: "", body: "", project_ID: "" });
       setAttachments([]);
-      fileInputRef.current?.value && (fileInputRef.current.value = "");
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
       await fetchMessages();
-    } else {
-      alert("Failed to send message.");
+    } catch (error) {
+      console.error("Error sending message:", error);
+      setError(error instanceof Error ? error.message : "Failed to send message");
     }
   };
 
@@ -397,8 +417,10 @@ const Page = () => {
                       receiver_ID: String(selectedUser),
                     })
                   }
+                  maxLength={1000}
                   required
                 />
+                {error && <p className={styles.errorMessage}>{error}</p>}
                 <section className={styles.buttonGroup}>
                   <button type="submit">Send</button>
                 </section>

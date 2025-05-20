@@ -95,7 +95,7 @@ describe('CreateReqForm', () => {
     fireEvent.change(screen.getByLabelText('Technical Requirements'), { target: { value: 'React' } });
     fireEvent.click(screen.getByLabelText('submit information'));
     await waitFor(() => {
-      expect(global.alert).toHaveBeenCalledWith('User not logged in');
+      expect(screen.getByText('User not logged in')).toBeInTheDocument();
       expect(onCreate).not.toHaveBeenCalled();
       expect(onClose).not.toHaveBeenCalled();
     });
@@ -113,7 +113,7 @@ describe('CreateReqForm', () => {
     fireEvent.change(screen.getByLabelText('Technical Requirements'), { target: { value: 'React' } });
     fireEvent.click(screen.getByLabelText('submit information'));
     await waitFor(() => {
-      expect(global.alert).toHaveBeenCalledWith('Error: API error');
+      expect(screen.getByText('API error')).toBeInTheDocument();
     });
   });
 
@@ -126,7 +126,7 @@ describe('CreateReqForm', () => {
     fireEvent.change(screen.getByLabelText('Technical Requirements'), { target: { value: 'React' } });
     fireEvent.click(screen.getByLabelText('submit information'));
     await waitFor(() => {
-      expect(global.alert).toHaveBeenCalledWith('An error occurred');
+      expect(screen.getByText('An error occurred while creating the project')).toBeInTheDocument();
     });
   });
 }); 

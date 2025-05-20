@@ -400,6 +400,7 @@ describe('Admin Routes', () => {
           sname: 'Doe',
           department: 'IT',
           acc_role: 'reviewer',
+          res_area: 'AI',  // Note: using res_area to match DB column name
           qualification: 'PhD'
         }
       ];
@@ -411,7 +412,20 @@ describe('Admin Routes', () => {
         .set('Authorization', `Bearer ${mockToken}`);
 
       expect(response.status).toBe(200);
-      expect(response.body).toEqual({ reviewers: dbReviewers });
+      expect(response.body.reviewers[0].research_area).toBe('AI');
+      expect(response.body.reviewers[0].research_area).not.toBeNull();
+      expect(response.body.reviewers[0].research_area).not.toBeUndefined();
+      expect(response.body).toEqual({ 
+        reviewers: [{
+          user_ID: '1',
+          fname: 'John',
+          sname: 'Doe',
+          department: 'IT',
+          acc_role: 'reviewer',
+          qualification: 'PhD',
+          research_area: 'AI'
+        }]
+      });
     });
 
     it('should return 400 when research area is missing', async () => {

@@ -4,26 +4,80 @@ import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import styles from '../Shared_projects/page.module.css'; // reuse your styles
 
+// Define interfaces for type safety
+interface ProjectData {
+  project_ID: string;
+  title: string;
+  description: string;
+  goals: string;
+  start_date: string;
+  end_date?: string;
+  funding_available: boolean;
+  researcher_fname: string;
+  researcher_sname: string;
+  skill_required?: string;
+  experience_level?: string;
+  technical_requirements?: string;
+}
+
+interface ReviewData {
+  outcome: string;
+  feedback?: string;
+}
+
 const PropInfoContent = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const projectId = searchParams.get('projectId');
   const projectDataParam = searchParams.get('projectData');
   const [activeTab, setActiveTab] = useState('shared');  
-  const [proposal, setProposal] = useState<any | null>(null);
+  const [proposal, setProposal] = useState<ProjectData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentStatus, setCurrentStatus] = useState<string>('PENDING');
 
   const [feedback, setFeedback] = useState('');
   const [outcome, setOutcome] = useState('approved');
+  const [validationErrors, setValidationErrors] = useState<{
+    feedback?: string;
+    outcome?: string;
+  }>({});
+
+  // Validate form submission
+  const validateForm = (): boolean => {
+    const errors: typeof validationErrors = {};
+    let isValid = true;
+
+    if (!feedback.trim()) {
+      errors.feedback = 'Feedback is required';
+      isValid = false;
+    } else if (feedback.trim().length > 1000) {
+      errors.feedback = 'Feedback must not exceed 1000 characters';
+      isValid = false;
+    }
+
+    if (!['approved', 'revise', 'rejected'].includes(outcome)) {
+      errors.outcome = 'Invalid outcome selected';
+      isValid = false;
+    }
+
+    setValidationErrors(errors);
+    return isValid;
+  };
 
   useEffect(() => {
     const fetchInitialData = async () => {
+      if (!projectId) {
+        setError('Project ID is required');
+        setLoading(false);
+        return;
+      }
+
       if (projectDataParam) {
         try {
           const decodedData = decodeURIComponent(projectDataParam);
           const projectData = JSON.parse(decodedData);
+
           setProposal(projectData);
           
           // Fetch the current review status
@@ -58,6 +112,10 @@ const PropInfoContent = () => {
   }, [projectId, projectDataParam]);
 
   const handleSubmit = async () => {
+    if (!validateForm()) {
+      return;
+    }
+
     try {
       const token = localStorage.getItem('jwt');
       if (!token) {
@@ -72,7 +130,7 @@ const PropInfoContent = () => {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          feedback,
+          feedback: feedback.trim(),
           outcome
         })
       });
@@ -86,6 +144,7 @@ const PropInfoContent = () => {
       setCurrentStatus(outcome);
       setFeedback('');
       setOutcome('approved');
+      setValidationErrors({});
     } catch (err: any) {
       alert(`Error: ${err.message}`);
     }
@@ -122,18 +181,6 @@ const PropInfoContent = () => {
               Assigned proposals
             </button>
           </li>
-          {/*<li>
-            <button 
-              type="button" 
-              onClick={() => {
-                setActiveTab('shared');
-                router.push("/Shared_projects");
-              }}
-              className={activeTab === 'shared' ? styles.active : ''}
-            >
-              Shared Projects
-            </button>
-          </li>*/}
         </ul>
       </nav>
 
@@ -202,25 +249,40 @@ const PropInfoContent = () => {
                 marginBottom: '10px',
                 padding: '8px',
                 fontSize: '1rem',
+                border: validationErrors.feedback ? '1px solid red' : '1px solid #ccc',
               }}
               value={feedback}
-              onChange={(e) => setFeedback(e.target.value)}
+              onChange={(e) => {
+                setFeedback(e.target.value);
+                setValidationErrors(prev => ({ ...prev, feedback: undefined }));
+              }}
+              maxLength={1000}
             />
+            {validationErrors.feedback && (
+              <p style={{ color: 'red', marginBottom: '10px' }}>{validationErrors.feedback}</p>
+            )}
 
             <section style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
               <select
                 value={outcome}
-                onChange={(e) => setOutcome(e.target.value)}
+                onChange={(e) => {
+                  setOutcome(e.target.value);
+                  setValidationErrors(prev => ({ ...prev, outcome: undefined }));
+                }}
                 style={{
                   padding: '8px',
                   fontSize: '1rem',
                   flex: 1,
+                  border: validationErrors.outcome ? '1px solid red' : '1px solid #ccc',
                 }}
               >
                 <option value="approved">Approve</option>
                 <option value="revise">Revise</option>
                 <option value="rejected">Reject</option>
               </select>
+              {validationErrors.outcome && (
+                <p style={{ color: 'red' }}>{validationErrors.outcome}</p>
+              )}
 
               <button
                 onClick={handleSubmit}

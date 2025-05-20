@@ -271,3 +271,34 @@
 .createBtn:hover {
   background: #222;
 }
+
+.cancelButton {
+  padding: 5px 15px;
+  border: none;
+  border-radius: 5px;
+  background: #eee;
+  color: #333;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-right: 1rem;
+  transition: background 0.2s;
+}
+.cancelButton:hover {
+  background: #ddd;
+}
+
+.confirmButton {
+  padding: 5px 15px;
+  border: none;
+  border-radius: 5px;
+  background: #4a90e2;
+  color: #fff;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.confirmButton:hover {
+  background: #357ab8;
+}

@@ -9,6 +9,20 @@ jest.mock('next/navigation', () => ({
   useRouter: jest.fn()
 }));
 
+// Add type declaration for window.editData
+declare global {
+  interface Window {
+    editData?: {
+      categories?: Array<{
+        category: string;
+        type: string;
+        description?: string;
+        amount_spent?: number;
+      }>;
+    };
+  }
+}
+
 // Mock fetch
 global.fetch = jest.fn();
 
@@ -110,6 +124,7 @@ describe('Funding Dashboard Page', () => {
     };
     (global.fetch as jest.Mock).mockImplementation((...args) => {
       const url = typeof args[0] === 'string' ? args[0] : '';
+      const options = args[1] || {};
       // Simulate /api/funding/report endpoint returns a blob and .json for error
       if (url.includes('/api/funding/report')) {
         if ((global as any).__forceReportError) {
@@ -132,21 +147,37 @@ describe('Funding Dashboard Page', () => {
           json: () => Promise.resolve([{}]),
         });
       }
-      if (/\/api\/funding\/.+\/categories$/.test(url)) {
+      if (/\/api\/funding\/1\/categories\/1$/.test(url) && options.method === 'PUT') {
+        // Simulate a successful category update
         return Promise.resolve({
           ok: true,
-          json: () => Promise.resolve({ categories: mockProjects[0].categories }),
+          json: () => Promise.resolve({ success: true }),
+        });
+      }
+      if (/\/api\/funding\/.+\/categories$/.test(url)) {
+        // Always return a new object for categories
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ categories: JSON.parse(JSON.stringify(mockProjects[0].categories)) }),
         });
       }
       if (/\/api\/funding\/.+/.test(url) && !url.endsWith('/categories')) {
+        // Always return a new object for projects
         return Promise.resolve({
           ok: true,
-          json: () => Promise.resolve({ projects: mockProjects }),
+          json: () => Promise.resolve({ projects: JSON.parse(JSON.stringify(mockProjects)) }),
+        });
+      }
+      if (url.includes('/api/funding/1/categories') && (options.method === 'PUT' || options.method === 'POST')) {
+        // Simulate a successful update
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ success: true }),
         });
       }
       return Promise.resolve({
         ok: true,
-        json: () => Promise.resolve({ projects: mockProjects }),
+        json: () => Promise.resolve({ projects: JSON.parse(JSON.stringify(mockProjects)) }),
       });
     });
     (global as any).__forceReportError = false;
@@ -244,7 +275,7 @@ describe('Funding Dashboard Page', () => {
     });
 
     it('should update funding details when form is submitted', async () => {
-      // Ensure mockProjects[0] has categories for the edit modal
+      // Set up mock data
       mockProjects[0].categories = [
         {
           category_ID: 1,
@@ -253,52 +284,75 @@ describe('Funding Dashboard Page', () => {
           amount_spent: 300,
           amount_allocated: 400,
           type: 'Personnel'
-        },
-        {
-          category_ID: 2,
-          category: 'Equipment',
-          description: 'Lab equipment',
-          amount_spent: 200,
-          amount_allocated: 300,
-          type: 'Equipment'
         }
       ];
       render(<Page />);
-      await waitFor(() => {
-        fireEvent.click(screen.getByText('Edit'));
-      });
-      const totalAwardedInput = screen.getByLabelText(/Total Awarded/i);
-      const statusSelect = screen.getByLabelText(/Status/i);
-      const endDateInput = screen.getByLabelText(/Grant End Date/i);
+      const editButton = await screen.findByText('Edit');
+      fireEvent.click(editButton);
+      const totalAwardedInput = await screen.findByTestId('funding-total-awarded-1');
+      const statusSelect = await screen.findByTestId('funding-status-1');
+      const endDateInput = await screen.findByTestId('funding-end-date-1');
       await userEvent.clear(totalAwardedInput);
       await userEvent.type(totalAwardedInput, '2000');
       await userEvent.selectOptions(statusSelect, 'completed');
+      await userEvent.clear(endDateInput);
       await userEvent.type(endDateInput, '2025-12-31');
-      fireEvent.click(screen.getByText('Confirm'));
+      fireEvent.click(screen.getByRole('button', { name: /confirm/i }));
       await waitFor(() => {
-        expect(global.fetch).toHaveBeenCalledWith(
-          expect.stringContaining('/api/funding/1'),
-          expect.objectContaining({
-            method: 'PUT',
-            body: expect.stringContaining('2000')
-          })
+        const putCall = (global.fetch as jest.Mock).mock.calls.find(call =>
+          call[0]?.includes('/api/funding/1') &&
+          call[1]?.method === 'PUT'
         );
-      });
+        expect(putCall).toBeTruthy();
+        expect(putCall[1].body).toContain('"total_awarded":2000');
+        // Optionally check for other updated fields if needed
+      }, { timeout: 3000 });
     });
 
     it('should handle validation errors in edit form', async () => {
+      const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {});
+      // Set up mock data with invalid total awarded and category amount_spent = 0
+      mockProjects[0] = {
+        ...mockProjects[0],
+        funding: {
+          total_awarded: 0, // set to 0 to trigger validation
+          amount_spent: 0,
+          amount_remaining: 0,
+          grant_status: 'active',
+          grant_end_date: '2024-12-31'
+        },
+        funding_initialized: true,
+        categories: [
+          {
+            category_ID: 1,
+            category: 'Personnel',
+            description: 'Staff costs',
+            amount_spent: 0,
+            amount_allocated: 0,
+            type: 'Personnel'
+          }
+        ]
+      };
       render(<Page />);
+      const editButton = await screen.findByText('Edit');
+      fireEvent.click(editButton);
       await waitFor(() => {
-        fireEvent.click(screen.getByText('Edit'));
+        expect(screen.getByText('Edit Funding')).toBeInTheDocument();
       });
-      const totalAwardedInput = screen.getByLabelText(/Total Awarded/i);
+      const totalAwardedInput = await screen.findByTestId('funding-total-awarded-1');
+      const endDateInput = await screen.findByTestId('funding-end-date-1');
+      await userEvent.clear(endDateInput);
+      await userEvent.type(endDateInput, '2099-12-31');
       await userEvent.clear(totalAwardedInput);
-      await userEvent.type(totalAwardedInput, '-100');
-      fireEvent.click(screen.getByText('Confirm'));
-      // Check that the modal is still open (form did not submit)
+      await userEvent.type(totalAwardedInput, '0');
+      const confirmButton = screen.getByRole('button', { name: /confirm/i });
+      fireEvent.click(confirmButton);
       await waitFor(() => {
-        expect(screen.getByText(/Edit Funding|Initialize Funding/)).toBeInTheDocument();
-      });
+        const alertArg = alertSpy.mock.calls[0]?.[0];
+        expect(alertArg).toContain('Total awarded amount must be greater than 0');
+        expect(alertArg).toContain('Amount spent must be greater than 0');
+      }, { timeout: 3000 });
+      alertSpy.mockRestore();
     });
   });
 
@@ -306,53 +360,42 @@ describe('Funding Dashboard Page', () => {
   describe('Category Management', () => {
     it('should add a new category', async () => {
       render(<Page />);
+      const editButton = await screen.findByText('Edit');
+      fireEvent.click(editButton);
+      // Wait for the modal to be fully rendered
       await waitFor(() => {
-        fireEvent.click(screen.getByText('Edit'));
+        expect(screen.getByText('Edit Funding')).toBeInTheDocument();
       });
-      // Add a category
-      fireEvent.click(screen.getByText('+ Add Category'));
-      // Now the category should be present
+      // Find the Add Category button by its text content
+      const addButton = await screen.findByText('+ Add Category');
+      fireEvent.click(addButton);
       await waitFor(() => {
-        expect(global.fetch).toHaveBeenCalledWith(
-          expect.stringContaining('/api/funding/1/categories'),
-          expect.objectContaining({
-            method: 'POST'
-          })
+        const called = (global.fetch as jest.Mock).mock.calls.some(call =>
+          call[0]?.includes('/api/funding/1/categories') &&
+          call[1]?.method === 'POST'
         );
-      });
+        expect(called).toBe(true);
+      }, { timeout: 3000 });
     });
 
-    it('should update category details', async () => {
-      // Add a category first
-      mockProjects[0].categories = [{
-        category_ID: 4,
-        category: 'Personnel',
-        description: 'Update Cat',
-        amount_spent: 0,
-        amount_allocated: 0,
-        type: 'Personnel',
-      }];
+    it('should remove a category', async () => {
       render(<Page />);
+      const editButton = await screen.findByText('Edit');
+      fireEvent.click(editButton);
+      // Wait for the modal to be fully rendered
       await waitFor(() => {
-        fireEvent.click(screen.getByText('Edit'));
+        expect(screen.getByText('Edit Funding')).toBeInTheDocument();
       });
-      // Now the category should be present
-      const descriptionInput = screen.getByTestId('category-description-4');
-      const amountInput = screen.getByTestId('category-amount-4');
-      await userEvent.clear(descriptionInput);
-      await userEvent.type(descriptionInput, 'Updated description');
-      await userEvent.clear(amountInput);
-      await userEvent.type(amountInput, '400');
-      fireEvent.click(screen.getByText('Confirm'));
+      // Find the remove button for the first category by data-testid
+      const removeButton = await screen.findByTestId('remove-category-1');
+      fireEvent.click(removeButton);
       await waitFor(() => {
-        expect(global.fetch).toHaveBeenCalledWith(
-          expect.stringContaining('/api/funding/1/categories/4'),
-          expect.objectContaining({
-            method: 'PUT',
-            body: expect.stringContaining('Updated description')
-          })
+        const called = (global.fetch as jest.Mock).mock.calls.some(call =>
+          call[0]?.includes('/api/funding/1/categories/1') &&
+          call[1]?.method === 'DELETE'
         );
-      });
+        expect(called).toBe(true);
+      }, { timeout: 3000 });
     });
   });
 

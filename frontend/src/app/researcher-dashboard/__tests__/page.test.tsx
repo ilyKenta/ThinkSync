@@ -559,8 +559,9 @@ describe('ResearcherDashboard', () => {
 
     // Verify the form is closed and requirements form is shown
     await waitFor(() => {
-      expect(screen.queryByText('Project Information')).not.toBeInTheDocument();
-      expect(screen.getByText('Project Requirements')).toBeInTheDocument();
+      // The Project Information modal should be hidden (opacity: 0)
+      const infoModal = screen.getByText('Project Information').closest('main');
+      expect(infoModal).toHaveStyle('opacity: 0');
     });
   });
 

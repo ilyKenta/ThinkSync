@@ -4,10 +4,9 @@ import InviteCollaborators from '../InviteCollaborators';
 import '@testing-library/jest-dom';
 
 // Mock fetch
-global.fetch = jest.fn();
-
-// Mock window.alert
-global.alert = jest.fn();
+beforeAll(() => {
+  global.fetch = jest.fn();
+});
 
 describe('InviteCollaborators', () => {
   const mockUsers = [
@@ -32,67 +31,80 @@ describe('InviteCollaborators', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     localStorage.setItem('jwt', 'test-token');
+    jest.useFakeTimers();
   });
 
-  it('renders modal with search form', () => {
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('renders modal with search form and search type select', () => {
     render(<InviteCollaborators {...mockProps} />);
-    
     expect(screen.getByText('Invite Collaborators')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Search by name')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /search/i })).toBeInTheDocument();
+    expect(screen.getByRole('combobox')).toBeInTheDocument();
   });
 
-  it('handles search by name', async () => {
+  it('handles search by name (debounced)', async () => {
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({ collaborators: mockUsers })
     });
-
-      render(<InviteCollaborators {...mockProps} />);
-
+    render(<InviteCollaborators {...mockProps} />);
     const searchInput = screen.getByPlaceholderText('Search by name');
-    const searchButton = screen.getByRole('button', { name: /search/i });
-
     await act(async () => {
       fireEvent.change(searchInput, { target: { value: 'John' } });
-      fireEvent.submit(searchButton.closest('form')!);
+      jest.advanceTimersByTime(300);
     });
-
     await waitFor(() => {
-      // Find the user info section
       const userSection = screen.getByTestId('user-section');
       expect(userSection).toBeInTheDocument();
-      
-      // Check for the checkbox
-      const checkbox = userSection.querySelector('input[type="checkbox"]');
-      expect(checkbox).toBeInTheDocument();
-      
-      // Check for the user info text
-      const userInfo = userSection.querySelector('p');
-      expect(userInfo).toBeInTheDocument();
-      
-      // Get the text content and normalize whitespace
-      const textContent = userInfo?.textContent?.replace(/\s+/g, ' ').trim();
-      expect(textContent).toContain('John Doe');
-      expect(textContent).toContain('researcher');
-      expect(textContent).toContain('AI');
-      expect(textContent).toContain('PhD');
+      const userInfo = screen.getByTestId('user-info');
+      expect(userInfo).toHaveTextContent('John Doe');
+      expect(userInfo).toHaveTextContent('researcher');
+      expect(userInfo).toHaveTextContent('AI');
+      expect(userInfo).toHaveTextContent('PhD');
+    });
+  });
+
+  it('handles search by skill', async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ collaborators: mockUsers })
+    });
+    render(<InviteCollaborators {...mockProps} />);
+    const select = screen.getByRole('combobox');
+    fireEvent.change(select, { target: { value: 'skill' } });
+    const searchInput = screen.getByPlaceholderText('Search by skill');
+    await act(async () => {
+      fireEvent.change(searchInput, { target: { value: 'AI' } });
+      jest.advanceTimersByTime(300);
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId('user-section')).toBeInTheDocument();
+    });
+  });
+
+  it('shows validation error for invalid search input', async () => {
+    render(<InviteCollaborators {...mockProps} />);
+    const searchInput = screen.getByPlaceholderText('Search by name');
+    await act(async () => {
+      fireEvent.change(searchInput, { target: { value: '!' } });
+      jest.advanceTimersByTime(300);
+    });
+    await waitFor(() => {
+      expect(screen.getByText(/please enter a valid name/i)).toBeInTheDocument();
     });
   });
 
   it('handles search errors', async () => {
     (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Search failed'));
-
-      render(<InviteCollaborators {...mockProps} />);
-
+    render(<InviteCollaborators {...mockProps} />);
     const searchInput = screen.getByPlaceholderText('Search by name');
-    const searchButton = screen.getByRole('button', { name: /search/i });
-
     await act(async () => {
       fireEvent.change(searchInput, { target: { value: 'John' } });
-      fireEvent.submit(searchButton.closest('form')!);
+      jest.advanceTimersByTime(300);
     });
-
     await waitFor(() => {
       expect(screen.getByText('Search failed')).toBeInTheDocument();
     });
@@ -108,29 +120,23 @@ describe('InviteCollaborators', () => {
         ok: true,
         json: () => Promise.resolve({ message: 'Invitations sent successfully' })
       });
-
-      render(<InviteCollaborators {...mockProps} />);
-
+    window.alert = jest.fn();
+    render(<InviteCollaborators {...mockProps} />);
     const searchInput = screen.getByPlaceholderText('Search by name');
-    const searchButton = screen.getByRole('button', { name: /search/i });
-
     await act(async () => {
       fireEvent.change(searchInput, { target: { value: 'John' } });
-      fireEvent.submit(searchButton.closest('form')!);
+      jest.advanceTimersByTime(300);
     });
-
     await waitFor(() => {
       const checkbox = screen.getByRole('checkbox');
-        fireEvent.click(checkbox);
+      fireEvent.click(checkbox);
     });
-
     const sendButton = screen.getByRole('button', { name: /send invitation/i });
     await act(async () => {
       fireEvent.click(sendButton);
     });
-
     await waitFor(() => {
-      expect(global.alert).toHaveBeenCalledWith(
+      expect(window.alert).toHaveBeenCalledWith(
         expect.stringContaining('Invitations sent to: John Doe')
       );
       expect(mockProps.onClose).toHaveBeenCalled();
@@ -144,31 +150,22 @@ describe('InviteCollaborators', () => {
         json: () => Promise.resolve({ collaborators: mockUsers })
       })
       .mockRejectedValueOnce(new Error('Failed to send invitations'));
-
-      render(<InviteCollaborators {...mockProps} />);
-
+    render(<InviteCollaborators {...mockProps} />);
     const searchInput = screen.getByPlaceholderText('Search by name');
-    const searchButton = screen.getByRole('button', { name: /search/i });
-
     await act(async () => {
       fireEvent.change(searchInput, { target: { value: 'John' } });
-      fireEvent.submit(searchButton.closest('form')!);
+      jest.advanceTimersByTime(300);
     });
-
     await waitFor(() => {
       const checkbox = screen.getByRole('checkbox');
-        fireEvent.click(checkbox);
+      fireEvent.click(checkbox);
     });
-
     const sendButton = screen.getByRole('button', { name: /send invitation/i });
     await act(async () => {
       fireEvent.click(sendButton);
     });
-
     await waitFor(() => {
-      expect(global.alert).toHaveBeenCalledWith(
-        expect.stringContaining('Error sending invitations')
-      );
+      expect(screen.getByText(/Error sending invitations: Failed to send invitations/i)).toBeInTheDocument();
     });
   });
 }); 

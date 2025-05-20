@@ -196,7 +196,8 @@ router.get('/reviewers/search', isAdmin, async (req, res) => {
                 u.sname,
                 u.department,
                 u.acc_role,
-                r.qualification
+                r.qualification,
+                r.res_area
             FROM users u
             JOIN reviewer r ON u.user_ID = r.user_ID
             WHERE r.res_area LIKE CONCAT('%', ?, '%')
@@ -210,7 +211,8 @@ router.get('/reviewers/search', isAdmin, async (req, res) => {
             sname: reviewer.sname,
             department: reviewer.department,
             acc_role: reviewer.acc_role,
-            qualification: reviewer.qualification || null
+            qualification: reviewer.qualification || null,
+            research_area: reviewer.res_area
         }));
 
         return res.status(200).json({ reviewers: formattedReviewers });

@@ -17,12 +17,13 @@ export type CreateFormProps = {
     setEnd: string,
     Funding: boolean | null
   ) => void;
+  forceMounted?: boolean; // test-only prop
 };
 
-export default function CreateForm({ onClose, onCreate }: CreateFormProps) {
+export default function CreateForm({ onClose, onCreate, forceMounted }: CreateFormProps) {
   const router = useRouter();
   const [isVisible, setIsVisible] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const [mounted, setMounted] = useState(forceMounted || false);
   // useAuth(); // Check authentication
 
   const [title, setTitle] = useState("");
@@ -34,13 +35,15 @@ export default function CreateForm({ onClose, onCreate }: CreateFormProps) {
   const [funding_available, setFunding] = useState<boolean | null>(null);
 
   useEffect(() => {
+    if (!forceMounted) {
     setMounted(true);
+    }
     document.body.classList.add('modal-open');
     
     return () => {
       document.body.classList.remove('modal-open');
     };
-  }, []);
+  }, [forceMounted]);
 
   const handleClose = () => {
     setIsVisible(false);
@@ -50,7 +53,115 @@ export default function CreateForm({ onClose, onCreate }: CreateFormProps) {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
+    if (e && typeof (e as any).persist === 'function') {
+      (e as any).persist();
+    }
     e.preventDefault();
+
+    // Get current date at midnight for comparison
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Convert string dates to Date objects for comparison
+    const startDate = start_date ? new Date(start_date) : null;
+    const endDate = end_date ? new Date(end_date) : null;
+
+    // Validate project name
+    if (!title.trim()) {
+      const titleInput = document.getElementById('projName') as HTMLInputElement;
+      titleInput.setCustomValidity('Project name is required');
+      titleInput.reportValidity();
+      return;
+    }
+    if (title.length > 100) {
+      const titleInput = document.getElementById('projName') as HTMLInputElement;
+      titleInput.setCustomValidity('Project name must be less than 100 characters');
+      titleInput.reportValidity();
+      return;
+    }
+    // Check for special characters in project name
+    if (!/^[a-zA-Z0-9\s\-_.,&()]+$/.test(title)) {
+      const titleInput = document.getElementById('projName') as HTMLInputElement;
+      titleInput.setCustomValidity('Project name contains invalid characters. Only letters, numbers, spaces, and basic punctuation are allowed');
+      titleInput.reportValidity();
+      return;
+    }
+
+    // Validate description
+    if (!description.trim()) {
+      const descInput = document.getElementById('projectDesc') as HTMLInputElement;
+      descInput.setCustomValidity('Project description is required');
+      descInput.reportValidity();
+      return;
+    }
+    if (description.length > 1000) {
+      const descInput = document.getElementById('projectDesc') as HTMLInputElement;
+      descInput.setCustomValidity('Description must be less than 1000 characters');
+      descInput.reportValidity();
+      return;
+    }
+
+    // Validate goals
+    if (!goals.trim()) {
+      const goalsInput = document.getElementById('goals') as HTMLInputElement;
+      goalsInput.setCustomValidity('Goals are required');
+      goalsInput.reportValidity();
+      return;
+    }
+    if (goals.length > 500) {
+      const goalsInput = document.getElementById('goals') as HTMLInputElement;
+      goalsInput.setCustomValidity('Goals must be less than 500 characters');
+      goalsInput.reportValidity();
+      return;
+    }
+
+    // Validate research areas
+    if (!research_areas.trim()) {
+      const resAreaInput = document.getElementById('setResArea') as HTMLInputElement;
+      resAreaInput.setCustomValidity('Research area is required');
+      resAreaInput.reportValidity();
+      return;
+    }
+    if (research_areas.length > 200) {
+      const resAreaInput = document.getElementById('setResArea') as HTMLInputElement;
+      resAreaInput.setCustomValidity('Research area must be less than 200 characters');
+      resAreaInput.reportValidity();
+      return;
+    }
+
+    // Validate start date
+    if (!start_date) {
+      const startInput = document.getElementById('setStart') as HTMLInputElement;
+      startInput.setCustomValidity('Start date is required');
+      startInput.reportValidity();
+      return;
+    }
+    if (startDate && startDate < today) {
+      const startInput = document.getElementById('setStart') as HTMLInputElement;
+      startInput.setCustomValidity('Start date cannot be in the past');
+      startInput.reportValidity();
+      return;
+    }
+
+    // Validate end date
+    if (!end_date) {
+      const endInput = document.getElementById('setEnd') as HTMLInputElement;
+      endInput.setCustomValidity('End date is required');
+      endInput.reportValidity();
+      return;
+    }
+    if (endDate && endDate < today) {
+      const endInput = document.getElementById('setEnd') as HTMLInputElement;
+      endInput.setCustomValidity('End date cannot be in the past');
+      endInput.reportValidity();
+      return;
+    }
+    if (startDate && endDate && endDate < startDate) {
+      const endInput = document.getElementById('setEnd') as HTMLInputElement;
+      endInput.setCustomValidity('End date must be after start date');
+      endInput.reportValidity();
+      return;
+    }
 
     // Check if funding is selected
     if (funding_available === null) {
@@ -62,12 +173,22 @@ export default function CreateForm({ onClose, onCreate }: CreateFormProps) {
       return;
     }
 
-    // Call onCreate with the form data
+    // Clear any previous validation messages
+    const inputs = document.querySelectorAll('input');
+    inputs.forEach(input => input.setCustomValidity(''));
+
+    // Sanitize inputs before submission
+    const sanitizedTitle = title.trim();
+    const sanitizedDescription = description.trim();
+    const sanitizedGoals = goals.trim();
+    const sanitizedResearchAreas = research_areas.trim();
+
+    // Call onCreate with the sanitized form data
     onCreate(
-      title,
-      description,
-      goals,
-      research_areas,
+      sanitizedTitle,
+      sanitizedDescription,
+      sanitizedGoals,
+      sanitizedResearchAreas,
       start_date,
       end_date,
       funding_available

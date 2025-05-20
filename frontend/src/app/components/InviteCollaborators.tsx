@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import "./InviteCollaborators.css";
 
 type Collaborator = {
@@ -31,6 +31,7 @@ const InviteCollaborators: React.FC<InviteCollaboratorsProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [inviteLoading, setInviteLoading] = useState(false);
+  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
 
   // Reset state when the component mounts or projectId changes
   useEffect(() => {
@@ -43,14 +44,39 @@ const InviteCollaborators: React.FC<InviteCollaboratorsProps> = ({
     setInviteLoading(false);
   }, [projectId]);
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Validate search input based on search type
+  const validateSearch = (value: string, type: string): boolean => {
+    if (!value.trim()) return false;
+
+    switch (type) {
+      case "name":
+        // Allow letters, spaces, and basic punctuation for names
+        return /^[a-zA-Z\s\-']{2,50}$/.test(value.trim());
+      case "skill":
+        // Allow letters, numbers, spaces, and basic punctuation for skills
+        return /^[a-zA-Z0-9\s\-_.,&()]{2,50}$/.test(value.trim());
+      case "position":
+        // Allow letters, spaces, and basic punctuation for positions
+        return /^[a-zA-Z\s\-_.,&()]{2,50}$/.test(value.trim());
+      default:
+        return false;
+    }
+  };
+
+  const handleSearch = useCallback(async (searchTerm: string, type: string) => {
+    if (!validateSearch(searchTerm, type)) {
+      setError(`Please enter a valid ${type} (2-50 characters, no special characters)`);
+      setResults([]);
+      return;
+    }
+
     setLoading(true);
     setError(null);
-    setResults([]);
+
     try {
       const token = localStorage.getItem("jwt");
       if (!token) throw new Error("Not authenticated");
+
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/collaborations/search`,
         {
@@ -59,20 +85,46 @@ const InviteCollaborators: React.FC<InviteCollaboratorsProps> = ({
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ searchTerm: search, searchType }),
+          body: JSON.stringify({ searchTerm: searchTerm.trim(), searchType: type }),
         }
       );
+
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || "Search failed");
       }
+
       const data = await res.json();
-      setResults(data.collaborators || []);
+      // Limit results to 5 users
+      setResults((data.collaborators || []).slice(0, 5));
     } catch (err: any) {
       setError(err.message || "Search error");
+      setResults([]);
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  // Handle search input changes with debounce
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setError(null);
+
+    // Clear previous timeout
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+
+    // Set new timeout for search
+    const timeout = setTimeout(() => {
+      if (value.trim()) {
+        handleSearch(value, searchType);
+      } else {
+        setResults([]);
+      }
+    }, 300); // 300ms debounce
+
+    setSearchTimeout(timeout);
   };
 
   const handleSelect = (id: string) => {
@@ -86,8 +138,9 @@ const InviteCollaborators: React.FC<InviteCollaboratorsProps> = ({
     try {
       const token = localStorage.getItem("jwt");
       if (!token) throw new Error("Not authenticated");
+
       for (const userId of selected) {
-        await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/collaborations/invite`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/collaborations/invite`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -99,7 +152,13 @@ const InviteCollaborators: React.FC<InviteCollaboratorsProps> = ({
             proposed_role: "Collaborator",
           }),
         });
+
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || "Failed to send invitation");
+        }
       }
+
       alert(
         `Invitations sent to: ${results
           .filter((u) => selected.includes(u.user_ID))
@@ -111,11 +170,20 @@ const InviteCollaborators: React.FC<InviteCollaboratorsProps> = ({
       setSearch("");
       onClose();
     } catch (err: any) {
-      alert("Error sending invitations: " + (err.message || err));
+      setError("Error sending invitations: " + (err.message || err));
     } finally {
       setInviteLoading(false);
     }
   };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeout) {
+        clearTimeout(searchTimeout);
+      }
+    };
+  }, [searchTimeout]);
 
   return (
     <section className="modal-overlay">
@@ -129,11 +197,16 @@ const InviteCollaborators: React.FC<InviteCollaboratorsProps> = ({
           <h2 className="title" id="invite-collaborators-title">Invite Collaborators</h2>
         </header>
 
-        <form onSubmit={handleSearch} className="search-form">
+        <section className="search-form">
           <select
             className="search-input"
             value={searchType}
-            onChange={(e) => setSearchType(e.target.value)}
+            onChange={(e) => {
+              setSearchType(e.target.value);
+              if (search.trim()) {
+                handleSearch(search, e.target.value);
+              }
+            }}
           >
             <option value="name">Name</option>
             <option value="skill">Skill set</option>
@@ -143,17 +216,16 @@ const InviteCollaborators: React.FC<InviteCollaboratorsProps> = ({
             className="search-input"
             type="text"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             placeholder={`Search by ${searchType}`}
+            maxLength={50}
           />
-          <button className="search-button" type="submit" disabled={loading}>
-            {loading ? "Searching..." : "Search"}
-          </button>
-        </form>
+        </section>
         {error && <p className="error-message">{error}</p>}
+        {loading && <p className="loading-message">Searching...</p>}
 
         <section className="results-container">
-          {results.length === 0 && !loading && <p>No results.</p>}
+          {results.length === 0 && !loading && search.trim() && <p>No results found.</p>}
           {results.map((u) => (
             <section className="user-entry" key={u.user_ID} data-testid="user-section">
               <input

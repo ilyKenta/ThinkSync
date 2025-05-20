@@ -35,6 +35,8 @@ export default function CreateReqForm({
   const [experience, setExp] = useState("");
   const [reqrole, setRole] = useState("");
   const [techReq, setReq] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -46,11 +48,73 @@ export default function CreateReqForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const token = localStorage.getItem("jwt");
-    if (!token) {
-      alert("User not logged in");
+    setError(null);
+    setLoading(true);
+
+    // Validate skill
+    if (!skill.trim()) {
+      setError('Skill is required');
+      setLoading(false);
       return;
     }
+    if (skill.length > 100) {
+      setError('Skill must be less than 100 characters');
+      setLoading(false);
+      return;
+    }
+    if (!/^[a-zA-Z0-9\s\-_.,&()]+$/.test(skill)) {
+      setError('Skill contains invalid characters. Only letters, numbers, spaces, and basic punctuation are allowed');
+      setLoading(false);
+      return;
+    }
+
+    // Validate role
+    if (!reqrole.trim()) {
+      setError('Role is required');
+      setLoading(false);
+      return;
+    }
+    if (reqrole.length > 100) {
+      setError('Role must be less than 100 characters');
+      setLoading(false);
+      return;
+    }
+    if (!/^[a-zA-Z0-9\s\-_.,&()]+$/.test(reqrole)) {
+      setError('Role contains invalid characters. Only letters, numbers, spaces, and basic punctuation are allowed');
+      setLoading(false);
+      return;
+    }
+
+    // Validate technical requirements
+    if (!techReq.trim()) {
+      setError('Technical requirements are required');
+      setLoading(false);
+      return;
+    }
+    if (techReq.length > 500) {
+      setError('Technical requirements must be less than 500 characters');
+      setLoading(false);
+      return;
+    }
+
+    // Validate experience level
+    if (!experience) {
+      setError('Experience level is required');
+      setLoading(false);
+      return;
+    }
+
+    const token = localStorage.getItem("jwt");
+    if (!token) {
+      setError("User not logged in");
+      setLoading(false);
+      return;
+    }
+
+    // Sanitize inputs
+    const sanitizedSkill = skill.trim();
+    const sanitizedRole = reqrole.trim();
+    const sanitizedTechReq = techReq.trim();
 
     const payload = {
       project: {
@@ -64,16 +128,13 @@ export default function CreateReqForm({
       },
       requirements: [
         {
-          skill_required: skill,
+          skill_required: sanitizedSkill,
           experience_level: experience.toLowerCase(),
-          role: reqrole,
-          technical_requirements: techReq,
+          role: sanitizedRole,
+          technical_requirements: sanitizedTechReq,
         },
       ],
     };
-
-    onCreate(skill);
-    onClose();
 
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/projects/create`, {
@@ -88,13 +149,16 @@ export default function CreateReqForm({
       const data = await res.json();
 
       if (res.ok) {
-        console.log(data);
+        onCreate(sanitizedSkill);
+        onClose();
       } else {
-        alert(`Error: ${data.error}`);
+        setError(data.error || 'Failed to create project');
       }
     } catch (err) {
       console.error("Submission error:", err);
-      alert("An error occurred");
+      setError("An error occurred while creating the project");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -113,6 +177,7 @@ export default function CreateReqForm({
             value={skill}
             onChange={(e) => setSkill(e.target.value)}
             required
+            maxLength={100}
           />
           <label htmlFor="explvl">Level of experience</label>
           <select
@@ -134,6 +199,7 @@ export default function CreateReqForm({
             value={reqrole}
             onChange={(e) => setRole(e.target.value)}
             required
+            maxLength={100}
           />
           <label htmlFor="techReq">Technical Requirements</label>
           <input
@@ -142,9 +208,20 @@ export default function CreateReqForm({
             value={techReq}
             onChange={(e) => setReq(e.target.value)}
             required
+            maxLength={500}
           />
-          <button type="submit" aria-label="submit information">
-            Create →
+          {error && (
+            <div style={{ color: 'red', marginTop: '10px', marginBottom: '10px' }}>
+              {error}
+            </div>
+          )}
+          <button 
+            type="submit" 
+            aria-label="submit information"
+            disabled={loading}
+            style={{ opacity: loading ? 0.7 : 1 }}
+          >
+            {loading ? 'Creating...' : 'Create →'}
           </button>
         </form>
       </section>

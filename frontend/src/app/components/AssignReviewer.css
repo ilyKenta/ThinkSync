@@ -67,12 +67,51 @@
   color: #666;
 }
 
+.reviewer-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-left: 8px;
+  flex: 1;
+}
+
+.reviewer-name {
+  margin: 0;
+  font-size: 1.1em;
+  font-weight: 600;
+  color: #000;
+}
+
+.reviewer-details {
+  margin: 0;
+  color: #666;
+  font-size: 0.9em;
+}
+
+.reviewer-research {
+  margin: 0;
+  color: #4a90e2;
+  font-size: 0.9em;
+  font-style: italic;
+}
+
 .reviewer-option {
   display: flex;
-  align-items: center;
-  padding: 6px;
-  border-bottom: 1px solid #eee;
+  align-items: flex-start;
+  padding: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  margin-bottom: 8px;
   cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.reviewer-option:hover {
+  background-color: #f5f5f5;
+}
+
+.reviewer-option input[type="radio"] {
+  margin-top: 4px;
 }
 
 .action-buttons {

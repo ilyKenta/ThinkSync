@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import AssignReviewer from '../AssignReviewers';
 
 // Mock alert
@@ -22,17 +22,22 @@ describe('AssignReviewer', () => {
   const defaultProps = {
     projectId: 'p1',
     onClose: jest.fn(),
+    onAssignSuccess: jest.fn(),
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.useFakeTimers();
   });
 
-  it('renders modal and form', () => {
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('renders modal and form elements', () => {
     render(<AssignReviewer {...defaultProps} />);
     expect(screen.getByRole('heading', { name: /Assign Reviewer/i })).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/search by research area/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /search/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /assign reviewer/i })).toBeDisabled();
   });
@@ -46,8 +51,11 @@ describe('AssignReviewer', () => {
   it('shows error if not authenticated on search', async () => {
     window.localStorage.getItem = jest.fn().mockReturnValue(null);
     render(<AssignReviewer {...defaultProps} />);
-    fireEvent.change(screen.getByPlaceholderText(/search by research area/i), { target: { value: 'AI' } });
-    fireEvent.click(screen.getByRole('button', { name: /search/i }));
+    const searchInput = screen.getByPlaceholderText(/search by research area/i);
+    fireEvent.change(searchInput, { target: { value: 'AI' } });
+    act(() => {
+      jest.advanceTimersByTime(300); // Advance past debounce
+    });
     await waitFor(() => {
       expect(screen.getByText(/not authenticated/i)).toBeInTheDocument();
     });
@@ -60,8 +68,11 @@ describe('AssignReviewer', () => {
       json: async () => ({ error: 'API error' }),
     });
     render(<AssignReviewer {...defaultProps} />);
-    fireEvent.change(screen.getByPlaceholderText(/search by research area/i), { target: { value: 'AI' } });
-    fireEvent.click(screen.getByRole('button', { name: /search/i }));
+    const searchInput = screen.getByPlaceholderText(/search by research area/i);
+    fireEvent.change(searchInput, { target: { value: 'AI' } });
+    act(() => {
+      jest.advanceTimersByTime(300); // Advance past debounce
+    });
     await waitFor(() => {
       expect(screen.getByText(/API error/i)).toBeInTheDocument();
     });
@@ -72,20 +83,27 @@ describe('AssignReviewer', () => {
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ reviewers: [
-        { user_ID: 'u1', fname: 'Alice', sname: 'Smith', department: 'CS', acc_role: 'Reviewer', qualification: 'PhD' },
-        { user_ID: 'u2', fname: 'Bob', sname: 'Jones', department: 'Math', acc_role: 'Reviewer' },
+        { user_ID: 'u1', fname: 'Alice', sname: 'Smith', department: 'CS', acc_role: 'Reviewer', qualification: 'PhD', research_area: 'AI' },
+        { user_ID: 'u2', fname: 'Bob', sname: 'Jones', department: 'Math', acc_role: 'Reviewer', research_area: 'AI' },
       ] }),
     });
     render(<AssignReviewer {...defaultProps} />);
-    fireEvent.change(screen.getByPlaceholderText(/search by research area/i), { target: { value: 'AI' } });
-    fireEvent.click(screen.getByRole('button', { name: /search/i }));
+    const searchInput = screen.getByPlaceholderText(/search by research area/i);
+    fireEvent.change(searchInput, { target: { value: 'AI' } });
+    act(() => {
+      jest.advanceTimersByTime(300); // Advance past debounce
+    });
     await waitFor(() => {
       expect(screen.getByText(/Alice Smith/)).toBeInTheDocument();
       expect(screen.getByText(/Bob Jones/)).toBeInTheDocument();
+      expect(screen.getByText(/PhD/)).toBeInTheDocument();
+      // Use getAllByText for multiple elements
+      const researchAreas = screen.getAllByText(/Research Area: AI/);
+      expect(researchAreas).toHaveLength(2);
     });
   });
 
-  it('can select a reviewer and enable assign button', async () => {
+  it('enables assign button when reviewer is selected', async () => {
     window.localStorage.getItem = jest.fn().mockReturnValue('token');
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
@@ -94,8 +112,11 @@ describe('AssignReviewer', () => {
       ] }),
     });
     render(<AssignReviewer {...defaultProps} />);
-    fireEvent.change(screen.getByPlaceholderText(/search by research area/i), { target: { value: 'AI' } });
-    fireEvent.click(screen.getByRole('button', { name: /search/i }));
+    const searchInput = screen.getByPlaceholderText(/search by research area/i);
+    fireEvent.change(searchInput, { target: { value: 'AI' } });
+    act(() => {
+      jest.advanceTimersByTime(300); // Advance past debounce
+    });
     await waitFor(() => {
       expect(screen.getByText(/Alice Smith/)).toBeInTheDocument();
     });
@@ -106,20 +127,17 @@ describe('AssignReviewer', () => {
   it('shows error if not authenticated on assign', async () => {
     window.localStorage.getItem = jest.fn().mockReturnValue(null);
     render(<AssignReviewer {...defaultProps} />);
-    // Simulate search and select
-    fireEvent.change(screen.getByPlaceholderText(/search by research area/i), { target: { value: 'AI' } });
-    fireEvent.click(screen.getByRole('button', { name: /search/i }));
-    await waitFor(() => {
-      // No reviewers, so nothing to select
-      expect(screen.getByText(/no results/i)).toBeInTheDocument();
+    const searchInput = screen.getByPlaceholderText(/search by research area/i);
+    fireEvent.change(searchInput, { target: { value: 'AI' } });
+    act(() => {
+      jest.advanceTimersByTime(300); // Advance past debounce
     });
-    // Try to assign (should do nothing)
-    fireEvent.click(screen.getByRole('button', { name: /assign reviewer/i }));
-    // No alert should be called
-    expect(window.alert).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(screen.getByText(/not authenticated/i)).toBeInTheDocument();
+    });
   });
 
-  it('shows alert and closes on successful assign', async () => {
+  it('calls onAssignSuccess and onClose on successful assign', async () => {
     window.localStorage.getItem = jest.fn().mockReturnValue('token');
     global.fetch = jest
       .fn()
@@ -134,20 +152,23 @@ describe('AssignReviewer', () => {
         json: async () => ({}),
       });
     render(<AssignReviewer {...defaultProps} />);
-    fireEvent.change(screen.getByPlaceholderText(/search by research area/i), { target: { value: 'AI' } });
-    fireEvent.click(screen.getByRole('button', { name: /search/i }));
+    const searchInput = screen.getByPlaceholderText(/search by research area/i);
+    fireEvent.change(searchInput, { target: { value: 'AI' } });
+    act(() => {
+      jest.advanceTimersByTime(300); // Advance past debounce
+    });
     await waitFor(() => {
       expect(screen.getByText(/Alice Smith/)).toBeInTheDocument();
     });
     fireEvent.click(screen.getByRole('radio', { name: /Alice Smith/i }));
     fireEvent.click(screen.getByRole('button', { name: /assign reviewer/i }));
     await waitFor(() => {
-      expect(window.alert).toHaveBeenCalledWith(expect.stringContaining('Reviewer assigned'));
+      expect(defaultProps.onAssignSuccess).toHaveBeenCalled();
       expect(defaultProps.onClose).toHaveBeenCalled();
     });
   });
 
-  it('shows alert on assign error', async () => {
+  it('shows error message on assign failure', async () => {
     window.localStorage.getItem = jest.fn().mockReturnValue('token');
     global.fetch = jest
       .fn()
@@ -162,15 +183,55 @@ describe('AssignReviewer', () => {
         json: async () => ({ error: 'Assign error' }),
       });
     render(<AssignReviewer {...defaultProps} />);
-    fireEvent.change(screen.getByPlaceholderText(/search by research area/i), { target: { value: 'AI' } });
-    fireEvent.click(screen.getByRole('button', { name: /search/i }));
+    const searchInput = screen.getByPlaceholderText(/search by research area/i);
+    fireEvent.change(searchInput, { target: { value: 'AI' } });
+    act(() => {
+      jest.advanceTimersByTime(300); // Advance past debounce
+    });
     await waitFor(() => {
       expect(screen.getByText(/Alice Smith/)).toBeInTheDocument();
     });
     fireEvent.click(screen.getByRole('radio', { name: /Alice Smith/i }));
     fireEvent.click(screen.getByRole('button', { name: /assign reviewer/i }));
     await waitFor(() => {
-      expect(window.alert).toHaveBeenCalledWith(expect.stringContaining('Error assigning reviewer'));
+      expect(screen.getByText(/Error assigning reviewer: Assign error/i)).toBeInTheDocument();
     });
+  });
+
+  it('shows loading state during search', async () => {
+    window.localStorage.getItem = jest.fn().mockReturnValue('token');
+    global.fetch = jest.fn().mockImplementation(() => new Promise(resolve => setTimeout(resolve, 100)));
+    render(<AssignReviewer {...defaultProps} />);
+    const searchInput = screen.getByPlaceholderText(/search by research area/i);
+    fireEvent.change(searchInput, { target: { value: 'AI' } });
+    act(() => {
+      jest.advanceTimersByTime(300); // Advance past debounce
+    });
+    expect(screen.getByText(/searching/i)).toBeInTheDocument();
+  });
+
+  it('shows loading state during assign', async () => {
+    window.localStorage.getItem = jest.fn().mockReturnValue('token');
+    global.fetch = jest
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ reviewers: [
+          { user_ID: 'u1', fname: 'Alice', sname: 'Smith', department: 'CS', acc_role: 'Reviewer' },
+        ] }),
+      })
+      .mockImplementationOnce(() => new Promise(resolve => setTimeout(resolve, 100)));
+    render(<AssignReviewer {...defaultProps} />);
+    const searchInput = screen.getByPlaceholderText(/search by research area/i);
+    fireEvent.change(searchInput, { target: { value: 'AI' } });
+    act(() => {
+      jest.advanceTimersByTime(300); // Advance past debounce
+    });
+    await waitFor(() => {
+      expect(screen.getByText(/Alice Smith/)).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole('radio', { name: /Alice Smith/i }));
+    fireEvent.click(screen.getByRole('button', { name: /assign reviewer/i }));
+    expect(screen.getByText(/assigning/i)).toBeInTheDocument();
   });
 }); 

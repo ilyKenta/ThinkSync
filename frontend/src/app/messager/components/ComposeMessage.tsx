@@ -37,6 +37,7 @@ const ComposeMessage: React.FC<ComposeMessageProps> = ({ onClose }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const userInputRef = useRef<HTMLInputElement>(null);
   const projectInputRef = useRef<HTMLInputElement>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const searchUsers = async (query: string) => {
     if (query.length < 2) {
@@ -162,8 +163,43 @@ const ComposeMessage: React.FC<ComposeMessageProps> = ({ onClose }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+
+    // Validate recipient
     if (!selectedUser) {
-      alert('Please select a recipient');
+      setError('Please select a recipient');
+      return;
+    }
+
+    // Validate subject
+    if (!message.subject.trim()) {
+      setError('Subject is required');
+      return;
+    }
+    if (message.subject.length > 100) {
+      setError('Subject must be less than 100 characters');
+      return;
+    }
+
+    // Validate message body
+    if (!message.body.trim()) {
+      setError('Message body is required');
+      return;
+    }
+    if (message.body.length > 1000) {
+      setError('Message must be less than 1000 characters');
+      return;
+    }
+
+    // Validate attachments
+    if (attachments.length > 5) {
+      setError('Maximum 5 attachments allowed');
+      return;
+    }
+
+    const totalSize = attachments.reduce((sum, file) => sum + file.size, 0);
+    if (totalSize > 50 * 1024 * 1024) { // 50MB
+      setError('Total attachment size must be less than 50MB');
       return;
     }
 
@@ -171,8 +207,8 @@ const ComposeMessage: React.FC<ComposeMessageProps> = ({ onClose }) => {
       const token = localStorage.getItem('jwt');
       const formData = new FormData();
       formData.append('receiver_ID', selectedUser.user_ID.toString());
-      formData.append('subject', message.subject);
-      formData.append('body', message.body);
+      formData.append('subject', message.subject.trim());
+      formData.append('body', message.body.trim());
       if (selectedProject) {
         formData.append('project_ID', selectedProject.project_ID.toString());
       }
@@ -188,15 +224,15 @@ const ComposeMessage: React.FC<ComposeMessageProps> = ({ onClose }) => {
         body: formData,
       });
 
-      if (response.ok) {
-        alert('Message sent successfully!');
-        onClose();
-      } else {
-        throw new Error('Failed to send message');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to send message');
       }
+
+      onClose();
     } catch (error) {
       console.error('Error sending message:', error);
-      alert('Failed to send message');
+      setError(error instanceof Error ? error.message : 'Failed to send message');
     }
   };
 
@@ -207,6 +243,8 @@ const ComposeMessage: React.FC<ComposeMessageProps> = ({ onClose }) => {
           <h2>Compose Message</h2>
         </header>
         <form onSubmit={handleSubmit}>
+          {error && <p className={styles.errorMessage}>{error}</p>}
+          
           <fieldset className={styles.formGroup}>
             <legend>Recipient</legend>
             <section className={styles.searchContainer}>
@@ -219,6 +257,7 @@ const ComposeMessage: React.FC<ComposeMessageProps> = ({ onClose }) => {
                 placeholder="Search users..."
                 autoComplete="off"
                 ref={userInputRef}
+                maxLength={50}
               />
               {showUserResults && searchQuery.length >= 2 && users.length === 0 && (
                 <p className={styles.noResults}>No results found</p>
@@ -261,6 +300,7 @@ const ComposeMessage: React.FC<ComposeMessageProps> = ({ onClose }) => {
                 placeholder="Search projects..."
                 autoComplete="off"
                 ref={projectInputRef}
+                maxLength={100}
               />
               {showProjectResults && projectQuery.length >= 2 && projects.length === 0 && (
                 <p className={styles.noResults}>No results found</p>
@@ -297,6 +337,7 @@ const ComposeMessage: React.FC<ComposeMessageProps> = ({ onClose }) => {
               type="text"
               value={message.subject}
               onChange={(e) => setMessage({ ...message, subject: e.target.value })}
+              maxLength={100}
               required
             />
           </fieldset>
@@ -306,6 +347,7 @@ const ComposeMessage: React.FC<ComposeMessageProps> = ({ onClose }) => {
             <textarea
               value={message.body}
               onChange={(e) => setMessage({ ...message, body: e.target.value })}
+              maxLength={1000}
               required
             />
           </fieldset>
