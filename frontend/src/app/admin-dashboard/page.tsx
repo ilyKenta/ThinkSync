@@ -7,6 +7,7 @@ import ManageUsersPage from "../manage-users/page";
 import SubmittedProposalsPage from "../submitted-proposals/page";
 import useAuth from "../useAuth";
 import { useRouter } from "next/navigation";
+import ProfileSidebar from "../components/ProfileSidebar";
 
 const AdminDashboard = () => {
   const router = useRouter();
@@ -17,6 +18,7 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState<'users' | 'proposals'>('users');
   // Track number of unread messages for notification badge
   const [unreadCount, setUnreadCount] = useState(0);
+  const [isProfileSidebarOpen, setIsProfileSidebarOpen] = useState(false);
 
   // Authentication check effect - verifies user has admin role
   useEffect(() => {
@@ -70,6 +72,10 @@ const AdminDashboard = () => {
     // Redirecting, render nothing
     return null;
   }
+
+  const handleProfileClick = () => {
+    setIsProfileSidebarOpen(true);
+  };
 
   return (
     <main className={styles.container}>
@@ -132,24 +138,35 @@ const AdminDashboard = () => {
       <section style={{ flex: 1, padding: "40px 60px" }}>
         {/* Top header with search and user profile */}
         <header style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 16, marginBottom: 32 }}>
-          <input
-            type="text"
-            placeholder="Search..."
+          <button
+            onClick={handleProfileClick}
             style={{
-              padding: "8px 16px",
-              borderRadius: 8,
-              border: "1px solid #ccc",
-              fontSize: 16,
-              marginRight: 20,
-              width: 240,
-              background: "#f9f9f9"
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '4px',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'background-color 0.2s'
             }}
-          />
-          <FaUserCircle size={32} style={{ color: "#222" }} />
+            onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f0f0f0'}
+            onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+          >
+            <FaUserCircle size={32} style={{ color: "#222" }} />
+          </button>
         </header>
         
         {/* Conditional content rendering based on active tab selection */}
         {activeTab === 'users' ? <ManageUsersPage /> : <SubmittedProposalsPage />}
+
+        <ProfileSidebar
+          isOpen={isProfileSidebarOpen}
+          onClose={() => {
+            setIsProfileSidebarOpen(false);
+          }}
+        />
       </section>
     </main>
   );

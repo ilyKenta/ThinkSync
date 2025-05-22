@@ -233,5 +233,54 @@ router.post('/admin', async (req, res) => {
     }
 });
 
+// Get user details
+router.get('/user-details', async (req, res) => {
+    const token = req.headers.authorization?.split(' ')[1];
+    
+    if (!token) {
+        return res.status(401).json({ error: 'No token provided' });
+    }
+
+    try {
+        const user_ID = await getUserIdFromToken(token);
+        
+        const userQuery = `
+            SELECT u.*, r.role_name
+            FROM users u
+            LEFT JOIN user_roles ur ON u.user_ID = ur.user_ID
+            LEFT JOIN roles r ON ur.role_ID = r.role_ID
+            WHERE u.user_ID = ?
+        `;
+        
+        const results = await db.executeQuery(userQuery, [user_ID]);
+        
+        if (results.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Get additional role-specific details
+        let additionalDetails = {};
+        if (results[0].role_name === 'researcher') {
+            const researcherQuery = 'SELECT * FROM researcher WHERE user_ID = ?';
+            const researcherResults = await db.executeQuery(researcherQuery, [user_ID]);
+            additionalDetails = researcherResults[0] || {};
+        } else if (results[0].role_name === 'reviewer') {
+            const reviewerQuery = 'SELECT * FROM reviewer WHERE user_ID = ?';
+            const reviewerResults = await db.executeQuery(reviewerQuery, [user_ID]);
+            additionalDetails = reviewerResults[0] || {};
+        }
+
+        const userDetails = {
+            ...results[0],
+            ...additionalDetails
+        };
+
+        return res.status(200).json(userDetails);
+    } catch (error) {
+        console.error('Error in /user-details route:', error);
+        return res.status(500).json({ error: 'Server error' });
+    }
+});
+
 module.exports = router;
 module.exports.isValidUserPayload = isValidUserPayload;

@@ -46,6 +46,19 @@ interface Project {
     categories: Category[];
 }
 
+// Add validation errors interface
+interface ValidationErrors {
+    total_awarded?: string;
+    grant_status?: string;
+    grant_end_date?: string;
+    categories?: {
+        [key: number]: {
+            description?: string;
+            amount_spent?: string;
+        }
+    }
+}
+
 export const normalizeCategory = (category: string): string => {
     const normalized = category.toLowerCase();
     if (normalized.includes('personnel')) return 'Personnel';
@@ -64,6 +77,7 @@ export default function FundingWidget({ onDelete }: WidgetProps) {
     const [submitting, setSubmitting] = useState(false);
     const [editError, setEditError] = useState<string | null>(null);
     const [editData, setEditData] = useState<Project | null>(null);
+    const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
 
     useEffect(() => {
         fetchProjects();
@@ -148,12 +162,101 @@ export default function FundingWidget({ onDelete }: WidgetProps) {
         }
     };
 
+    const validateForm = () => {
+        if (!editData) return false;
+        
+        const errors: ValidationErrors = {};
+        let isValid = true;
+
+        // Validate total awarded amount
+        if (typeof editData.funding?.total_awarded !== 'number' || editData.funding.total_awarded <= 0) {
+            errors.total_awarded = "Total awarded amount must be greater than 0";
+            isValid = false;
+        }
+
+        // Validate grant status
+        if (!editData.funding?.grant_status || !["active", "completed", "expired", "cancelled"].includes(editData.funding.grant_status.toLowerCase())) {
+            errors.grant_status = "Invalid grant status selected";
+            isValid = false;
+        }
+
+        // Validate grant end date
+        if (!editData.funding?.grant_end_date) {
+            errors.grant_end_date = "Grant end date is required";
+            isValid = false;
+        } else {
+            const endDate = new Date(editData.funding.grant_end_date);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            endDate.setHours(0, 0, 0, 0);
+
+            if (isNaN(endDate.getTime())) {
+                errors.grant_end_date = "Invalid date format";
+                isValid = false;
+            } else if (editData.funding.grant_status.toLowerCase() === 'active' && endDate < today) {
+                errors.grant_end_date = "Grant end date cannot be in the past for active grants";
+                isValid = false;
+            }
+        }
+
+        // Validate categories if they exist
+        if (editData.categories && editData.categories.length > 0) {
+            errors.categories = {};
+            let totalSpent = 0;
+
+            editData.categories.forEach((cat, index) => {
+                const categoryErrors: { description?: string; amount_spent?: string } = {};
+
+                // Validate description
+                if (cat.description && cat.description.length > 200) {
+                    categoryErrors.description = "Description must be less than 200 characters";
+                    isValid = false;
+                }
+
+                // Validate amount spent
+                const amount = Number(cat.amount_spent);
+                if (isNaN(amount) || amount <= 0) {
+                    categoryErrors.amount_spent = "Amount spent must be greater than 0";
+                    isValid = false;
+                }
+
+                // Validate category type
+                if (!["Personnel", "Equipment", "Consumables"].includes(cat.category)) {
+                    categoryErrors.amount_spent = "Invalid category type";
+                    isValid = false;
+                }
+
+                totalSpent += amount || 0;
+
+                if (Object.keys(categoryErrors).length > 0) {
+                    errors.categories![index] = categoryErrors;
+                }
+            });
+
+            // Validate total spent against total awarded
+            if (editData.funding?.total_awarded && totalSpent > editData.funding.total_awarded) {
+                errors.total_awarded = "Total amount spent across categories cannot exceed total awarded amount";
+                isValid = false;
+            }
+        }
+
+        setValidationErrors(errors);
+        return isValid;
+    };
+
     const handleConfirmEdit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!editData) return;
 
         setSubmitting(true);
         setEditError(null);
+        setValidationErrors({});
+
+        // Validate form before submission
+        if (!validateForm()) {
+            setSubmitting(false);
+            return;
+        }
 
         try {
             const token = localStorage.getItem('jwt');
@@ -538,7 +641,7 @@ export default function FundingWidget({ onDelete }: WidgetProps) {
                                     <input
                                         id="total-awarded"
                                         type="number"
-                                        className={styles.input}
+                                        className={`${styles.input} ${validationErrors.total_awarded ? styles.inputError : ''}`}
                                         value={editData.funding?.total_awarded || 0}
                                         onChange={(e) => setEditData({
                                             ...editData,
@@ -549,10 +652,13 @@ export default function FundingWidget({ onDelete }: WidgetProps) {
                                         })}
                                         required
                                     />
+                                    {validationErrors.total_awarded && (
+                                        <p className={styles.errorMessage}>{validationErrors.total_awarded}</p>
+                                    )}
 
                                     <label className={styles.label}>Grant Status</label>
                                     <select
-                                        className={styles.input}
+                                        className={`${styles.input} ${validationErrors.grant_status ? styles.inputError : ''}`}
                                         value={editData.funding?.grant_status || 'active'}
                                         onChange={(e) => setEditData({
                                             ...editData,
@@ -567,11 +673,14 @@ export default function FundingWidget({ onDelete }: WidgetProps) {
                                         <option value="expired">Expired</option>
                                         <option value="cancelled">Cancelled</option>
                                     </select>
+                                    {validationErrors.grant_status && (
+                                        <p className={styles.errorMessage}>{validationErrors.grant_status}</p>
+                                    )}
 
                                     <label className={styles.label}>Grant End Date</label>
                                     <input
                                         type="date"
-                                        className={styles.input}
+                                        className={`${styles.input} ${validationErrors.grant_end_date ? styles.inputError : ''}`}
                                         value={editData.funding?.grant_end_date || ''}
                                         onChange={(e) => setEditData({
                                             ...editData,
@@ -581,6 +690,9 @@ export default function FundingWidget({ onDelete }: WidgetProps) {
                                             }
                                         })}
                                     />
+                                    {validationErrors.grant_end_date && (
+                                        <p className={styles.errorMessage}>{validationErrors.grant_end_date}</p>
+                                    )}
 
                                     {editData.funding_initialized && (
                                         <fieldset className={styles.formFieldset}>
@@ -601,6 +713,7 @@ export default function FundingWidget({ onDelete }: WidgetProps) {
                                                             <td>
                                                                 <input
                                                                     type="text"
+                                                                    className={validationErrors.categories?.[idx]?.description ? styles.inputError : ''}
                                                                     value={cat.description || ''}
                                                                     onChange={(e) => {
                                                                         const updated = [...editData.categories];
@@ -609,6 +722,9 @@ export default function FundingWidget({ onDelete }: WidgetProps) {
                                                                     }}
                                                                     placeholder="Enter description"
                                                                 />
+                                                                {validationErrors.categories?.[idx]?.description && (
+                                                                    <p className={styles.errorMessage}>{validationErrors.categories[idx].description}</p>
+                                                                )}
                                                             </td>
                                                             <td>
                                                                 <select
@@ -628,6 +744,7 @@ export default function FundingWidget({ onDelete }: WidgetProps) {
                                                             <td>
                                                                 <input
                                                                     type="number"
+                                                                    className={validationErrors.categories?.[idx]?.amount_spent ? styles.inputError : ''}
                                                                     value={cat.amount_spent}
                                                                     onChange={(e) => {
                                                                         const updated = [...editData.categories];
@@ -635,6 +752,9 @@ export default function FundingWidget({ onDelete }: WidgetProps) {
                                                                         setEditData({ ...editData, categories: updated });
                                                                     }}
                                                                 />
+                                                                {validationErrors.categories?.[idx]?.amount_spent && (
+                                                                    <p className={styles.errorMessage}>{validationErrors.categories[idx].amount_spent}</p>
+                                                                )}
                                                             </td>
                                                             <td>
                                                                 <button

@@ -4,6 +4,8 @@ import React, { useState, useEffect } from "react";
 import styles from "./page.module.css";
 import { useRouter } from "next/navigation";
 import useAuth from "../useAuth";
+import ProfileSidebar from "../components/ProfileSidebar";
+import { FaUserCircle } from "react-icons/fa";
 
 const Page = () => {
   useAuth();
@@ -14,6 +16,7 @@ const Page = () => {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('shared');
   const [unreadCount, setUnreadCount] = useState(0);
+  const [isProfileSidebarOpen, setIsProfileSidebarOpen] = useState(false);
 
   useEffect(() => {
     //setHasReviewerRole(true);
@@ -177,16 +180,15 @@ const Page = () => {
       <section className={styles.mainContent}>
         <header className={styles.heading}>
           <h2>Assigned Proposals</h2>
+          <nav className={styles.colabGroup}>
+            <button 
+              className={styles.iconButton}
+              onClick={() => setIsProfileSidebarOpen(true)}
+            >
+              <FaUserCircle />
+            </button>
+          </nav>
         </header>
-        <section className={styles.buttonHeader}>
-          <section className={styles.searchContainer}>
-            <input
-              className={styles.searchInput}
-              type="text"
-              placeholder="Search proposals..."
-            />
-          </section>
-        </section>
 
         <section className={styles.cardContainer}>
           {proposal.map((prop) => (
@@ -214,6 +216,11 @@ const Page = () => {
             </article>
           ))}
         </section>
+
+        <ProfileSidebar
+          isOpen={isProfileSidebarOpen}
+          onClose={() => setIsProfileSidebarOpen(false)}
+        />
       </section>
     </main>
   );

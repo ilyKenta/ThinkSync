@@ -16,6 +16,7 @@ import {
 import Sidebar from "../sent-sidebar/sidebar";
 import InboxSidebar from "../inbox-sidebar/inb_sidebar";
 import useAuth from "../useAuth";
+import ProfileSidebar from "../components/ProfileSidebar";
 
 const ResearcherDashboard = () => {
   useAuth();
@@ -47,6 +48,7 @@ const ResearcherDashboard = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredProjects, setFilteredProjects] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [isProfileSidebarOpen, setIsProfileSidebarOpen] = useState(false);
 
   useEffect(() => {
     const roleString =
@@ -156,9 +158,7 @@ const ResearcherDashboard = () => {
     setIsInboxSidebarOpen((prev) => !prev);
   };
 
-  const handleCardClick = (projectId: string) => {
-    //router.push(`/projectInfo/${projectId}`);
-  };
+
 
   const handleDelete = async (projectId: string) => {
     try {
@@ -340,7 +340,10 @@ const ResearcherDashboard = () => {
               />
             </section>
 
-            <button className={styles.iconButton}>
+            <button 
+              className={styles.iconButton}
+              onClick={() => setIsProfileSidebarOpen(true)}
+            >
               <FaUserCircle />
             </button>
           </nav>
@@ -424,7 +427,6 @@ const ResearcherDashboard = () => {
             <article
               key={project.project_ID}
               className={styles.card}
-              onClick={() => handleCardClick(project.project_ID)}
             >
               <section className={styles.cardContent}>
                 <img src="/exampleImg.png" alt="project" />
@@ -535,6 +537,11 @@ const ResearcherDashboard = () => {
             data-testid="edit-form"
           />
         )}
+
+        <ProfileSidebar
+          isOpen={isProfileSidebarOpen}
+          onClose={() => setIsProfileSidebarOpen(false)}
+        />
       </section>
     </main>
   );

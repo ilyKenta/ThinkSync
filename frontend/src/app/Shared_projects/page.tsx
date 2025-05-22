@@ -10,6 +10,7 @@ import {
 } from "react-icons/fa";
 import Sidebar from "../sent-sidebar/sidebar";
 import InboxSidebar from "../inbox-sidebar/inb_sidebar";
+import ProfileSidebar from "../components/ProfileSidebar";
 
 const Page = () => {
   const router = useRouter();
@@ -18,6 +19,7 @@ const Page = () => {
   const [error, setError] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isInboxSidebarOpen, setIsInboxSidebarOpen] = useState(false);
+  const [isProfileSidebarOpen, setIsProfileSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('shared');
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -73,6 +75,10 @@ const Page = () => {
 
   const toggleInboxSidebar = () => {
     setIsInboxSidebarOpen((prev) => !prev);
+  };
+
+  const handleProfileClick = () => {
+    setIsProfileSidebarOpen(true);
   };
 
   const handleCardClick = (projectId: string) => {
@@ -212,21 +218,14 @@ const Page = () => {
               />
             </section>
 
-            <button className={styles.iconButton}>
-              <FaUserCircle />
+            <button 
+              className={styles.iconButton}
+              onClick={handleProfileClick}
+            >
+              <FaUserCircle size={32} style={{ color: "#222" }} />
             </button>
           </nav>
         </header>
-
-        <section className={styles.buttonHeader}>
-          <section className={styles.searchContainer}>
-            <input
-              className={styles.searchInput}
-              type="text"
-              placeholder="Search projects..."
-            />
-          </section>
-        </section>
 
         <section className={styles.cardContainer}>
           {projects.map((project) => (
@@ -257,6 +256,11 @@ const Page = () => {
           ))}
         </section>
       </section>
+
+      <ProfileSidebar
+        isOpen={isProfileSidebarOpen}
+        onClose={() => setIsProfileSidebarOpen(false)}
+      />
     </main>
   );
 };

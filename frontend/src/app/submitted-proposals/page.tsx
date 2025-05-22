@@ -31,34 +31,6 @@ const SubmittedProposalsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Validate project data structure
-  const validateProjectData = (project: any): project is ProjectData => {
-    return (
-      typeof project === 'object' &&
-      project !== null &&
-      typeof project.project_ID === 'string' &&
-      typeof project.title === 'string' &&
-      typeof project.researcher_fname === 'string' &&
-      typeof project.researcher_sname === 'string' &&
-      (!project.research_areas || typeof project.research_areas === 'string') &&
-      (!project.description || typeof project.description === 'string')
-    );
-  };
-
-  // Validate mapped proposal data
-  const validateProposal = (proposal: any): proposal is Proposal => {
-    return (
-      typeof proposal === 'object' &&
-      proposal !== null &&
-      typeof proposal.id === 'string' &&
-      typeof proposal.title === 'string' &&
-      typeof proposal.researcher === 'string' &&
-      typeof proposal.researchAreas === 'string' &&
-      typeof proposal.summary === 'string' &&
-      typeof proposal.project_ID === 'string'
-    );
-  };
-
   const fetchProposals = async () => {
     try {
       setLoading(true);
@@ -88,7 +60,6 @@ const SubmittedProposalsPage = () => {
 
       // Validate and map the projects data
       const mappedProposals = data.projects
-        .filter((project: any) => validateProjectData(project))
         .map((project: ProjectData) => ({
           id: project.project_ID,
           title: project.title.trim(),
@@ -96,12 +67,7 @@ const SubmittedProposalsPage = () => {
           researchAreas: project.research_areas?.trim() || "No research areas specified",
           summary: project.description?.trim() || '',
           project_ID: project.project_ID
-        }))
-        .filter(validateProposal);
-
-      if (mappedProposals.length === 0) {
-        throw new Error('No valid proposals found');
-      }
+        }));
 
       setProposals(mappedProposals);
     } catch (err: any) {
@@ -117,10 +83,6 @@ const SubmittedProposalsPage = () => {
   }, []);
 
   const handleAssignReviewer = (proposalId: string) => {
-    if (!proposalId || typeof proposalId !== 'string') {
-      setError('Invalid proposal ID');
-      return;
-    }
     setSelectedProposal(proposalId);
     setShowAssignReviewer(true);
   };
@@ -185,7 +147,7 @@ const SubmittedProposalsPage = () => {
                         borderRadius: 6,
                         padding: "6px 16px",
                       }}
-                      onClick={() => handleAssignReviewer(proposal.id)}
+                      onClick={() => setSelectedProposal(proposal.id)}
                     >
                       View
                     </button>
@@ -234,7 +196,6 @@ const SubmittedProposalsPage = () => {
               <p>
                 <strong>Summary:</strong> {proposals.find(p => p.id === selectedProposal)?.summary}
               </p>
-              {/* Add more details as needed */}
             </section>
           )}
         </section>

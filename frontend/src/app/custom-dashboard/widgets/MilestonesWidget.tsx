@@ -61,6 +61,13 @@ export default function MilestonesWidget({ onDelete }: WidgetProps) {
         status: 'Not Started',
         assigned_user_ID: ''
     });
+    const [validationErrors, setValidationErrors] = useState<{
+        title?: string;
+        description?: string;
+        dueDate?: string;
+        status?: string;
+        assigned_user_ID?: string;
+    }>({});
     const router = useRouter();
 
     // Fetch projects on component mount
@@ -124,11 +131,75 @@ export default function MilestonesWidget({ onDelete }: WidgetProps) {
         router.push(`/milestones/${milestoneId}?from=custom-dashboard`);
     };
 
+    // Validate form inputs
+    const validateForm = () => {
+        const errors: typeof validationErrors = {};
+        let isValid = true;
+
+        // Validate title
+        if (!newMilestone.title.trim()) {
+            errors.title = "Title is required";
+            isValid = false;
+        } else if (newMilestone.title.length > 100) {
+            errors.title = "Title must be less than 100 characters";
+            isValid = false;
+        } else if (!/^[a-zA-Z0-9\s\-_.,&()]+$/.test(newMilestone.title)) {
+            errors.title = "Title contains invalid characters. Only letters, numbers, spaces, and basic punctuation are allowed";
+            isValid = false;
+        }
+
+        // Validate description
+        if (!newMilestone.description.trim()) {
+            errors.description = "Description is required";
+            isValid = false;
+        } else if (newMilestone.description.length > 500) {
+            errors.description = "Description must be less than 500 characters";
+            isValid = false;
+        }
+
+        // Validate due date
+        if (!newMilestone.dueDate) {
+            errors.dueDate = "Due date is required";
+            isValid = false;
+        } else {
+            const selectedDate = new Date(newMilestone.dueDate);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            if (selectedDate < today) {
+                errors.dueDate = "Due date cannot be in the past";
+                isValid = false;
+            }
+        }
+
+        // Validate status
+        if (!newMilestone.status) {
+            errors.status = "Status is required";
+            isValid = false;
+        }
+
+        // Validate assigned user
+        if (!newMilestone.assigned_user_ID) {
+            errors.assigned_user_ID = "Please assign a collaborator";
+            isValid = false;
+        }
+
+        setValidationErrors(errors);
+        return isValid;
+    };
+
     // Handle milestone creation
     const handleCreateSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSubmitting(true);
         setCreateError(null);
+        setValidationErrors({});
+
+        // Validate form before submission
+        if (!validateForm()) {
+            setSubmitting(false);
+            return;
+        }
 
         try {
             const token = localStorage.getItem('jwt');
@@ -397,60 +468,80 @@ export default function MilestonesWidget({ onDelete }: WidgetProps) {
                                     <input
                                         id="milestone-title"
                                         type="text"
-                                        className={styles.input}
+                                        className={`${styles.input} ${validationErrors.title ? styles.inputError : ''}`}
                                         value={newMilestone.title}
                                         onChange={(e) => setNewMilestone({ ...newMilestone, title: e.target.value })}
                                         placeholder="Milestone title"
+                                        maxLength={100}
                                         required
                                     />
+                                    {validationErrors.title && (
+                                        <p className={styles.errorMessage}>{validationErrors.title}</p>
+                                    )}
 
                                     <label className={styles.label} htmlFor="milestone-description">Description</label>
                                     <textarea
                                         id="milestone-description"
-                                        className={styles.textarea}
+                                        className={`${styles.textarea} ${validationErrors.description ? styles.inputError : ''}`}
                                         value={newMilestone.description}
                                         onChange={(e) => setNewMilestone({ ...newMilestone, description: e.target.value })}
                                         placeholder="Describe this milestone"
+                                        maxLength={500}
                                         required
                                     />
+                                    {validationErrors.description && (
+                                        <p className={styles.errorMessage}>{validationErrors.description}</p>
+                                    )}
 
                                     <label className={styles.label} htmlFor="milestone-due-date">Due Date</label>
                                     <input
                                         id="milestone-due-date"
                                         type="date"
-                                        className={styles.input}
+                                        className={`${styles.input} ${validationErrors.dueDate ? styles.inputError : ''}`}
                                         value={newMilestone.dueDate}
                                         onChange={(e) => setNewMilestone({ ...newMilestone, dueDate: e.target.value })}
+                                        min={new Date().toISOString().split('T')[0]}
                                         required
                                     />
+                                    {validationErrors.dueDate && (
+                                        <p className={styles.errorMessage}>{validationErrors.dueDate}</p>
+                                    )}
 
                                     <label className={styles.label} htmlFor="milestone-status">Status</label>
                                     <select
                                         id="milestone-status"
-                                        className={styles.input}
+                                        className={`${styles.input} ${validationErrors.status ? styles.inputError : ''}`}
                                         value={newMilestone.status}
                                         onChange={(e) => setNewMilestone({ ...newMilestone, status: e.target.value })}
                                         required
                                     >
+                                        <option value="">Select a status</option>
                                         <option value="Not Started">Not Started</option>
                                         <option value="In Progress">In Progress</option>
                                         <option value="Completed">Completed</option>
                                     </select>
+                                    {validationErrors.status && (
+                                        <p className={styles.errorMessage}>{validationErrors.status}</p>
+                                    )}
 
                                     <label className={styles.label} htmlFor="milestone-assigned-to">Assign To</label>
                                     <select
                                         id="milestone-assigned-to"
-                                        className={styles.input}
+                                        className={`${styles.input} ${validationErrors.assigned_user_ID ? styles.inputError : ''}`}
                                         value={newMilestone.assigned_user_ID}
                                         onChange={(e) => setNewMilestone({ ...newMilestone, assigned_user_ID: e.target.value })}
+                                        required
                                     >
-                                        <option value="">Not Assigned</option>
+                                        <option value="">Select a collaborator</option>
                                         {currentProject?.collaborators.map((collab) => (
                                             <option key={collab.user_ID} value={collab.user_ID}>
                                                 {`${collab.first_name} ${collab.last_name}`}
                                             </option>
                                         ))}
                                     </select>
+                                    {validationErrors.assigned_user_ID && (
+                                        <p className={styles.errorMessage}>{validationErrors.assigned_user_ID}</p>
+                                    )}
 
                                     <section className={styles.buttonRow}>
                                         <button
