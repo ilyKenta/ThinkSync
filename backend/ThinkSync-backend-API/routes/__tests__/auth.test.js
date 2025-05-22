@@ -406,5 +406,128 @@ describe('Auth Routes', () => {
         expect(response.body.error).toBe('Server error');
       });
     });
+
+    describe('GET /api/auth/user-details', () => {
+      beforeEach(() => {
+        getUserIdFromToken.mockResolvedValue('test-id');
+      });
+
+      it('should handle missing token', async () => {
+        const response = await request(app)
+          .get('/api/auth/user-details');
+
+        expect(response.status).toBe(401);
+        expect(response.body.error).toBe('No token provided');
+      });
+
+      it('should handle non-existent user', async () => {
+        db.executeQuery.mockResolvedValueOnce([]); // User not found
+
+        const response = await request(app)
+          .get('/api/auth/user-details')
+          .set('Authorization', 'Bearer valid-token');
+
+        expect(response.status).toBe(404);
+        expect(response.body.error).toBe('User not found');
+      });
+
+      it('should return basic user details for admin', async () => {
+        const mockUserData = {
+          user_ID: 'test-id',
+          fname: 'Test',
+          sname: 'User',
+          phone_number: '1234567890',
+          department: 'Test Dept',
+          acc_role: 'admin',
+          role_name: 'admin'
+        };
+
+        db.executeQuery.mockResolvedValueOnce([mockUserData]); // User exists as admin
+
+        const response = await request(app)
+          .get('/api/auth/user-details')
+          .set('Authorization', 'Bearer valid-token');
+
+        expect(response.status).toBe(200);
+        expect(response.body).toEqual(mockUserData);
+      });
+
+      it('should return user details with researcher information', async () => {
+        const mockUserData = {
+          user_ID: 'test-id',
+          fname: 'Test',
+          sname: 'User',
+          phone_number: '1234567890',
+          department: 'Test Dept',
+          acc_role: 'researcher',
+          role_name: 'researcher'
+        };
+
+        const mockResearcherData = {
+          user_ID: 'test-id',
+          res_area: 'Test Area',
+          qualification: 'Test Qual',
+          current_proj: 'Test Project'
+        };
+
+        db.executeQuery
+          .mockResolvedValueOnce([mockUserData]) // User exists as researcher
+          .mockResolvedValueOnce([mockResearcherData]); // Researcher details
+
+        const response = await request(app)
+          .get('/api/auth/user-details')
+          .set('Authorization', 'Bearer valid-token');
+
+        expect(response.status).toBe(200);
+        expect(response.body).toEqual({
+          ...mockUserData,
+          ...mockResearcherData
+        });
+      });
+
+      it('should return user details with reviewer information', async () => {
+        const mockUserData = {
+          user_ID: 'test-id',
+          fname: 'Test',
+          sname: 'User',
+          phone_number: '1234567890',
+          department: 'Test Dept',
+          acc_role: 'reviewer',
+          role_name: 'reviewer'
+        };
+
+        const mockReviewerData = {
+          user_ID: 'test-id',
+          res_area: 'Test Area',
+          qualification: 'Test Qual',
+          current_proj: 'Test Project'
+        };
+
+        db.executeQuery
+          .mockResolvedValueOnce([mockUserData]) // User exists as reviewer
+          .mockResolvedValueOnce([mockReviewerData]); // Reviewer details
+
+        const response = await request(app)
+          .get('/api/auth/user-details')
+          .set('Authorization', 'Bearer valid-token');
+
+        expect(response.status).toBe(200);
+        expect(response.body).toEqual({
+          ...mockUserData,
+          ...mockReviewerData
+        });
+      });
+
+      it('should handle database error', async () => {
+        db.executeQuery.mockRejectedValueOnce(new Error('Database error'));
+
+        const response = await request(app)
+          .get('/api/auth/user-details')
+          .set('Authorization', 'Bearer valid-token');
+
+        expect(response.status).toBe(500);
+        expect(response.body.error).toBe('Server error');
+      });
+    });
   });
 }); 
