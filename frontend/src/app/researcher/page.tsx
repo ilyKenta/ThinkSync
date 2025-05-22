@@ -18,11 +18,38 @@ export default function ResearcherSignupPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const token = localStorage.getItem("jwt");
-    if (!token) {
-      alert("User ID is missing.");
+
+    // Validate phone number format
+    const phoneRegex = /^[0-9]{10}$/;
+    if (!phoneRegex.test(phone_number)) {
+      alert("Please enter a valid 10-digit phone number");
       return;
     }
+
+    // Validate required fields
+    if (!department || !acc_role || !res_area || !qualification || !current_proj) {
+      alert("Please fill in all required fields");
+      return;
+    }
+
+    // Validate research area length
+    if (res_area.length < 3) {
+      alert("Research area must be at least 3 characters long");
+      return;
+    }
+
+    // Validate qualifications and projects length
+    if (qualification.length < 2 || current_proj.length < 5) {
+      alert("Please provide more detailed information for qualifications and projects");
+      return;
+    }
+
+    const token = localStorage.getItem("jwt");
+    if (!token) {
+      alert("Authentication token is missing. Please log in again.");
+      return;
+    }
+
     const payload = {
       token,
       phone_number,
@@ -32,8 +59,6 @@ export default function ResearcherSignupPage() {
       qualification,
       current_proj,
     };
-
-    console.log(payload);
 
     try {
       const res = await fetch(
@@ -51,13 +76,12 @@ export default function ResearcherSignupPage() {
 
       if (res.ok) {
         router.push("/researcher-dashboard");
-        console.log(data);
       } else {
         alert(`Error: ${data.error}`);
       }
     } catch (err) {
       console.error("Submission error:", err);
-      alert("An error occurred");
+      alert("An error occurred during registration. Please try again.");
     }
   };
 
@@ -89,10 +113,12 @@ export default function ResearcherSignupPage() {
           <input
             type="text"
             id="number"
-            placeholder="0814366553"
+
             value={phone_number}
             onChange={(e) => setPhoneNumber(e.target.value)}
             required
+            pattern="[0-9]{10}"
+            title="Please enter a valid 10-digit phone number"
           />
 
           <label htmlFor="department">Current Department</label>
@@ -136,6 +162,8 @@ export default function ResearcherSignupPage() {
             value={res_area}
             onChange={(e) => setResArea(e.target.value)}
             required
+            minLength={3}
+            title="Research area must be at least 3 characters long"
           />
 
           <label htmlFor="researchExp">Research experience</label>
@@ -146,6 +174,8 @@ export default function ResearcherSignupPage() {
             value={qualification}
             onChange={(e) => setQualification(e.target.value)}
             required
+            minLength={2}
+            title="Please provide detailed qualifications"
           />
           <input
             type="text"
@@ -154,6 +184,8 @@ export default function ResearcherSignupPage() {
             value={current_proj}
             onChange={(e) => setCurrentProj(e.target.value)}
             required
+            minLength={5}
+            title="Please provide detailed project information"
           />
 
           <button type="submit" aria-label="submit information">

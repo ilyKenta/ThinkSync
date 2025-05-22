@@ -80,20 +80,14 @@ describe('ReviewerSignupPage', () => {
   });
 
   it('handles form submission successfully', async () => {
-    // Mock the fetch call with the correct URL
-    (global.fetch as jest.Mock).mockImplementation((url) => {
-      if (url === `${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/auth/reviewer`) {
-        return Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve({ message: 'Success' }),
-        });
-      }
-      return Promise.reject(new Error('Not found'));
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ message: 'Success' }),
     });
 
     render(<ReviewerSignupPage />);
 
-    // Fill in the form
+    // Fill in the form with valid data
     fireEvent.change(screen.getByLabelText('Contact number'), { target: { value: '0814366553' } });
     fireEvent.change(screen.getByLabelText('Current Department'), { target: { value: 'science' } });
     fireEvent.change(screen.getByLabelText('Current academic role'), { target: { value: 'lecturer' } });
@@ -128,13 +122,131 @@ describe('ReviewerSignupPage', () => {
     });
   });
 
+  it('validates phone number format', async () => {
+    const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {});
+    render(<ReviewerSignupPage />);
+
+    // Fill form with invalid phone number but valid other fields
+    const phoneInput = screen.getByLabelText('Contact number');
+    fireEvent.change(phoneInput, { target: { value: '123' } });
+    fireEvent.change(screen.getByLabelText('Current Department'), { target: { value: 'science' } });
+    fireEvent.change(screen.getByLabelText('Current academic role'), { target: { value: 'lecturer' } });
+    fireEvent.change(screen.getByLabelText('Research area'), { target: { value: 'Black holes' } });
+    fireEvent.change(screen.getByPlaceholderText('Qualifications'), { target: { value: 'PhD in Physics' } });
+    fireEvent.change(screen.getByPlaceholderText('Projects'), { target: { value: 'Current research project' } });
+
+    // Remove HTML5 validation attributes so JS validation runs
+    phoneInput.removeAttribute('pattern');
+    phoneInput.removeAttribute('required');
+
+    // Submit the form using the submit button
+    const submitButton = screen.getByRole('button', { name: 'submit information' });
+    fireEvent.click(submitButton);
+
+    // Wait for the alert to be called
+    await waitFor(() => {
+      expect(alertSpy).toHaveBeenCalledWith('Please enter a valid 10-digit phone number');
+    });
+
+    expect(global.fetch).not.toHaveBeenCalled();
+    alertSpy.mockRestore();
+  });
+
+  it('validates required fields', async () => {
+    const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {});
+    render(<ReviewerSignupPage />);
+
+    // Fill only phone number
+    const phoneInput = screen.getByLabelText('Contact number');
+    fireEvent.change(phoneInput, { target: { value: '0814366553' } });
+    phoneInput.removeAttribute('required');
+
+    // Remove required from other fields so JS validation runs
+    screen.getByLabelText('Current Department').removeAttribute('required');
+    screen.getByLabelText('Current academic role').removeAttribute('required');
+    screen.getByLabelText('Research area').removeAttribute('required');
+    screen.getByPlaceholderText('Qualifications').removeAttribute('required');
+    screen.getByPlaceholderText('Projects').removeAttribute('required');
+
+    // Submit the form using the submit button
+    const submitButton = screen.getByRole('button', { name: 'submit information' });
+    fireEvent.click(submitButton);
+
+    // Wait for the alert to be called
+    await waitFor(() => {
+      expect(alertSpy).toHaveBeenCalledWith('Please fill in all required fields');
+    });
+
+    expect(global.fetch).not.toHaveBeenCalled();
+    alertSpy.mockRestore();
+  });
+
+  it('validates research area length', async () => {
+    const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {});
+    render(<ReviewerSignupPage />);
+
+    // Check HTML5 validation attributes
+    const researchInput = screen.getByLabelText('Research area');
+    expect(researchInput).toHaveAttribute('minLength', '3');
+    expect(researchInput).toHaveAttribute('title', 'Research area must be at least 3 characters long');
+
+    // Fill form with short research area but valid other fields
+    fireEvent.change(screen.getByLabelText('Contact number'), { target: { value: '0814366553' } });
+    fireEvent.change(screen.getByLabelText('Current Department'), { target: { value: 'science' } });
+    fireEvent.change(screen.getByLabelText('Current academic role'), { target: { value: 'lecturer' } });
+    fireEvent.change(researchInput, { target: { value: 'A' } });
+    fireEvent.change(screen.getByPlaceholderText('Qualifications'), { target: { value: 'PhD in Physics' } });
+    fireEvent.change(screen.getByPlaceholderText('Projects'), { target: { value: 'Current research project' } });
+
+    // Submit the form
+    const submitButton = screen.getByRole('button', { name: 'submit information' });
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(alertSpy).toHaveBeenCalledWith('Research area must be at least 3 characters long');
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    alertSpy.mockRestore();
+  });
+
+  it('validates qualifications and projects length', async () => {
+    const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {});
+    render(<ReviewerSignupPage />);
+
+    // Check HTML5 validation attributes
+    const qualInput = screen.getByPlaceholderText('Qualifications');
+    const projectsInput = screen.getByPlaceholderText('Projects');
+    expect(qualInput).toHaveAttribute('minLength', '2');
+    expect(projectsInput).toHaveAttribute('minLength', '5');
+
+    // Fill form with short qualifications and projects but valid other fields
+    fireEvent.change(screen.getByLabelText('Contact number'), { target: { value: '0814366553' } });
+    fireEvent.change(screen.getByLabelText('Current Department'), { target: { value: 'science' } });
+    fireEvent.change(screen.getByLabelText('Current academic role'), { target: { value: 'lecturer' } });
+    fireEvent.change(screen.getByLabelText('Research area'), { target: { value: 'Black holes' } });
+    fireEvent.change(qualInput, { target: { value: 'A' } });
+    fireEvent.change(projectsInput, { target: { value: 'Proj' } });
+
+    // Submit the form
+    const submitButton = screen.getByRole('button', { name: 'submit information' });
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(alertSpy).toHaveBeenCalledWith('Please provide more detailed information for qualifications and projects');
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    alertSpy.mockRestore();
+  });
+
   it('handles form submission with missing token', async () => {
     localStorage.removeItem('jwt');
     const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {});
 
     render(<ReviewerSignupPage />);
 
-    // Fill in the form
+    // Fill in the form with valid data
     fireEvent.change(screen.getByLabelText('Contact number'), { target: { value: '0814366553' } });
     fireEvent.change(screen.getByLabelText('Current Department'), { target: { value: 'science' } });
     fireEvent.change(screen.getByLabelText('Current academic role'), { target: { value: 'lecturer' } });
@@ -147,7 +259,7 @@ describe('ReviewerSignupPage', () => {
     fireEvent.click(submitButton);
 
     await waitFor(() => {
-      expect(alertSpy).toHaveBeenCalledWith('User ID is missing.');
+      expect(alertSpy).toHaveBeenCalledWith('Authentication token is missing. Please log in again.');
       expect(global.fetch).not.toHaveBeenCalled();
     });
 
@@ -163,7 +275,7 @@ describe('ReviewerSignupPage', () => {
 
     render(<ReviewerSignupPage />);
 
-    // Fill in the form
+    // Fill in the form with valid data
     fireEvent.change(screen.getByLabelText('Contact number'), { target: { value: '0814366553' } });
     fireEvent.change(screen.getByLabelText('Current Department'), { target: { value: 'science' } });
     fireEvent.change(screen.getByLabelText('Current academic role'), { target: { value: 'lecturer' } });
@@ -190,7 +302,7 @@ describe('ReviewerSignupPage', () => {
 
     render(<ReviewerSignupPage />);
 
-    // Fill in the form
+    // Fill in the form with valid data
     fireEvent.change(screen.getByLabelText('Contact number'), { target: { value: '0814366553' } });
     fireEvent.change(screen.getByLabelText('Current Department'), { target: { value: 'science' } });
     fireEvent.change(screen.getByLabelText('Current academic role'), { target: { value: 'lecturer' } });
@@ -204,7 +316,7 @@ describe('ReviewerSignupPage', () => {
 
     await waitFor(() => {
       expect(consoleSpy).toHaveBeenCalledWith('Submission error:', expect.any(Error));
-      expect(alertSpy).toHaveBeenCalledWith('An error occurred');
+      expect(alertSpy).toHaveBeenCalledWith('An error occurred during registration. Please try again.');
       expect(mockRouter.push).not.toHaveBeenCalled();
     });
 

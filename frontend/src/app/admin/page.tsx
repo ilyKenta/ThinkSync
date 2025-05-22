@@ -26,11 +26,22 @@ export default function AdminSignupPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Assuming user_ID is retrieved from elsewhere like localStorage or session
-    const token = localStorage.getItem("jwt"); 
-    // localStorage.getItem("user_ID");
+    // Validate phone number format
+    const phoneRegex = /^[0-9]{10}$/;
+    if (!phoneRegex.test(formData.number)) {
+      alert("Please enter a valid 10-digit phone number");
+      return;
+    }
+
+    // Validate department and role
+    if (!formData.department || !formData.role) {
+      alert("Please fill in all required fields");
+      return;
+    }
+
+    const token = localStorage.getItem("jwt");
     if (!token) {
-      alert("User ID is missing.");
+      alert("Authentication token is missing. Please log in again.");
       return;
     }
 
@@ -40,9 +51,6 @@ export default function AdminSignupPage() {
       department: formData.department,
       acc_role: formData.role
     };
-
-    const bodie= JSON.stringify(payload);
-    console.log(bodie);
 
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_AZURE_API_URL}/api/auth/admin`, {
@@ -60,8 +68,8 @@ export default function AdminSignupPage() {
         alert("Error: " + result.error);
       }
     } catch (error) {
-      console.log(bodie);
       console.error("Error during registration:", error);
+      alert("An error occurred during registration. Please try again.");
     }
   };
 
@@ -70,7 +78,7 @@ export default function AdminSignupPage() {
       <header className={styles.header}>
         <h1 className={styles.logo}>ThinkSync</h1>
         <nav className={styles.navButtons}>
-          <button className={styles.loginButton} type="button"  onClick= {() => router.push("/login")}>
+          <button className={styles.loginButton} type="button" onClick={() => router.push("/login")}>
             login
           </button>
           <button className={styles.signupButton} type="button">
@@ -82,10 +90,26 @@ export default function AdminSignupPage() {
         <h1 className={styles.title}>Admin Sign Up</h1>
         <form className={styles.signupForm} onSubmit={handleSubmit}>
           <label htmlFor="number">Contact Number</label>
-          <input type="tel" id="number" name="number" required placeholder="0814366553" value={formData.number} onChange={handleChange} />
+          <input 
+            type="tel" 
+            id="number" 
+            name="number" 
+            required 
+            pattern="[0-9]{10}"
+            title="Please enter a valid 10-digit phone number" 
+            value={formData.number} 
+            onChange={handleChange} 
+          />
 
           <label htmlFor="department">Current Department</label>
-          <select name="department" id="department" className="drop-down" required value={formData.department} onChange={handleChange}>
+          <select 
+            name="department" 
+            id="department" 
+            className="drop-down" 
+            required 
+            value={formData.department} 
+            onChange={handleChange}
+          >
             <option value=""></option>
             <option value="science">Science</option>
             <option value="health-science">Health Science</option>
@@ -95,7 +119,14 @@ export default function AdminSignupPage() {
           </select>
 
           <label htmlFor="role">Current Academic Role</label>
-          <select name="role" id="role" className="drop-down" required value={formData.role} onChange={handleChange}>
+          <select 
+            name="role" 
+            id="role" 
+            className="drop-down" 
+            required 
+            value={formData.role} 
+            onChange={handleChange}
+          >
             <option value=""></option>
             <option value="lecturer">Lecturer</option>
             <option value="student">Student</option>
@@ -105,8 +136,7 @@ export default function AdminSignupPage() {
             <option value="reasearcher">Reasearcher</option>
           </select>
 
-          <button type="submit" aria-label="submit information" /*onClick= {() => router.push("/login")}*/>Continue →
-          </button>
+          <button type="submit" aria-label="submit information">Continue →</button>
         </form>
       </section>
     </main>

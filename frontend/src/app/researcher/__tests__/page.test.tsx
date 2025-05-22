@@ -129,7 +129,14 @@ describe('ResearcherSignupPage', () => {
     render(<ResearcherSignupPage />);
 
     // Fill in the form
-    fireEvent.change(screen.getByLabelText('Contact number'), { target: { value: '0814366553' } });
+    const phoneInput = screen.getByLabelText('Contact number');
+    fireEvent.change(phoneInput, { target: { value: '0814366553' } });
+    phoneInput.removeAttribute('required');
+    screen.getByLabelText('Current Department').removeAttribute('required');
+    screen.getByLabelText('Current academic role').removeAttribute('required');
+    screen.getByLabelText('Research area').removeAttribute('required');
+    screen.getByPlaceholderText('Qualifications').removeAttribute('required');
+    screen.getByPlaceholderText('Projects').removeAttribute('required');
     fireEvent.change(screen.getByLabelText('Current Department'), { target: { value: 'science' } });
     fireEvent.change(screen.getByLabelText('Current academic role'), { target: { value: 'lecturer' } });
     fireEvent.change(screen.getByLabelText('Research area'), { target: { value: 'Black holes' } });
@@ -141,7 +148,7 @@ describe('ResearcherSignupPage', () => {
     fireEvent.click(submitButton);
 
     await waitFor(() => {
-      expect(alertSpy).toHaveBeenCalledWith('User ID is missing.');
+      expect(alertSpy).toHaveBeenCalledWith('Authentication token is missing. Please log in again.');
       expect(global.fetch).not.toHaveBeenCalled();
     });
 
@@ -185,7 +192,14 @@ describe('ResearcherSignupPage', () => {
     render(<ResearcherSignupPage />);
 
     // Fill in the form
-    fireEvent.change(screen.getByLabelText('Contact number'), { target: { value: '0814366553' } });
+    const phoneInput = screen.getByLabelText('Contact number');
+    fireEvent.change(phoneInput, { target: { value: '0814366553' } });
+    phoneInput.removeAttribute('required');
+    screen.getByLabelText('Current Department').removeAttribute('required');
+    screen.getByLabelText('Current academic role').removeAttribute('required');
+    screen.getByLabelText('Research area').removeAttribute('required');
+    screen.getByPlaceholderText('Qualifications').removeAttribute('required');
+    screen.getByPlaceholderText('Projects').removeAttribute('required');
     fireEvent.change(screen.getByLabelText('Current Department'), { target: { value: 'science' } });
     fireEvent.change(screen.getByLabelText('Current academic role'), { target: { value: 'lecturer' } });
     fireEvent.change(screen.getByLabelText('Research area'), { target: { value: 'Black holes' } });
@@ -198,7 +212,7 @@ describe('ResearcherSignupPage', () => {
 
     await waitFor(() => {
       expect(consoleSpy).toHaveBeenCalledWith('Submission error:', expect.any(Error));
-      expect(alertSpy).toHaveBeenCalledWith('An error occurred');
+      expect(alertSpy).toHaveBeenCalledWith('An error occurred during registration. Please try again.');
       expect(mockRouter.push).not.toHaveBeenCalled();
     });
 

@@ -107,13 +107,57 @@ describe('AdminSignupPage', () => {
     });
   });
 
+  it('validates phone number format', async () => {
+    render(<AdminSignupPage />);
+
+    // Fill in the form with invalid phone number
+    const phoneInput = screen.getByLabelText('Contact Number');
+    fireEvent.change(phoneInput, { target: { name: 'number', value: '123' } });
+    
+    // Check HTML5 validation attributes
+    expect(phoneInput).toHaveAttribute('pattern', '[0-9]{10}');
+    expect(phoneInput).toHaveAttribute('title', 'Please enter a valid 10-digit phone number');
+    expect(phoneInput).toHaveAttribute('required');
+
+    // Submit the form
+    const submitButton = screen.getByRole('button', { name: 'submit information' });
+    fireEvent.click(submitButton);
+
+    // The form should not submit due to HTML5 validation
+    await waitFor(() => {
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+  });
+
+  it('validates required fields', async () => {
+    render(<AdminSignupPage />);
+
+    // Check that all required fields have the required attribute
+    const phoneInput = screen.getByLabelText('Contact Number');
+    const departmentSelect = screen.getByLabelText('Current Department');
+    const roleSelect = screen.getByLabelText('Current Academic Role');
+
+    expect(phoneInput).toHaveAttribute('required');
+    expect(departmentSelect).toHaveAttribute('required');
+    expect(roleSelect).toHaveAttribute('required');
+
+    // Submit the form without filling required fields
+    const submitButton = screen.getByRole('button', { name: 'submit information' });
+    fireEvent.click(submitButton);
+
+    // The form should not submit due to HTML5 validation
+    await waitFor(() => {
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+  });
+
   it('handles form submission with missing token', async () => {
     localStorage.removeItem('jwt');
     const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {});
 
     render(<AdminSignupPage />);
 
-    // Fill in the form
+    // Fill in the form with valid data
     fireEvent.change(screen.getByLabelText('Contact Number'), { 
       target: { name: 'number', value: '0814366553' } 
     });
@@ -129,7 +173,7 @@ describe('AdminSignupPage', () => {
     fireEvent.click(submitButton);
 
     await waitFor(() => {
-      expect(alertSpy).toHaveBeenCalledWith('User ID is missing.');
+      expect(alertSpy).toHaveBeenCalledWith('Authentication token is missing. Please log in again.');
       expect(global.fetch).not.toHaveBeenCalled();
     });
 
@@ -145,7 +189,7 @@ describe('AdminSignupPage', () => {
 
     render(<AdminSignupPage />);
 
-    // Fill in the form
+    // Fill in the form with valid data
     fireEvent.change(screen.getByLabelText('Contact Number'), { 
       target: { name: 'number', value: '0814366553' } 
     });
@@ -170,11 +214,12 @@ describe('AdminSignupPage', () => {
 
   it('handles form submission with network error', async () => {
     (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
+    const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {});
     const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
     render(<AdminSignupPage />);
 
-    // Fill in the form
+    // Fill in the form with valid data
     fireEvent.change(screen.getByLabelText('Contact Number'), { 
       target: { name: 'number', value: '0814366553' } 
     });
@@ -191,9 +236,11 @@ describe('AdminSignupPage', () => {
 
     await waitFor(() => {
       expect(consoleSpy).toHaveBeenCalledWith('Error during registration:', expect.any(Error));
+      expect(alertSpy).toHaveBeenCalledWith('An error occurred during registration. Please try again.');
     });
 
     consoleSpy.mockRestore();
+    alertSpy.mockRestore();
   });
 
   it('handles navigation button clicks', () => {
