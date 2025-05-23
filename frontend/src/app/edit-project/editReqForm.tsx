@@ -199,7 +199,7 @@ export default function EditReqForm({
           X
         </button>
         <h1 className={styles.title}>Edit Project Requirements</h1>
-        <form className={styles.createForm} onSubmit={handleSubmit}>
+        <form className={styles.createForm} onSubmit={handleSubmit} data-testid="edit-req-form">
           <label htmlFor="skillReq">Skill Required</label>
           <input
             type="text"

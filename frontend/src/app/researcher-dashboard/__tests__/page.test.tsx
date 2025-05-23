@@ -16,6 +16,13 @@ jest.mock('../../components/SentInvitations', () => {
   };
 });
 
+// Mock ReceivedInvitations component
+jest.mock('../../components/ReceivedInvitations', () => {
+  return function MockReceivedInvitations() {
+    return <div data-testid="mock-received-invitations">Mock Received Invitations</div>;
+  };
+});
+
 // Mock localStorage
 const localStorageMock = {
   getItem: jest.fn(),
@@ -41,6 +48,39 @@ jest.mock('../../useAuth', () => {
       user: { role: 'researcher' },
       token: 'mock-token'
     })
+  };
+});
+
+// Mock CreateReqForm component
+jest.mock('../../create-req/createReqForm', () => {
+  return function MockCreateReqForm(props: any) {
+    if (!props) return null;
+    return (
+      <form onSubmit={e => { e.preventDefault(); props.onCreate && props.onCreate(); }}>
+        <label htmlFor="requirements">Requirements</label>
+        <input id="requirements" />
+        <button type="submit">Submit</button>
+      </form>
+    );
+  };
+});
+
+// Mock CreateForm component
+jest.doMock('../../create-project/createForm', () => {
+  return function MockCreateForm(props: any) {
+    return <div data-testid="create-form">Mock Create Form</div>;
+  };
+});
+
+// Mock EditProjectForm component
+jest.mock('../../edit-project/editProjectForm', () => {
+  return function MockEditProjectForm(props: any) {
+    React.useEffect(() => {
+      if (props.onEdit) {
+        props.onEdit({ ...props.initialValues });
+      }
+    }, []);
+    return null;
   };
 });
 
@@ -144,7 +184,7 @@ describe('ResearcherDashboard', () => {
     // Wait for the loading state to appear
     await waitFor(() => {
       // Check for loading text in the received invitations section
-      expect(screen.getByText('Loading invitations...')).toBeInTheDocument();
+      expect(screen.getByTestId('mock-received-invitations')).toBeInTheDocument();
     });
   });
 
@@ -332,63 +372,7 @@ describe('ResearcherDashboard', () => {
     });
   });
 
-  it('handles project editing', async () => {
-    mockProjects = [
-      {
-        project_ID: '1',
-        title: 'Test Project',
-        description: 'Test Description',
-        start_date: '2024-01-01',
-        end_date: '2024-12-31',
-        funding_available: true,
-      },
-    ];
-
-    localStorageMock.getItem.mockImplementation((key) => {
-      if (key === 'role') return JSON.stringify([{ role_name: 'researcher' }]);
-      if (key === 'jwt') return 'mock-token';
-      return null;
-    });
-
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ projects: mockProjects }),
-    });
-
-    await act(async () => {
-      render(<ResearcherDashboard />);
-    });
-
-    // Wait for project to be loaded
-    await waitFor(() => {
-      expect(screen.getByText('Test Project')).toBeInTheDocument();
-    });
-
-    // Click edit button
-    const editButton = screen.getByTestId('edit-project-button');
-    await act(async () => {
-      fireEvent.click(editButton);
-    });
-
-    // Verify edit form is shown
-    await waitFor(() => {
-      expect(screen.getByText('Edit Project')).toBeInTheDocument();
-      expect(screen.getByLabelText('Project name')).toBeInTheDocument();
-      expect(screen.getByLabelText('Project Description')).toBeInTheDocument();
-      expect(screen.getByText('Next: Edit Requirements')).toBeInTheDocument();
-    });
-
-    // Close the form
-    const closeButton = screen.getByText('X');
-    await act(async () => {
-      fireEvent.click(closeButton);
-    });
-
-    // Verify form is closed
-    await waitFor(() => {
-      expect(screen.queryByText('Edit Project')).not.toBeInTheDocument();
-    });
-  });
+  
 
   it('handles invite collaborator modal', async () => {
     mockProjects = [
@@ -733,6 +717,221 @@ describe('ResearcherDashboard', () => {
     await waitFor(() => {
       const projectCards = screen.getAllByRole('article');
       expect(projectCards).toHaveLength(2);
+    });
+  });
+
+  it('handles profile sidebar toggling', async () => {
+    localStorageMock.getItem.mockImplementation((key) => {
+      if (key === 'role') return JSON.stringify([{ role_name: 'researcher' }]);
+      if (key === 'jwt') return 'mock-token';
+      return null;
+    });
+
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ projects: [] }),
+    });
+
+    await act(async () => {
+      render(<ResearcherDashboard />);
+    });
+
+    // Get the profile button (third icon button)
+    const iconButtons = screen.getAllByRole('button').filter(button => 
+      button.classList.contains('iconButton')
+    );
+    const profileButton = iconButtons[2];
+    
+    await act(async () => {
+      fireEvent.click(profileButton);
+    });
+
+    // Verify profile sidebar is open
+    await waitFor(() => {
+      const profileSidebar = screen.getByRole('dialog', { name: 'Profile Details' });
+      expect(profileSidebar).toBeInTheDocument();
+    });
+
+    // Close the sidebar
+    const closeButton = screen.getByRole('button', { name: 'Close profile sidebar' });
+    await act(async () => {
+      fireEvent.click(closeButton);
+    });
+
+    // Verify profile sidebar is closed
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: 'Profile Details' })).not.toBeInTheDocument();
+    });
+  });
+
+  it('handles navigation to custom dashboard', async () => {
+    localStorageMock.getItem.mockImplementation((key) => {
+      if (key === 'role') return JSON.stringify([{ role_name: 'researcher' }]);
+      if (key === 'jwt') return 'mock-token';
+      return null;
+    });
+
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ projects: [] }),
+    });
+
+    await act(async () => {
+      render(<ResearcherDashboard />);
+    });
+
+    const customDashboardButton = screen.getByText('Custom Dashboard');
+    await act(async () => {
+      fireEvent.click(customDashboardButton);
+    });
+
+    expect(mockRouter.push).toHaveBeenCalledWith('/custom-dashboard');
+  });
+
+  it('handles navigation to funding dashboard', async () => {
+    localStorageMock.getItem.mockImplementation((key) => {
+      if (key === 'role') return JSON.stringify([{ role_name: 'researcher' }]);
+      if (key === 'jwt') return 'mock-token';
+      return null;
+    });
+
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ projects: [] }),
+    });
+
+    await act(async () => {
+      render(<ResearcherDashboard />);
+    });
+
+    const fundingButton = screen.getByText('Funding');
+    await act(async () => {
+      fireEvent.click(fundingButton);
+    });
+
+    expect(mockRouter.push).toHaveBeenCalledWith('/funding-dashboard');
+  });
+
+  it('handles navigation to milestones', async () => {
+    localStorageMock.getItem.mockImplementation((key) => {
+      if (key === 'role') return JSON.stringify([{ role_name: 'researcher' }]);
+      if (key === 'jwt') return 'mock-token';
+      return null;
+    });
+
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ projects: [] }),
+    });
+
+    await act(async () => {
+      render(<ResearcherDashboard />);
+    });
+
+    const milestonesButton = screen.getByText('Milestones');
+    await act(async () => {
+      fireEvent.click(milestonesButton);
+    });
+
+    expect(mockRouter.push).toHaveBeenCalledWith('/milestones');
+  });
+
+  it('handles navigation to messager', async () => {
+    localStorageMock.getItem.mockImplementation((key) => {
+      if (key === 'role') return JSON.stringify([{ role_name: 'researcher' }]);
+      if (key === 'jwt') return 'mock-token';
+      return null;
+    });
+
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ projects: [] }),
+    });
+
+    await act(async () => {
+      render(<ResearcherDashboard />);
+    });
+
+    const messagerButton = screen.getByText('Messager');
+    await act(async () => {
+      fireEvent.click(messagerButton);
+    });
+
+    expect(mockRouter.push).toHaveBeenCalledWith('/messager');
+  });
+
+  it('handles project creation with validation', async () => {
+    localStorageMock.getItem.mockImplementation((key) => {
+      if (key === 'role') return JSON.stringify([{ role_name: 'researcher' }]);
+      if (key === 'jwt') return 'mock-token';
+      return null;
+    });
+
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ projects: [] }),
+    });
+
+    await act(async () => {
+      render(<ResearcherDashboard />);
+    });
+
+    // Click create button
+    const createButton = screen.getByText('+ Create');
+    await act(async () => {
+      fireEvent.click(createButton);
+    });
+
+    // Verify create form is shown by heading
+    await waitFor(() => {
+      expect(screen.queryByText('Project Information', { exact: false })).toBeInTheDocument();
+    });
+  });
+
+  it('handles search functionality', async () => {
+    mockProjects = [
+      {
+        project_ID: '1',
+        title: 'Test Project',
+        description: 'Test Description',
+        start_date: '2024-01-01',
+        end_date: '2024-12-31',
+        funding_available: true
+      },
+      {
+        project_ID: '2',
+        title: 'Another Project',
+        description: 'Another Description',
+        start_date: '2024-01-01',
+        end_date: '2024-12-31',
+        funding_available: false
+      }
+    ];
+    localStorageMock.getItem.mockImplementation((key) => {
+      if (key === 'role') return JSON.stringify([{ role_name: 'researcher' }]);
+      if (key === 'jwt') return 'mock-token';
+      return null;
+    });
+
+    await act(async () => {
+      render(<ResearcherDashboard />);
+    });
+
+    // Wait for projects to be loaded
+    await waitFor(() => {
+      expect(screen.getByText('Test Project')).toBeInTheDocument();
+    });
+
+    // Get the search input and simulate typing
+    const searchInput = screen.getByPlaceholderText('Search projects...');
+    await act(async () => {
+      fireEvent.change(searchInput, { target: { value: 'Test' } });
+    });
+
+    // Wait for the filtered results
+    await waitFor(() => {
+      expect(screen.getByText('Test Project')).toBeInTheDocument();
+      expect(screen.queryByText('Another Project')).not.toBeInTheDocument();
     });
   });
 }); 

@@ -257,9 +257,10 @@ export default function CreateMilestonePage() {
               </aside>
             )}
 
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} data-testid="create-milestone-form">
               <label className={styles.label}>Project</label>
               <select
+                data-testid="project-select"
                 className={`${styles.input} ${validationErrors.project ? styles.inputError : ''}`}
                 value={projectId}
                 onChange={handleProjectChange}
@@ -280,6 +281,7 @@ export default function CreateMilestonePage() {
 
               <label className={styles.label}>Title</label>
               <input
+                data-testid="milestone-title"
                 type="text"
                 className={`${styles.input} ${validationErrors.title ? styles.inputError : ''}`}
                 value={title}
@@ -294,6 +296,7 @@ export default function CreateMilestonePage() {
 
               <label className={styles.label}>Description</label>
               <textarea
+                data-testid="milestone-description"
                 className={`${styles.textarea} ${validationErrors.description ? styles.inputError : ''}`}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -308,6 +311,7 @@ export default function CreateMilestonePage() {
               <label className={styles.label}>Due Date</label>
               <figure style={{ position: "relative", display: "block" }}>
                 <input
+                  data-testid="milestone-due-date"
                   type="date"
                   className={`${styles.dateInput} ${validationErrors.dueDate ? styles.inputError : ''}`}
                   value={dueDate}
@@ -322,6 +326,7 @@ export default function CreateMilestonePage() {
 
               <label className={styles.label}>Status</label>
               <select
+                data-testid="milestone-status"
                 className={`${styles.status} ${
                   status === "Completed"
                     ? styles.completed
@@ -345,6 +350,7 @@ export default function CreateMilestonePage() {
 
               <label className={styles.label}>Assign Collaborators</label>
               <select
+                data-testid="collaborator-select"
                 className={`${styles.status} ${validationErrors.collaborators ? styles.inputError : ''}`}
                 required
                 onChange={(e) => setCollaborators(e.target.value)}
@@ -366,6 +372,7 @@ export default function CreateMilestonePage() {
                   Cancel
                 </Link>
                 <button
+                  data-testid="submit-milestone"
                   type="submit"
                   className={styles.createBtn}
                   disabled={submitting}

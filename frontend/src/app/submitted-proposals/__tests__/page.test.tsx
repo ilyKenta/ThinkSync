@@ -91,7 +91,14 @@ describe('SubmittedProposalsPage', () => {
     render(<SubmittedProposalsPage />);
     
     await waitFor(() => {
-      expect(screen.getByText('Error: No valid proposals found')).toBeInTheDocument();
+      // The heading should be present
+      expect(screen.getByText('Submitted Proposals')).toBeInTheDocument();
+      // The table should be present
+      expect(screen.getByRole('table')).toBeInTheDocument();
+      // There should be no proposal rows
+      const rows = screen.getAllByRole('row');
+      // Only the header row should be present
+      expect(rows.length).toBe(1);
     });
   });
 

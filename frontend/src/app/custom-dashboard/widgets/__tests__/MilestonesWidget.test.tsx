@@ -26,6 +26,16 @@ jest.mock('next/navigation', () => ({
   })
 }));
 
+// Mock recharts
+jest.mock('recharts', () => ({
+  PieChart: ({ children }: any) => <div data-testid="pie-chart">{children}</div>,
+  Pie: ({ children }: any) => <div data-testid="pie">{children}</div>,
+  Cell: () => <div data-testid="cell" />,
+  Tooltip: () => <div data-testid="tooltip" />,
+  Legend: () => <div data-testid="legend" />,
+  ResponsiveContainer: ({ children }: any) => <div data-testid="responsive-container">{children}</div>
+}));
+
 describe('MilestonesWidget', () => {
   const mockOnDelete = jest.fn();
   const mockToken = 'mock-token';
@@ -168,6 +178,27 @@ describe('MilestonesWidget', () => {
   });
 
   it('handles milestone creation correctly', async () => {
+    const mockFetch = global.fetch as jest.Mock;
+    mockFetch
+      .mockImplementationOnce(() => Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ 
+          projects: mockProjects,
+          summary: mockSummary
+        })
+      }))
+      .mockImplementationOnce(() => Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ success: true })
+      }))
+      .mockImplementationOnce(() => Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ 
+          projects: mockProjects,
+          summary: mockSummary
+        })
+      }));
+
     render(<MilestonesWidget onDelete={mockOnDelete} />);
     
     await waitFor(() => {
@@ -183,16 +214,24 @@ describe('MilestonesWidget', () => {
     // Fill in the form
     fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'New Milestone' } });
     fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'New Description' } });
-    fireEvent.change(screen.getByLabelText('Due Date'), { target: { value: '2024-12-31' } });
+    fireEvent.change(screen.getByLabelText('Due Date'), { target: { value: '2099-12-31' } });
     fireEvent.change(screen.getByLabelText('Status'), { target: { value: 'Not Started' } });
+    fireEvent.change(screen.getByLabelText('Assign To'), { target: { value: 'user1' } });
 
-    fireEvent.click(screen.getByText('Create Milestone'));
+    // Submit the form
+    const form = screen.getByText('Create New Milestone').closest('form');
+    if (!form) throw new Error('Form not found');
+    fireEvent.submit(form);
     
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(mockFetch).toHaveBeenCalledWith(
         'http://test-api-url/api/milestones/1',
         expect.objectContaining({
           method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer mock-token'
+          },
           body: expect.any(String)
         })
       );
@@ -200,27 +239,40 @@ describe('MilestonesWidget', () => {
   });
 
   it('handles milestone click navigation', async () => {
-    render(<MilestonesWidget onDelete={mockOnDelete} />);
-    await waitFor(() => {
-      expect(screen.getByText('Test Project')).toBeInTheDocument();
-    });
-    fireEvent.click(screen.getByText('Milestone 1'));
-    expect(mockPush).toHaveBeenCalledWith(
-      '/milestones/1?from=custom-dashboard'
-    );
-  });
-
-  it('handles report download correctly', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    const mockFetch = global.fetch as jest.Mock;
+    mockFetch.mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({ 
         projects: mockProjects,
         summary: mockSummary
       })
-    }).mockResolvedValueOnce({
-      ok: true,
-      blob: () => Promise.resolve(new Blob())
     });
+
+    render(<MilestonesWidget onDelete={mockOnDelete} />);
+    
+    await waitFor(() => {
+      expect(screen.getByText('Test Project')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('Milestone 1'));
+    
+    expect(mockPush).toHaveBeenCalledWith('/milestones/1?from=custom-dashboard');
+  });
+
+  it('handles report download correctly', async () => {
+    const mockFetch = global.fetch as jest.Mock;
+    mockFetch
+      .mockImplementationOnce(() => Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ 
+          projects: mockProjects,
+          summary: mockSummary
+        })
+      }))
+      .mockImplementationOnce(() => Promise.resolve({
+        ok: true,
+        blob: () => Promise.resolve(new Blob())
+      }));
 
     render(<MilestonesWidget onDelete={mockOnDelete} />);
     
@@ -231,17 +283,23 @@ describe('MilestonesWidget', () => {
     fireEvent.click(screen.getByText('Download Report'));
     
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(mockFetch).toHaveBeenCalledWith(
         'http://test-api-url/api/milestones/report/generate',
-        expect.any(Object)
+        expect.objectContaining({
+          headers: {
+            'Authorization': 'Bearer mock-token'
+          }
+        })
       );
     });
   });
 
   it('handles session expiration correctly', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    const mockFetch = global.fetch as jest.Mock;
+    mockFetch.mockResolvedValueOnce({
       status: 401,
-      ok: false
+      ok: false,
+      json: () => Promise.resolve({ error: 'Session expired' })
     });
 
     render(<MilestonesWidget onDelete={mockOnDelete} />);
@@ -252,27 +310,43 @@ describe('MilestonesWidget', () => {
   });
 
   it('renders milestone summary chart correctly', async () => {
+    const mockFetch = global.fetch as jest.Mock;
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ 
+        projects: mockProjects,
+        summary: mockSummary
+      })
+    });
+
     render(<MilestonesWidget onDelete={mockOnDelete} />);
+    
     await waitFor(() => {
       expect(screen.getByText('Milestone Progress Overview')).toBeInTheDocument();
-      // Check for the chart container
-      expect(document.querySelector('.recharts-responsive-container')).toBeInTheDocument();
-      // Check for legend/label elements
-      const notStartedLabels = screen.queryAllByText((content) => content.includes('Not Started'));
-      const inProgressLabels = screen.queryAllByText((content) => content.includes('In Progress'));
-      expect(notStartedLabels.length).toBeGreaterThan(0);
-      expect(inProgressLabels.length).toBeGreaterThan(0);
+      expect(screen.getByTestId('pie-chart')).toBeInTheDocument();
+      expect(screen.getByTestId('pie')).toBeInTheDocument();
+      expect(screen.getByTestId('legend')).toBeInTheDocument();
     });
   });
 
   it('handles milestone status updates correctly', async () => {
+    const mockFetch = global.fetch as jest.Mock;
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ 
+        projects: mockProjects,
+        summary: mockSummary
+      })
+    });
+
     render(<MilestonesWidget onDelete={mockOnDelete} />);
+    
     await waitFor(() => {
       expect(screen.getByText('Test Project')).toBeInTheDocument();
     });
+
     fireEvent.click(screen.getByText('Milestone 1'));
-    expect(mockPush).toHaveBeenCalledWith(
-      '/milestones/1?from=custom-dashboard'
-    );
+    
+    expect(mockPush).toHaveBeenCalledWith('/milestones/1?from=custom-dashboard');
   });
 }); 

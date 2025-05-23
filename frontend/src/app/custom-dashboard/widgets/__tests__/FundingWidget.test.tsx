@@ -354,23 +354,69 @@ describe('FundingWidget', () => {
 
     // --- SAVE/CANCEL/ERROR IN EDIT MODAL ---
     test('saves and cancels in edit modal, handles error', async () => {
-        mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ projects: [mockProject] }) });
-        mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ categories: mockProject.categories }) });
-        mockFetch.mockResolvedValue({ ok: true }); // save
+        // Use a future grant_end_date to avoid validation error
+        const futureProject = {
+            ...mockProject,
+            funding: {
+                ...mockProject.funding,
+                grant_end_date: '2099-12-31',
+            },
+        };
+        // Mock initial projects fetch
+        mockFetch.mockResolvedValueOnce({
+            ok: true,
+            json: () => Promise.resolve({ projects: [futureProject] })
+        });
+        
+        // Mock categories fetch when edit is clicked
+        mockFetch.mockResolvedValueOnce({
+            ok: true,
+            json: () => Promise.resolve({ categories: mockProject.categories })
+        });
+
+        // Mock successful save
+        mockFetch.mockResolvedValueOnce({ ok: true });
+        
         render(<FundingWidget onDelete={mockOnDelete} />);
-        await waitFor(() => expect(screen.getByRole('heading', { name: /Test Project/i })).toBeInTheDocument());
-        fireEvent.click(screen.getByRole('button', { name: /edit funding/i }));
-        await waitFor(() => expect(screen.getByRole('heading', { name: /edit funding/i })).toBeInTheDocument());
+        
+        await waitFor(() => {
+            expect(screen.getByRole('heading', { name: /Test Project/i })).toBeInTheDocument();
+        });
+
+        const editButton = screen.getByRole('button', { name: /edit funding/i });
+        fireEvent.click(editButton);
+        
+        await waitFor(() => {
+            expect(screen.getByRole('heading', { name: /edit funding/i })).toBeInTheDocument();
+        });
+
         // Save
         const saveBtn = screen.getByRole('button', { name: /save changes/i });
         fireEvent.click(saveBtn);
+
         // Cancel
-        fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
-        // Error
-        mockFetch.mockResolvedValueOnce({ ok: false, json: () => Promise.resolve({}) });
-        fireEvent.click(screen.getByRole('button', { name: /edit funding/i }));
-        await waitFor(() => expect(screen.getByRole('heading', { name: /edit funding/i })).toBeInTheDocument());
-        fireEvent.click(saveBtn);
+        const cancelBtn = screen.getByRole('button', { name: /cancel/i });
+        fireEvent.click(cancelBtn);
+
+        // Test error handling
+        mockFetch.mockReset();
+        mockFetch.mockResolvedValueOnce({
+            ok: true,
+            json: () => Promise.resolve({ projects: [mockProject] })
+        });
+        mockFetch.mockRejectedValueOnce(new Error('Failed to fetch project details'));
+
+        fireEvent.click(editButton);
+        
+        await waitFor(() => {
+            // The modal should be present
+            const modal = document.querySelector('.modal');
+            expect(modal).toBeTruthy();
+            // The error message should be present somewhere inside the modal
+            const errorText = 'Failed to fetch project details';
+            const foundError = modal && modal.textContent && modal.textContent.includes(errorText);
+            expect(foundError).toBeTruthy();
+        });
     });
 
     // --- DELETE MODAL ---

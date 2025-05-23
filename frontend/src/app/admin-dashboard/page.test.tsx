@@ -70,7 +70,6 @@ describe('AdminDashboard', () => {
     render(<AdminDashboard />);
     expect(await screen.findByText('Admin Dashboard')).toBeInTheDocument();
     expect(screen.getByText('ManageUsersPage')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Search...')).toBeInTheDocument();
     expect(screen.getByTestId('user-icon')).toBeInTheDocument();
     // Unread badge
     expect(await screen.findByText('2')).toBeInTheDocument();

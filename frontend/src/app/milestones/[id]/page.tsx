@@ -408,6 +408,7 @@ export default function MilestoneDetailsPage({
                 <h2 className={styles.formTitle}>Edit {milestone.title}</h2>
                 {editError && (
                   <aside
+                    data-testid="error-edit"
                     style={{
                       background: "#fdeaea",
                       border: "1px solid #f5c2c7",
@@ -433,7 +434,7 @@ export default function MilestoneDetailsPage({
                   required
                 />
                 {validationErrors.title && (
-                  <p className={styles.errorMessage}>{validationErrors.title}</p>
+                  <p className={styles.errorMessage} data-testid="error-title">{validationErrors.title}</p>
                 )}
 
                 <label className={styles.label}>Description</label>
@@ -447,7 +448,7 @@ export default function MilestoneDetailsPage({
                   required
                 />
                 {validationErrors.description && (
-                  <p className={styles.errorMessage}>{validationErrors.description}</p>
+                  <p className={styles.errorMessage} data-testid="error-description">{validationErrors.description}</p>
                 )}
 
                 <label className={styles.label}>Due Date</label>
@@ -462,7 +463,7 @@ export default function MilestoneDetailsPage({
                   required
                 />
                 {validationErrors.dueDate && (
-                  <p className={styles.errorMessage}>{validationErrors.dueDate}</p>
+                  <p className={styles.errorMessage} data-testid="error-dueDate">{validationErrors.dueDate}</p>
                 )}
 
                 <label className={styles.label}>Status</label>
@@ -479,7 +480,7 @@ export default function MilestoneDetailsPage({
                   <option value="Completed">Completed</option>
                 </select>
                 {validationErrors.status && (
-                  <p className={styles.errorMessage}>{validationErrors.status}</p>
+                  <p className={styles.errorMessage} data-testid="error-status">{validationErrors.status}</p>
                 )}
 
                 <label className={styles.label}>Assign To</label>
@@ -498,7 +499,7 @@ export default function MilestoneDetailsPage({
                   ))}
                 </select>
                 {validationErrors.assigned_user_ID && (
-                  <p className={styles.errorMessage}>{validationErrors.assigned_user_ID}</p>
+                  <p className={styles.errorMessage} data-testid="error-assigned-user">{validationErrors.assigned_user_ID}</p>
                 )}
 
                 <nav className={styles.buttonRow}>

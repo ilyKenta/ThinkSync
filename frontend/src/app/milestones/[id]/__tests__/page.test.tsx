@@ -2,6 +2,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import MilestoneDetailsPage from '../page';
 import '@testing-library/jest-dom';
+import userEvent from '@testing-library/user-event';
 
 // Mock next/navigation
 jest.mock('next/navigation', () => ({
@@ -28,6 +29,7 @@ describe('MilestoneDetailsPage', () => {
     },
     collaborators: [
       { user_ID: 'u1', name: 'Alice Smith' },
+      { user_ID: 'u2', name: 'Bob Jones' },
     ],
   };
 
@@ -121,5 +123,114 @@ describe('MilestoneDetailsPage', () => {
     const backButton = screen.getAllByRole('button')[0];
     fireEvent.click(backButton);
     expect(mockRouter.push).toHaveBeenCalledWith('/custom-dashboard');
+  });
+
+  it('opens and closes edit form', async () => {
+    render(<MilestoneDetailsPage params={{ id: '1' }} />);
+    await waitFor(() => {
+      expect(screen.getByText('Test Milestone')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /edit/i }));
+    expect(screen.getByRole('heading', { name: /edit test milestone/i })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
+    expect(screen.queryByRole('heading', { name: /edit test milestone/i })).not.toBeInTheDocument();
+  });
+
+  it('handles successful milestone update', async () => {
+    const updatedMilestone = {
+      ...mockMilestoneData,
+      milestone: {
+        ...mockMilestoneData.milestone,
+        title: 'Updated Title',
+        description: 'Updated Description',
+        status: 'In Progress',
+      },
+    };
+
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockMilestoneData) })
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({}) })
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(updatedMilestone) });
+
+    render(<MilestoneDetailsPage params={{ id: '1' }} />);
+    await waitFor(() => {
+      expect(screen.getByText('Test Milestone')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /edit/i }));
+    
+    const textboxes = screen.getAllByRole('textbox');
+    const titleInput = textboxes[0];
+    const descriptionInput = textboxes[1];
+    const comboboxes = screen.getAllByRole('combobox');
+    const statusSelect = comboboxes[0];
+
+    await userEvent.clear(titleInput);
+    await userEvent.type(titleInput, 'Updated Title');
+    await userEvent.clear(descriptionInput);
+    await userEvent.type(descriptionInput, 'Updated Description');
+    await userEvent.selectOptions(statusSelect, 'In Progress');
+
+    fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Updated Title').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Updated Description').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('In Progress').length).toBeGreaterThan(0);
+    });
+  });
+
+  it('handles delete error', async () => {
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockMilestoneData) })
+      .mockRejectedValueOnce(new Error('Delete failed'));
+
+    render(<MilestoneDetailsPage params={{ id: '1' }} />);
+    await waitFor(() => {
+      expect(screen.getByText('Test Milestone')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    fireEvent.click(screen.getByRole('button', { name: /delete milestone/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Delete failed')).toBeInTheDocument();
+    });
+  });
+
+  it('handles collaborator assignment', async () => {
+    const updatedMilestone = {
+      ...mockMilestoneData,
+      milestone: {
+        ...mockMilestoneData.milestone,
+        assigned_user_ID: 'u2',
+        assigned_user_fname: 'Bob',
+        assigned_user_sname: 'Jones'
+      }
+    };
+
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockMilestoneData) })
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({}) })
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(updatedMilestone) });
+
+    render(<MilestoneDetailsPage params={{ id: '1' }} />);
+    await waitFor(() => {
+      expect(screen.getByText('Test Milestone')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /edit/i }));
+    
+    const comboboxes = screen.getAllByRole('combobox');
+    const assignSelect = comboboxes[1];
+    await userEvent.selectOptions(assignSelect, 'u2');
+    fireEvent.blur(assignSelect);
+    fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/bob jones/i)).toBeInTheDocument();
+    });
   });
 }); 
