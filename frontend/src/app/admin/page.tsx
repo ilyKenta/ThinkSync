@@ -77,14 +77,6 @@ export default function AdminSignupPage() {
     <main className={styles.signupPage}>
       <header className={styles.header}>
         <h1 className={styles.logo}>ThinkSync</h1>
-        <nav className={styles.navButtons}>
-          <button className={styles.loginButton} type="button" onClick={() => router.push("/login")}>
-            login
-          </button>
-          <button className={styles.signupButton} type="button">
-            sign up
-          </button>
-        </nav>
       </header>
       <section className={styles.signupBox}>
         <h1 className={styles.title}>Admin Sign Up</h1>

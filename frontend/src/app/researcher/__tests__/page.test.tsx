@@ -34,8 +34,6 @@ describe('ResearcherSignupPage', () => {
 
     expect(screen.getByText('ThinkSync')).toBeInTheDocument();
     expect(screen.getByText('Researcher Sign Up')).toBeInTheDocument();
-    expect(screen.getByText('login')).toBeInTheDocument();
-    expect(screen.getByText('sign up')).toBeInTheDocument();
     expect(screen.getByLabelText('Contact number')).toBeInTheDocument();
     expect(screen.getByLabelText('Current Department')).toBeInTheDocument();
     expect(screen.getByLabelText('Current academic role')).toBeInTheDocument();
@@ -218,17 +216,5 @@ describe('ResearcherSignupPage', () => {
 
     alertSpy.mockRestore();
     consoleSpy.mockRestore();
-  });
-
-  it('handles navigation button clicks', () => {
-    render(<ResearcherSignupPage />);
-
-    // Test login button
-    fireEvent.click(screen.getByText('login'));
-    expect(mockRouter.push).toHaveBeenCalledWith('/login');
-
-    // Test sign up button
-    fireEvent.click(screen.getByText('sign up'));
-    expect(mockRouter.push).toHaveBeenCalledWith('/roles');
   });
 }); 

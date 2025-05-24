@@ -35,8 +35,6 @@ describe('AdminSignupPage', () => {
     // Check for header elements
     expect(screen.getByText('ThinkSync')).toBeInTheDocument();
     expect(screen.getByText('Admin Sign Up')).toBeInTheDocument();
-    expect(screen.getByText('login')).toBeInTheDocument();
-    expect(screen.getByText('sign up')).toBeInTheDocument();
 
     // Check for form elements
     expect(screen.getByLabelText('Contact Number')).toBeInTheDocument();
@@ -241,13 +239,5 @@ describe('AdminSignupPage', () => {
 
     consoleSpy.mockRestore();
     alertSpy.mockRestore();
-  });
-
-  it('handles navigation button clicks', () => {
-    render(<AdminSignupPage />);
-
-    // Test login button
-    fireEvent.click(screen.getByText('login'));
-    expect(mockRouter.push).toHaveBeenCalledWith('/login');
   });
 }); 
